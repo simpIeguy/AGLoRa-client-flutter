@@ -19,6 +19,7 @@ class BleDataSource implements TrackerDataSource {
   StreamSubscription<BluetoothConnectionState>? _connectionSubscription;
   StreamSubscription<List<int>>? _valueSubscription;
   BluetoothCharacteristic? _characteristic;
+  bool _disposed = false;
 
   @override
   Stream<List<int>> get chunks => _chunks.stream;
@@ -39,6 +40,7 @@ class BleDataSource implements TrackerDataSource {
   }
 
   Future<void> _onConnectionState(BluetoothConnectionState status) async {
+    if (_disposed) return;
     if (status != BluetoothConnectionState.connected) {
       _characteristic = null;
       _ready.add(false);
@@ -47,6 +49,8 @@ class BleDataSource implements TrackerDataSource {
 
     try {
       final services = await device.discoverServices();
+      // the screen may have closed while the services were looked up
+      if (_disposed) return;
       BluetoothService? uart;
       for (final service in services) {
         if (_isUartService(service)) uart = service;
@@ -56,8 +60,10 @@ class BleDataSource implements TrackerDataSource {
       for (final c in uart.characteristics) {
         if (!_isUartCharacteristic(c)) continue;
         await _valueSubscription?.cancel();
+        if (_disposed) return;
         _valueSubscription = c.onValueReceived.listen(_chunks.add);
         await c.setNotifyValue(true);
+        if (_disposed) return;
         _characteristic = c;
         _ready.add(true); // the app now asks for the history
       }
@@ -75,6 +81,7 @@ class BleDataSource implements TrackerDataSource {
 
   @override
   void dispose() {
+    _disposed = true;
     _connectionSubscription?.cancel();
     _valueSubscription?.cancel();
     _chunks.close();

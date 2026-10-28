@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../demo/demo_runner.dart';
@@ -27,12 +29,19 @@ class _DemoTrackersScreenState extends State<DemoTrackersScreen> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    startDemo(_services, widget.scenarioId, widget.speed);
+    startDemo(_services, widget.scenarioId, widget.speed,
+        isWanted: () => mounted);
   }
 
   @override
   void dispose() {
-    _services.link.detach();
+    final services = _services;
+    // after the tree settles: both tell the listeners about the change
+    scheduleMicrotask(() {
+      services.link.detach();
+      // made-up trackers must not mix with real ones
+      services.store.reset();
+    });
     super.dispose();
   }
 

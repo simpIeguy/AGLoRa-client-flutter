@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../protocol/tracker_name.dart';
 import '../../protocol/tracker_point.dart';
 import '../../services/app_services.dart';
 import '../../services/map_link.dart';
 import '../format.dart';
+import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
 
@@ -18,7 +20,9 @@ class TrackerLogScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final services = AppScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(S.logTitle(identifier))),
+      appBar: AppBar(
+          title: Text(S.logTitle(displayName(parseTrackerName(identifier),
+              alias: services.store.aliasOf(identifier))))),
       body: ListenableBuilder(
         // refreshes "N мин назад" and picks up new points
         listenable: Listenable.merge([services.store, services.clock]),

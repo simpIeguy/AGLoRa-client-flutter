@@ -134,7 +134,7 @@ void main() {
     await tester.tap(find.textContaining('Человек 1'));
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
     expect(find.byType(TrackerLogScreen), findsOneWidget);
-    expect(find.text('Лог: GROUND1'), findsOneWidget);
+    expect(find.text('Лог: Человек 1'), findsOneWidget);
 
     await tester.longPress(find.text('53.902284, 27.561831'));
     await tester.pump();

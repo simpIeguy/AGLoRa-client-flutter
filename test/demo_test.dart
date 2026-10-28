@@ -168,5 +168,6 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 100));
     expect(app.store.connectedTracker, 'Tracker1');
     app.link.detach();
+    expect(app.store.connectedTracker, isNull, reason: 'the link is gone');
   });
 }

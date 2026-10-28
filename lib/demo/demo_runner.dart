@@ -30,12 +30,14 @@ bool get isDemoRequestedAtLaunch =>
 
 String demoScenarioAsset(String id) => 'assets/demo/$id.txt';
 
-/// forgets the trackers and plays the scenario as if it came over BLE
-Future<DemoDataSource> startDemo(
+/// forgets the trackers and plays the scenario as if it came over BLE;
+/// null when [isWanted] says the demo screen closed while the file loaded
+Future<DemoDataSource?> startDemo(
     AppServices services, String scenarioId, double speed,
-    {AssetBundle? bundle}) async {
+    {AssetBundle? bundle, bool Function()? isWanted}) async {
   final text =
       await (bundle ?? rootBundle).loadString(demoScenarioAsset(scenarioId));
+  if (isWanted != null && !isWanted()) return null;
   final source = DemoDataSource(parseDemoScenario(text), speed: speed);
 
   services.store.reset();

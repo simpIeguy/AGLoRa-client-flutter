@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../protocol/tracker_name.dart';
 import '../protocol/tracker_point.dart';
+import 'tracker_status.dart';
 
 /// a tracker the user waits for: shown before its first point
 class WaitingTracker {
@@ -41,8 +42,16 @@ class TrackerStore extends ChangeNotifier {
   final Map<String, WaitingTracker> _waiting = {};
   final Set<String> _hidden = {};
 
-  /// trackers the app has ever had a point from
-  final Set<String> _seen = {};
+  /// trackers that already had their "came on air" moment
+  final Set<String> _onAir = {};
+
+  /// waited trackers whose points so far were only old ones
+  final Set<String> _waitedFor = {};
+
+  final DateTime Function() _now;
+
+  /// [now] replaces the phone's clock in tests
+  TrackerStore({DateTime Function()? now}) : _now = now ?? DateTime.now;
 
   final _firstSignals = StreamController<FirstSignal>.broadcast();
 
@@ -90,13 +99,21 @@ class TrackerStore extends ChangeNotifier {
       points.removeRange(pointsPerTrackerLimit, points.length);
     }
 
-    if (_seen.add(key)) _onFirstPoint(key, point);
+    // with a point it is a tracker in the list, no longer a stub
+    if (_waiting.remove(key) != null) _waitedFor.add(key);
+    _checkOnAir(key, point);
     notifyListeners();
     return true;
   }
 
-  void _onFirstPoint(String key, TrackerPoint point) {
-    if (_waiting.remove(key) != null) {
+  /// The first fresh point is the moment to tell the user. Old points (the
+  /// history the tracker sends on connect) do not count: the tracker may
+  /// have fallen silent long ago.
+  void _checkOnAir(String key, TrackerPoint point) {
+    if (_onAir.contains(key)) return;
+    if (_now().toUtc().difference(point.time) >= trackerLostTimeout) return;
+    _onAir.add(key);
+    if (_waitedFor.remove(key)) {
       _firstSignals.add(FirstSignal(point, wasWaited: true));
     } else if (_alertNewUavs &&
         parseTrackerName(point.identifier).role == TrackerRole.uav) {
@@ -176,7 +193,8 @@ class TrackerStore extends ChangeNotifier {
     _aliases.clear();
     _waiting.clear();
     _hidden.clear();
-    _seen.clear();
+    _onAir.clear();
+    _waitedFor.clear();
     _connectedTracker = null;
     notifyListeners();
   }

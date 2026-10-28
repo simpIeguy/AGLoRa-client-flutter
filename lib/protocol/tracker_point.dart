@@ -1,3 +1,5 @@
+import 'tracker_name.dart';
+
 /// one extra value of a point: altitude, satellites, battery…
 class TrackerSensor {
   const TrackerSensor({required this.name, required this.value});
@@ -39,7 +41,8 @@ class TrackerPoint {
 
   /// the same fix: a point resent by the tracker or by another one (mesh)
   bool isSameFixAs(TrackerPoint other) =>
-      identifier == other.identifier &&
+      parseTrackerName(identifier).key ==
+          parseTrackerName(other.identifier).key &&
       latitude == other.latitude &&
       longitude == other.longitude &&
       time == other.time;

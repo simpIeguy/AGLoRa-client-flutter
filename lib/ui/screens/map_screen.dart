@@ -137,7 +137,6 @@ class _MapScreenState extends State<MapScreen> {
               listenable: Listenable.merge([_services.store, _services.clock]),
               builder: (context, _) {
                 final now = _services.clock.now;
-                final connected = _services.store.connectedTracker;
                 return MarkerLayer(
                   rotate: true,
                   markers: [
@@ -146,7 +145,8 @@ class _MapScreenState extends State<MapScreen> {
                           now: now,
                           status: trackerStatus(
                               time: point.time,
-                              isConnected: point.identifier == connected,
+                              isConnected:
+                                  _services.store.isConnected(point.identifier),
                               now: now)),
                   ],
                 );

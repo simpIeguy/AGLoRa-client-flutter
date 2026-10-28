@@ -43,6 +43,8 @@ class TrackerLink {
     _source?.dispose();
     _source = null;
     _buffer.reset();
+    // no link: no tracker is "connected" any more
+    store.setConnectedTracker(null);
   }
 
   /// one BLE chunk

@@ -113,8 +113,8 @@ class _ScanResultTile extends StatelessWidget {
   final VoidCallback onConnect;
 
   static Icon _signalIcon(int rssi) {
-    if (rssi >= -80) return const Icon(Icons.signal_cellular_null);
     if (rssi >= -70) return const Icon(Icons.signal_cellular_4_bar);
+    if (rssi >= -80) return const Icon(Icons.network_cell);
     return const Icon(Icons.network_cell_outlined);
   }
 

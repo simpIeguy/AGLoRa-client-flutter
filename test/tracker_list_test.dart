@@ -131,7 +131,7 @@ void main() {
     });
 
     test('a waited tracker alerts once, then is an ordinary one', () async {
-      final store = TrackerStore();
+      final store = TrackerStore(now: () => now);
       final signals = <FirstSignal>[];
       store.firstSignals.listen(signals.add);
       expect(
@@ -149,8 +149,47 @@ void main() {
       expect(store.aliasOf('ground3'), 'Пётр');
     });
 
-    test('any new UAV alerts by default; it can be switched off', () async {
+    test('old points from the history do not alert, a fresh one does',
+        () async {
+      final store = TrackerStore(now: () => now);
+      final signals = <FirstSignal>[];
+      store.firstSignals.listen(signals.add);
+      store.addWaiting(parseTrackerName('UAV7'));
+
+      store.addPoint(at('UAV7', const Duration(days: 3)));
+      store.addPoint(at('UAV8', const Duration(hours: 1)));
+      await Future<void>.delayed(Duration.zero);
+      expect(signals, isEmpty);
+      expect(store.waiting, isEmpty, reason: 'it is in the list now');
+
+      store.addPoint(at('UAV7', const Duration(seconds: 20)));
+      store.addPoint(at('UAV7', const Duration(seconds: 5)));
+      await Future<void>.delayed(Duration.zero);
+      expect(signals, hasLength(1));
+      expect(signals.single.wasWaited, isTrue);
+    });
+
+    test('one fix from "UAV 1" and "UAV1" is stored once', () {
       final store = TrackerStore();
+      store.addPoint(at('UAV 1', Duration.zero));
+      expect(store.addPoint(at('UAV1', Duration.zero)), isFalse);
+    });
+
+    test('aliases and removing a stub', () {
+      final store = TrackerStore()
+        ..addWaiting(parseTrackerName('GROUND5'), alias: '  Иван ');
+      expect(store.aliasOf('ground 5'), 'Иван');
+      store.setAlias('GROUND5', 'Пётр');
+      expect(store.aliasOf('GROUND5'), 'Пётр');
+      store.setAlias('GROUND5', ' ');
+      expect(store.aliasOf('GROUND5'), isNull);
+      store.removeWaiting('ground5');
+      expect(store.waiting, isEmpty);
+      expect(store.isKnown('GROUND5'), isFalse);
+    });
+
+    test('any new UAV alerts by default; it can be switched off', () async {
+      final store = TrackerStore(now: () => now);
       final signals = <FirstSignal>[];
       store.firstSignals.listen(signals.add);
 

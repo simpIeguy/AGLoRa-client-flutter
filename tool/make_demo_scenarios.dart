@@ -226,15 +226,16 @@ List<Event> raggedEvents(List<Event> whole) {
   return out;
 }
 
-void writeScenario(String dir, String id, String description, Track track,
-    List<Event> events) {
+void writeScenario(
+    String dir, String id, String description, Track track, List<Event> events,
+    {String connected = 'Tracker1'}) {
   int index = 0;
   int previousMs = 0;
   final out = StringBuffer()
     ..writeln('# AGLoRa demo scenario "$id": $description')
     ..writeln('# made by tool/make_demo_scenarios.dart, do not edit by hand')
     ..writeln('# line: <delay ms since the previous line> <text sent as is>')
-    ..writeln('connected Tracker1')
+    ..writeln('connected $connected')
     ..writeln('start ${_timestamp(track.start)}');
   for (final e in events) {
     // memory indexes go in the order the tracker received the points
@@ -306,4 +307,28 @@ void main(List<String> args) {
                 phaseS: fullS ~/ 3, offsetS: 12, dLat: 0.001, dLon: 0.003),
           ],
           fullS));
+
+  // the search of a fallen UAV: the phone is on a person's tracker GROUND1,
+  // UAV1 comes on air after 40 s, UAV2 goes silent after 90 s, GROUND2 is
+  // another person, Tracker9 has an old-style name
+  writeScenario(
+      args[1],
+      'search',
+      'UAV search: UAV1 comes on air, UAV2 is lost, two people',
+      track,
+      plannedEvents(
+          track,
+          [
+            TrackerPlan('GROUND1', own: true),
+            TrackerPlan('UAV1',
+                fromS: 40, phaseS: fullS ~/ 2, offsetS: 7, dLat: 0.004),
+            TrackerPlan('UAV2',
+                toS: 90, phaseS: fullS ~/ 4, offsetS: 3, dLon: -0.004),
+            TrackerPlan('GROUND2',
+                phaseS: fullS * 3 ~/ 4, offsetS: 10, dLat: -0.002),
+            TrackerPlan('Tracker9',
+                phaseS: fullS ~/ 3, offsetS: 12, dLat: 0.001, dLon: 0.003),
+          ],
+          fullS),
+      connected: 'GROUND1');
 }

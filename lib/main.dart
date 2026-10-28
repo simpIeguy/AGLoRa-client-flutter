@@ -8,14 +8,18 @@ import 'ui/screens/demo_screens.dart';
 import 'ui/screens/find_devices_screen.dart';
 import 'ui/strings.dart';
 import 'ui/theme.dart';
+import 'ui/widgets/first_signal_alerts.dart';
 
 void main() {
   final services = AppServices()..start();
-  runApp(AppScope(services: services, child: const TrackerApp()));
+  runApp(AppScope(services: services, child: TrackerApp()));
 }
 
 class TrackerApp extends StatelessWidget {
-  const TrackerApp({super.key});
+  TrackerApp({super.key});
+
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +27,12 @@ class TrackerApp extends StatelessWidget {
       title: S.appName,
       theme: buildAppTheme(),
       debugShowCheckedModeBanner: false,
+      navigatorKey: _navigatorKey,
+      scaffoldMessengerKey: _messengerKey,
+      builder: (context, child) => FirstSignalAlerts(
+          navigatorKey: _navigatorKey,
+          messengerKey: _messengerKey,
+          child: child!),
       home: isDemoRequestedAtLaunch
           // debug builds only: --dart-define=DEMO_SCENARIO=<id> opens the demo
           ? DemoTrackersScreen(

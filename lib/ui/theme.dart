@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/sensor_lamps.dart';
 import '../data/tracker_status.dart';
 
 /// All colors of the app. Screens take colors only from here or from the
@@ -45,6 +46,14 @@ abstract final class AppColors {
         TrackerStatus.active => active,
         TrackerStatus.fading => fading,
         TrackerStatus.lost => lost,
+        TrackerStatus.waiting => waiting,
+      };
+
+  static Color lamp(LampLevel level) => switch (level) {
+        LampLevel.good => lampGood,
+        LampLevel.fair => lampFair,
+        LampLevel.bad => lampBad,
+        LampLevel.off => lampOff,
       };
 
   /// black or white, whichever reads better on the background

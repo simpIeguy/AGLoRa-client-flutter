@@ -1,151 +1,255 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../data/tracker_list.dart';
 import '../../data/tracker_status.dart';
+import '../../protocol/tracker_name.dart';
 import '../../protocol/tracker_point.dart';
 import '../../services/app_services.dart';
-import '../../util/geo.dart';
 import '../format.dart';
+import '../names.dart';
+import '../screens/full_screen_arrow.dart';
 import '../screens/map_screen.dart';
 import '../screens/tracker_log_screen.dart';
 import '../strings.dart';
 import '../theme.dart';
 import 'direction_arrow.dart';
 
-/// One tracker: colored by its status, with the direction and distance
-/// from the phone. A tap opens its log.
-class TrackerCard extends StatelessWidget {
-  const TrackerCard({super.key, required this.point});
+IconData roleIcon(TrackerRole role) => switch (role) {
+      TrackerRole.uav => Icons.flight,
+      TrackerRole.ground => Icons.person,
+      TrackerRole.other => Icons.gps_fixed,
+    };
 
-  /// the tracker's newest point
-  final TrackerPoint point;
+/// One tracker: the whole card takes its status color, a text label says
+/// the same. A tap opens the log.
+class TrackerCard extends StatelessWidget {
+  const TrackerCard({super.key, required this.entry});
+
+  final TrackerEntry entry;
 
   @override
   Widget build(BuildContext context) {
-    final services = AppScope.of(context);
-    return ListenableBuilder(
-      // recolor by timer, without waiting for new data
-      listenable: Listenable.merge([services.clock, services.location]),
-      builder: (context, _) {
-        final status = trackerStatus(
-          time: point.time,
-          isConnected: point.identifier == services.store.connectedTracker,
-          now: services.clock.now,
-        );
-        final background = AppColors.status(status);
-        final foreground = AppColors.readableOn(background);
-        final phone = services.location.position;
+    final background = AppColors.status(entry.status);
+    final foreground = AppColors.readableOn(background);
+    final point = entry.latest;
+    final textTheme = Theme.of(context).textTheme;
 
-        return Padding(
-          padding: const EdgeInsets.all(AppSizes.gap),
-          child: Material(
-            color: background,
-            borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.gap, vertical: AppSizes.gap / 2),
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+          onTap: point == null
+              ? null
+              : () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) =>
                       TrackerLogScreen(identifier: point.identifier))),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.padding),
-                child: DefaultTextStyle.merge(
-                  style: TextStyle(color: foreground),
-                  child: Column(children: [
-                    phone == null
-                        ? _withoutPhonePosition(context)
-                        : _withPhonePosition(context, phone.latitude,
-                            phone.longitude, foreground),
-                    _bottomRow(context, foreground, services.clock.now),
-                  ]),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.padding),
+            child: DefaultTextStyle.merge(
+              style: TextStyle(color: foreground),
+              child: IconTheme.merge(
+                data: IconThemeData(color: foreground),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _header(textTheme, foreground),
+                    if (point == null)
+                      _waitingRow(context)
+                    else ...[
+                      if (entry.status != TrackerStatus.connected)
+                        _DirectionRow(point: point, foreground: foreground),
+                      _coordinatesRow(context, point, foreground),
+                    ],
+                  ],
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _header(TextTheme textTheme, Color foreground) {
+    final point = entry.latest;
+    final battery = point?.sensor('battery');
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(roleIcon(entry.name.role), size: 32),
+        const SizedBox(width: AppSizes.gap),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text.rich(TextSpan(children: [
+                TextSpan(
+                    text: displayName(entry.name, alias: entry.alias),
+                    style: textTheme.titleLarge?.copyWith(
+                        color: foreground, fontWeight: FontWeight.bold)),
+                // the technical name, as in the firmware
+                TextSpan(
+                    text: '  ${entry.name.raw}',
+                    style: textTheme.bodySmall?.copyWith(color: foreground)),
+              ])),
+              Text(statusLabel(entry.status),
+                  style: textTheme.titleSmall?.copyWith(
+                      color: foreground, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+        if (point != null) _AgeAndBattery(time: point.time, battery: battery),
+      ],
+    );
+  }
+
+  Widget _waitingRow(BuildContext context) {
+    final store = AppScope.of(context).store;
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton.icon(
+        style: TextButton.styleFrom(
+            foregroundColor: DefaultTextStyle.of(context).style.color),
+        icon: const Icon(Icons.close),
+        label: const Text(S.remove),
+        onPressed: () => store.removeWaiting(entry.key),
+      ),
+    );
+  }
+
+  Widget _coordinatesRow(
+      BuildContext context, TrackerPoint point, Color foreground) {
+    final coordinates = formatCoordinates(point.latitude, point.longitude);
+    return Row(children: [
+      Expanded(
+        child: GestureDetector(
+          // a long press on the coordinates copies them too
+          onLongPress: () =>
+              copyCoordinates(context, point.latitude, point.longitude),
+          child: Text(coordinates,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: foreground,
+                  fontFeatures: [const FontFeature.tabularFigures()])),
+        ),
+      ),
+      IconButton(
+        tooltip: S.copyCoordinates,
+        icon: const Icon(Icons.copy),
+        onPressed: () =>
+            copyCoordinates(context, point.latitude, point.longitude),
+      ),
+      OutlinedButton.icon(
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => MapScreen(
+                centerLatitude: point.latitude,
+                centerLongitude: point.longitude))),
+        icon: const Icon(CupertinoIcons.map_pin_ellipse),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: foreground,
+          side: BorderSide(color: foreground),
+        ),
+        label: const Text(S.map),
+      ),
+    ]);
+  }
+}
+
+class _AgeAndBattery extends StatelessWidget {
+  const _AgeAndBattery({required this.time, this.battery});
+
+  final DateTime time;
+  final String? battery;
+
+  @override
+  Widget build(BuildContext context) {
+    final clock = AppScope.of(context).clock;
+    return ListenableBuilder(
+      listenable: clock,
+      builder: (context, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(formatAge(clock.now.toUtc().difference(time)),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(color: DefaultTextStyle.of(context).style.color)),
+          if (battery != null)
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.battery_std, size: 18),
+              Text('$battery%'),
+            ]),
+        ],
+      ),
+    );
+  }
+}
+
+/// arrow, direction and distance from the phone; double tap or long press
+/// on the arrow opens it full screen
+class _DirectionRow extends StatelessWidget {
+  const _DirectionRow({required this.point, required this.foreground});
+
+  final TrackerPoint point;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    final services = AppScope.of(context);
+    final style = Theme.of(context)
+        .textTheme
+        .headlineSmall
+        ?.copyWith(color: foreground, fontWeight: FontWeight.bold);
+    final muted = foreground.withValues(alpha: 0.45);
+
+    void openFullScreen() => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => FullScreenArrow(identifier: point.identifier)));
+
+    return ListenableBuilder(
+      listenable: Listenable.merge([services.location, services.compass]),
+      builder: (context, _) {
+        final direction =
+            currentDirection(services, point.latitude, point.longitude);
+        final problem = directionProblemText(direction.problem);
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.gap),
+          child: Row(children: [
+            GestureDetector(
+              onDoubleTap: openFullScreen,
+              onLongPress: openFullScreen,
+              child: Semantics(
+                label: S.fullScreenHint,
+                child: DirectionArrow(
+                  bearing: direction.bearing,
+                  reliable: direction.isReliable,
+                  size: AppSizes.cardArrow,
+                  color: foreground,
+                  mutedColor: muted,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSizes.padding),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (direction.distance != null)
+                    Text(formatDistance(direction.distance!), style: style),
+                  if (direction.bearing != null)
+                    Text('${S.toTracker} ${formatBearing(direction.bearing!)}'),
+                  if (problem != null)
+                    Text(problem,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ]),
         );
       },
     );
-  }
-
-  TextStyle? _value(BuildContext context, Color color) =>
-      Theme.of(context).textTheme.titleLarge?.copyWith(color: color);
-
-  Widget _labeled(String label, String value, TextStyle? style) {
-    return Column(children: [Text(label), Text(value, style: style)]);
-  }
-
-  Widget _withPhonePosition(
-      BuildContext context, double lat, double lon, Color foreground) {
-    final bearing = bearingBetween(lat, lon, point.latitude, point.longitude);
-    final distance = distanceBetween(lat, lon, point.latitude, point.longitude);
-    final style = _value(context, foreground);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        DirectionArrow(
-            bearing: bearing, size: AppSizes.cardArrow, color: foreground),
-        _labeled(S.toTracker, formatBearing(bearing), style),
-        Expanded(child: _labeled(S.distance, formatDistance(distance), style)),
-        Expanded(child: _labeled(S.tracker, point.identifier, style)),
-      ],
-    );
-  }
-
-  Widget _withoutPhonePosition(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final color = DefaultTextStyle.of(context).style.color;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        Expanded(
-          child: Column(children: [
-            const Text(S.coordinates),
-            Text('${point.latitude.toStringAsFixed(6)},',
-                style: textTheme.bodyLarge?.copyWith(color: color)),
-            Text(point.longitude.toStringAsFixed(6),
-                style: textTheme.bodyLarge?.copyWith(color: color)),
-          ]),
-        ),
-        Expanded(
-          child: Column(children: [
-            const Text(S.tracker),
-            Text(point.identifier,
-                style: textTheme.headlineSmall?.copyWith(color: color)),
-          ]),
-        ),
-      ],
-    );
-  }
-
-  Widget _bottomRow(BuildContext context, Color foreground, DateTime now) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        OutlinedButton.icon(
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => MapScreen(
-                  centerLatitude: point.latitude,
-                  centerLongitude: point.longitude))),
-          icon: Icon(CupertinoIcons.map_pin_ellipse, color: foreground),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: foreground,
-            side: BorderSide(color: foreground),
-          ),
-          label: const Text(S.map),
-        ),
-        Expanded(child: Center(child: _sensors())),
-        Expanded(
-            child: Center(
-                child: Text(formatAge(now.toUtc().difference(point.time))))),
-      ],
-    );
-  }
-
-  Widget _sensors() {
-    if (point.sensors.isEmpty) return const SizedBox.shrink();
-    final lines = [
-      S.sensors,
-      for (final s in point.sensors) '${s.name}: ${s.value}',
-    ];
-    return Text(lines.join('\n'));
   }
 }

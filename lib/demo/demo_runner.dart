@@ -12,6 +12,7 @@ const Map<String, String> demoScenarios = {
   'link_loss': 'Потеря связи: Tracker2 замолкает',
   'ragged': 'Рваные, склеенные и битые данные',
   'many': 'Много трекеров: 5 сразу',
+  'search': 'Поиск БЛА: UAV1 выходит на связь, UAV2 пропадает',
 };
 
 const List<double> demoSpeeds = [1, 10];

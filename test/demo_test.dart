@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsp_tracker/data/tracker_list.dart';
 import 'package:tsp_tracker/demo/demo_data_source.dart';
 import 'package:tsp_tracker/demo/demo_runner.dart';
 import 'package:tsp_tracker/demo/demo_scenario.dart';
@@ -57,7 +58,8 @@ void main() {
   test('every scenario file is listed and parses', () {
     for (final id in demoScenarios.keys) {
       final s = loadScenario(id);
-      expect(s.connectedTracker, 'Tracker1', reason: id);
+      expect(s.connectedTracker, id == 'search' ? 'GROUND1' : 'Tracker1',
+          reason: id);
       expect(s.chunks, isNotEmpty, reason: id);
     }
   });
@@ -97,6 +99,25 @@ void main() {
 
   test('5 many trackers', () {
     expect(playInstantly('many'), hasLength(5));
+  });
+
+  test('6 search: roles, the order, one alert per new UAV', () async {
+    final alerts = <String>[];
+    app.store.firstSignals.listen((s) => alerts.add(s.point.identifier));
+    final names = playInstantly('search');
+    await flush();
+    expect(names, {'GROUND1', 'UAV1', 'UAV2', 'GROUND2', 'Tracker9'});
+    expect(app.store.connectedTracker, 'GROUND1');
+
+    // UAVs first, the freshest on top: UAV2 went silent at 90 s
+    final keys = buildTrackerList(app.store, DateTime.now().toUtc())
+        .shown
+        .map((e) => e.key)
+        .toList();
+    expect(keys.indexOf('UAV1'), lessThan(keys.indexOf('UAV2')));
+    expect(keys.indexOf('UAV2'), lessThan(keys.indexOf('GROUND1')));
+    expect(keys.last, 'Tracker9');
+    expect(alerts, ['UAV2', 'UAV1'], reason: 'once each, in order of air');
   });
 
   test('the player answers all/crc/id/clear like the firmware', () async {

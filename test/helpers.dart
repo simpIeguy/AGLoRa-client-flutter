@@ -25,8 +25,21 @@ void resetApp({
 }
 
 /// a screen inside the app's scope and theme
-Widget inApp(Widget home) => AppScope(
-    services: app, child: MaterialApp(theme: buildAppTheme(), home: home));
+Widget inApp(
+  Widget home, {
+  GlobalKey<NavigatorState>? navigatorKey,
+  GlobalKey<ScaffoldMessengerState>? messengerKey,
+  TransitionBuilder? builder,
+}) =>
+    AppScope(
+        services: app,
+        child: MaterialApp(
+          theme: buildAppTheme(),
+          navigatorKey: navigatorKey,
+          scaffoldMessengerKey: messengerKey,
+          builder: builder,
+          home: home,
+        ));
 
 /// a "point" message in the firmware's format
 String pointMessage(String name, double lat, double lon, DateTime time,

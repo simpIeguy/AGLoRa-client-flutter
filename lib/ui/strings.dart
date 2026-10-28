@@ -34,6 +34,67 @@ abstract final class S {
   static const String map = 'Карта';
   static const String sensors = 'Датчики';
   static const String useCompass = 'Компас телефона';
+  static const String copyCoordinates = 'Копировать координаты';
+  static const String fullScreenHint =
+      'Двойной тап или долгое нажатие на стрелку — полный экран';
+
+  // names: UAV1 → "БЛА 1", GROUND2 → "Человек 2"
+  static const String uav = 'БЛА';
+  static const String person = 'Человек';
+
+  // statuses: color is never the only sign
+  static const String statusConnected = 'Подключён к телефону';
+  static const String statusActive = 'Связь есть';
+  static const String statusFading = 'Связь пропадает';
+  static const String statusLost = 'Связь потеряна, последняя точка';
+  static const String statusWaiting = 'Ждём первый сигнал';
+
+  // waiting for a tracker
+  static const String waitTracker = 'Ждать трекер';
+  static const String waitNameHint = 'Имя трекера: uav1, UAV 1, ground2…';
+  static String recognized(String key, String name) =>
+      'Распознано: $key → $name';
+  static const String notRecognized =
+      'Не похоже на имя трекера. Нужно UAV или GROUND и номер, например UAV1';
+  static const String alreadyInList = 'Этот трекер уже в списке';
+  static const String aliasOptional = 'Своё название (необязательно)';
+  static const String add = 'Добавить';
+  static const String cancel = 'Отмена';
+  static const String remove = 'Убрать';
+
+  // who is shown
+  static const String whoToShow = 'Кого показывать';
+  static const String uavsAlwaysShown = 'БЛА видны всегда';
+  static const String connectedAlwaysShown = 'свой трекер виден всегда';
+  static String hiddenCount(int n) => 'Скрыто: $n';
+  static String archive(int n) => 'Архив, нет данных 7 дней: $n';
+  static const String alertNewUavs = 'Сообщать о каждом новом БЛА';
+  static const String close = 'Закрыть';
+
+  // the first signal
+  static String cameOnline(String name) => '$name вышел на связь';
+  static const String copy = 'Копировать';
+
+  // arrow problems
+  static const String noPhonePosition = 'Нет GPS телефона';
+  static const String noCompass = 'Компас не работает';
+  static const String compassUnreliable =
+      'Компас неточный: помашите телефоном восьмёркой';
+
+  // lamps
+  static String gpsAccuracy(int metres) => 'GPS ±$metres м';
+  static const String gpsNoAccuracy = 'GPS есть';
+  static const String gpsNone = 'GPS нет позиции';
+  static const String compassGood = 'Компас точный';
+  static const String compassFair = 'Компас средний';
+  static const String compassBad = 'Компас неточный';
+  static const String compassOff = 'Компас выключен';
+  static const String compassNone = 'Компаса нет';
+  static const String figureEight = 'Помашите телефоном восьмёркой';
+
+  // full screen
+  static const String azimuth = 'азимут';
+  static const String exitFullScreen = 'Двойной тап — выход';
 
   // log
   static String logTitle(String name) => 'Лог: $name';

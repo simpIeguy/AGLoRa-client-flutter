@@ -1,0 +1,223 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:tsp_tracker/data/direction.dart';
+import 'package:tsp_tracker/data/sensor_lamps.dart';
+import 'package:tsp_tracker/data/tracker_list.dart';
+import 'package:tsp_tracker/data/tracker_status.dart';
+import 'package:tsp_tracker/data/tracker_store.dart';
+import 'package:tsp_tracker/protocol/tracker_name.dart';
+import 'package:tsp_tracker/protocol/tracker_point.dart';
+import 'package:tsp_tracker/ui/names.dart';
+import 'package:tsp_tracker/ui/widgets/wait_tracker_dialog.dart';
+
+final DateTime now = DateTime.utc(2026, 10, 28, 12);
+
+TrackerPoint at(String name, Duration age, {double lat = 53.9}) => TrackerPoint(
+    identifier: name, latitude: lat, longitude: 27.5, time: now.subtract(age));
+
+List<String> order(TrackerStore store) =>
+    buildTrackerList(store, now).shown.map((e) => e.key).toList();
+
+void main() {
+  group('names and roles (1.1)', () {
+    test('the role from the start of the name, any letter case', () {
+      for (final raw in ['UAV1', 'uav1', 'Uav1', 'UAV 1', 'uav-1', 'UAV_1']) {
+        final n = parseTrackerName(raw);
+        expect(n.role, TrackerRole.uav, reason: raw);
+        expect(n.number, 1, reason: raw);
+        expect(n.key, 'UAV1', reason: raw);
+      }
+      expect(parseTrackerName('ground2').key, 'GROUND2');
+      expect(parseTrackerName('GROUND 2').role, TrackerRole.ground);
+    });
+
+    test('numbers above 9, tails and garbage', () {
+      expect(parseTrackerName('UAV12').number, 12);
+      expect(parseTrackerName('UAV3x7').number, 3, reason: 'tail is ignored');
+      expect(parseTrackerName('  uav5  ').key, 'UAV5');
+      expect(parseTrackerName('UAV').number, isNull);
+      expect(parseTrackerName('UAV').isKnown, isFalse);
+      expect(parseTrackerName('Tracker1').role, TrackerRole.other);
+      expect(parseTrackerName('Tracker1').key, 'Tracker1');
+      expect(parseTrackerName('').role, TrackerRole.other);
+      expect(parseTrackerName('#!*').isKnown, isFalse);
+    });
+
+    test('shown as "БЛА 1", "Человек 2", others as they are', () {
+      expect(displayName(parseTrackerName('uav1')), 'БЛА 1');
+      expect(displayName(parseTrackerName('GROUND2')), 'Человек 2');
+      expect(displayName(parseTrackerName('Tracker1')), 'Tracker1');
+      expect(displayName(parseTrackerName('UAV1'), alias: 'Орлан'), 'Орлан');
+    });
+
+    test('"uav1" and "UAV 1" are one tracker', () {
+      final store = TrackerStore();
+      store.addPoint(at('uav1', const Duration(minutes: 1)));
+      store.addPoint(at('UAV 1', Duration.zero, lat: 54));
+      expect(store.latestPoints, hasLength(1));
+      expect(store.pointsOf('UAV1'), hasLength(2));
+    });
+  });
+
+  group('the order of the list (2.1)', () {
+    test('UAVs first, lost ones among them, then waited, people, others', () {
+      final store = TrackerStore()
+        ..addPoint(at('Tracker9', Duration.zero))
+        ..addPoint(at('GROUND2', const Duration(minutes: 10)))
+        ..addPoint(at('GROUND1', const Duration(seconds: 5)))
+        ..addPoint(at('UAV2', const Duration(minutes: 20)))
+        ..addPoint(at('UAV1', const Duration(minutes: 2)))
+        ..addPoint(at('UAV4', const Duration(seconds: 10)))
+        ..addWaiting(parseTrackerName('UAV3'));
+      expect(order(store), [
+        'UAV4', 'UAV1', // a link, the freshest first
+        'UAV2', // lost, still among the UAVs
+        'UAV3', // waited
+        'GROUND1', 'GROUND2', // people, active above
+        'Tracker9',
+      ]);
+    });
+
+    test('the connected tracker counts as having a link', () {
+      final store = TrackerStore()
+        ..addPoint(at('GROUND3', const Duration(minutes: 10)))
+        ..addPoint(at('GROUND1', const Duration(hours: 1)))
+        ..setConnectedTracker('ground1');
+      // an hour old, but connected: above the lost one
+      expect(buildTrackerList(store, now).shown.first.status,
+          TrackerStatus.connected);
+      expect(order(store), ['GROUND1', 'GROUND3']);
+    });
+  });
+
+  group('who to show and the archive (2.4)', () {
+    test('people can be hidden, UAVs and the connected tracker can not', () {
+      final store = TrackerStore()
+        ..addPoint(at('UAV1', Duration.zero))
+        ..addPoint(at('GROUND1', Duration.zero))
+        ..addPoint(at('GROUND2', Duration.zero))
+        ..setConnectedTracker('GROUND1')
+        ..setHidden('UAV1', true)
+        ..setHidden('GROUND1', true)
+        ..setHidden('GROUND2', true);
+      final list = buildTrackerList(store, now);
+      expect(list.shown.map((e) => e.key), ['UAV1', 'GROUND1']);
+      expect(list.hiddenCount, 1);
+      expect(buildTrackerList(store, now, includeHidden: true).shown,
+          hasLength(3));
+    });
+
+    test('7 days without data: to the archive; waited ones never', () {
+      final store = TrackerStore()
+        ..addPoint(at('UAV1', const Duration(days: 8)))
+        ..addPoint(at('GROUND1', const Duration(days: 6)))
+        ..addWaiting(parseTrackerName('UAV2'),
+            since: now.subtract(const Duration(days: 30)));
+      final list = buildTrackerList(store, now);
+      expect(list.archived.map((e) => e.key), ['UAV1']);
+      expect(list.shown.map((e) => e.key), ['UAV2', 'GROUND1']);
+      expect(trackerArchiveAfter, const Duration(days: 7));
+    });
+  });
+
+  group('waiting and the first signal (4)', () {
+    test('the input is recognized or explained', () {
+      bool none(String _) => false;
+      expect(waitInputHint('uav1', none), 'Распознано: UAV1 → БЛА 1');
+      expect(waitInputHint('Uav-1', none), 'Распознано: UAV1 → БЛА 1');
+      expect(waitInputHint('ground2', none), 'Распознано: GROUND2 → Человек 2');
+      expect(waitInputHint('hello', none), startsWith('Не похоже'));
+      expect(waitInputHint('UAV1', (k) => k == 'UAV1'),
+          'Этот трекер уже в списке');
+    });
+
+    test('a waited tracker alerts once, then is an ordinary one', () async {
+      final store = TrackerStore();
+      final signals = <FirstSignal>[];
+      store.firstSignals.listen(signals.add);
+      expect(
+          store.addWaiting(parseTrackerName('ground3'), alias: 'Пётр'), isTrue);
+      expect(store.addWaiting(parseTrackerName('GROUND 3')), isFalse,
+          reason: 'already waited');
+
+      store.addPoint(at('GROUND3', Duration.zero));
+      store.addPoint(at('GROUND3', const Duration(seconds: -30)));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(signals, hasLength(1));
+      expect(signals.single.wasWaited, isTrue);
+      expect(store.waiting, isEmpty);
+      expect(store.aliasOf('ground3'), 'Пётр');
+    });
+
+    test('any new UAV alerts by default; it can be switched off', () async {
+      final store = TrackerStore();
+      final signals = <FirstSignal>[];
+      store.firstSignals.listen(signals.add);
+
+      store.addPoint(at('UAV1', Duration.zero));
+      store.addPoint(at('GROUND1', Duration.zero)); // people do not
+      store.addPoint(at('Tracker1', Duration.zero));
+      store.alertNewUavs = false;
+      store.addPoint(at('UAV2', Duration.zero));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(signals.map((s) => s.point.identifier), ['UAV1']);
+      expect(signals.single.wasWaited, isFalse);
+    });
+  });
+
+  group('arrow problems and lamps (6, 7)', () {
+    Direction direction({
+      double? phoneLat = 53.9,
+      bool useCompass = true,
+      bool hasReading = true,
+      double? accuracy = 15,
+    }) =>
+        directionTo(
+          latitude: 54,
+          longitude: 27.5,
+          phoneLatitude: phoneLat,
+          phoneLongitude: phoneLat == null ? null : 27.5,
+          useCompass: useCompass,
+          hasCompassReading: hasReading,
+          compassAccuracy: accuracy,
+        );
+
+    test('no wrong values: a reason instead', () {
+      expect(direction().problem, DirectionProblem.none);
+      expect(direction().distance, closeTo(11132, 20));
+      expect(
+          direction(phoneLat: null).problem, DirectionProblem.noPhonePosition);
+      expect(direction(phoneLat: null).distance, isNull);
+      expect(direction(hasReading: false).problem, DirectionProblem.noCompass);
+      expect(
+          direction(accuracy: 45).problem, DirectionProblem.compassUnreliable);
+      // compass off: the top of the phone is north, nothing to distrust
+      expect(direction(useCompass: false, hasReading: false).problem,
+          DirectionProblem.none);
+    });
+
+    test('GPS lamp', () {
+      final t = DateTime(2026, 10, 28, 12);
+      expect(gpsLamp(fixTime: t, accuracy: 6, now: t), LampLevel.good);
+      expect(gpsLamp(fixTime: t, accuracy: 25, now: t), LampLevel.fair);
+      expect(
+          gpsLamp(
+              fixTime: t, accuracy: 6, now: t.add(const Duration(seconds: 30))),
+          LampLevel.fair,
+          reason: 'a stale fix');
+      expect(gpsLamp(fixTime: null, accuracy: null, now: t), LampLevel.bad);
+    });
+
+    test('compass lamp', () {
+      LampLevel lamp(double? a, {bool on = true, bool has = true}) =>
+          compassLamp(useCompass: on, hasReading: has, accuracy: a);
+      expect(lamp(15), LampLevel.good);
+      expect(lamp(30), LampLevel.fair);
+      expect(lamp(45), LampLevel.bad);
+      expect(lamp(null), LampLevel.fair);
+      expect(lamp(15, has: false), LampLevel.bad);
+      expect(lamp(15, on: false), LampLevel.off);
+    });
+  });
+}

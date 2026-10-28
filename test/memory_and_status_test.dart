@@ -1,44 +1,47 @@
-import 'package:tsp_tracker/aglora/data.dart';
-import 'package:tsp_tracker/aglora/memory.dart';
-import 'package:tsp_tracker/screens/screen_tracker_log.dart';
-import 'package:tsp_tracker/utils/compass.dart';
-import 'package:tsp_tracker/utils/tracker_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsp_tracker/data/tracker_status.dart';
+import 'package:tsp_tracker/data/tracker_store.dart';
+import 'package:tsp_tracker/protocol/tracker_point.dart';
+import 'package:tsp_tracker/ui/format.dart';
+import 'package:tsp_tracker/ui/theme.dart';
+import 'package:tsp_tracker/util/geo.dart';
 
-import 'helpers.dart';
-
-AGLORATrackerPoint point(String name, DateTime time, {double lat = 53.9}) =>
-    AGLORATrackerPoint(
-        identifier: name, latitude: lat, longitude: 27.5, time: time);
+TrackerPoint point(String name, DateTime time, {double lat = 53.9}) =>
+    TrackerPoint(identifier: name, latitude: lat, longitude: 27.5, time: time);
 
 void main() {
-  setUp(resetApp);
-
   group('log of points (B2)', () {
     test('newest first, at most 50 per tracker', () {
+      final store = TrackerStore();
       final start = DateTime.utc(2026, 10, 28, 12);
       for (int i = 0; i < 60; i++) {
-        agloraAppMemory.addPoint(point(
-            'Tracker2', start.add(Duration(seconds: i * 15)),
+        store.addPoint(point('Tracker2', start.add(Duration(seconds: i * 15)),
             lat: 53.0 + i / 1000));
       }
-      agloraAppMemory.addPoint(point('Tracker3', start));
+      store.addPoint(point('Tracker3', start));
 
-      final log = agloraAppMemory.pointsOf('Tracker2');
-      expect(log, hasLength(pointsPerTrackerLimit));
-      expect(log.first.time, start.add(Duration(seconds: 59 * 15)));
-      expect(log.last.time, start.add(Duration(seconds: 10 * 15)));
+      final log = store.pointsOf('Tracker2');
+      expect(log, hasLength(TrackerStore.pointsPerTrackerLimit));
+      expect(log.first.time, start.add(const Duration(seconds: 59 * 15)));
+      expect(log.last.time, start.add(const Duration(seconds: 10 * 15)));
       for (int i = 1; i < log.length; i++) {
         expect(log[i - 1].time.isAfter(log[i].time), isTrue);
       }
       // the limit is per tracker
-      expect(agloraAppMemory.pointsOf('Tracker3'), hasLength(1));
+      expect(store.pointsOf('Tracker3'), hasLength(1));
       expect(
-          agloraAppMemory.trackers
-              .firstWhere((t) => t.identifier == 'Tracker2')
-              .time,
+          store.latestPoints.firstWhere((t) => t.identifier == 'Tracker2').time,
           log.first.time);
+    });
+
+    test('an older point that comes late goes to its place', () {
+      final store = TrackerStore();
+      final t = DateTime.utc(2026, 10, 28, 12);
+      store.addPoint(point('T', t));
+      store.addPoint(point('T', t.subtract(const Duration(minutes: 1))));
+      store.addPoint(point('T', t.add(const Duration(minutes: 1))));
+      expect(store.pointsOf('T').map((p) => p.time.minute), [1, 0, 59]);
     });
 
     test('copied coordinates look like 53.902284, 27.561831', () {
@@ -50,31 +53,30 @@ void main() {
   group('tracker status and color (B1)', () {
     final now = DateTime.now().toUtc();
 
+    TrackerStatus statusAt(Duration age, {bool connected = false}) =>
+        trackerStatus(
+            time: now.subtract(age), isConnected: connected, now: now);
+
     test('by the age of the last point', () {
-      expect(trackerStatusFor('T', now.subtract(Duration(seconds: 30))),
-          TrackerStatus.active);
-      expect(trackerStatusFor('T', now.subtract(Duration(minutes: 2))),
-          TrackerStatus.fading);
-      expect(trackerStatusFor('T', now.subtract(Duration(minutes: 6))),
-          TrackerStatus.lost);
+      expect(statusAt(const Duration(seconds: 30)), TrackerStatus.active);
+      expect(statusAt(const Duration(minutes: 2)), TrackerStatus.fading);
+      expect(statusAt(const Duration(minutes: 6)), TrackerStatus.lost);
     });
 
     test('the thresholds are 1 and 5 minutes', () {
-      expect(trackerActiveTimeout, Duration(minutes: 1));
-      expect(trackerLostTimeout, Duration(minutes: 5));
+      expect(trackerActiveTimeout, const Duration(minutes: 1));
+      expect(trackerLostTimeout, const Duration(minutes: 5));
     });
 
     test('the connected tracker is blue whatever its age', () {
-      agloraAppMemory.setConnectedTracker('Tracker1');
-      expect(trackerStatusFor('Tracker1', now.subtract(Duration(hours: 1))),
+      expect(statusAt(const Duration(hours: 1), connected: true),
           TrackerStatus.connected);
-      expect(trackerStatusFor('Tracker2', now), TrackerStatus.active);
     });
 
     test('text stays readable on every card color', () {
       for (final status in TrackerStatus.values) {
-        final background = trackerStatusColor(status);
-        final text = readableTextColor(background);
+        final background = AppColors.status(status);
+        final text = AppColors.readableOn(background);
         expect(_contrast(background, text), greaterThan(3.0),
             reason: '$status');
       }
@@ -102,6 +104,37 @@ void main() {
       expect(compassPoint(-100), 'З');
       expect(compassPoint(350), 'С');
       expect(normalizeDegrees(-90), 270);
+      expect(formatBearing(-45), '315° СЗ');
+    });
+  });
+
+  group('distance and direction from the phone', () {
+    test('known pairs of points', () {
+      // Minsk → Moscow, about 675 km to the east-north-east
+      expect(distanceBetween(53.9023, 27.5618, 55.7558, 37.6173) / 1000,
+          closeTo(675, 5));
+      expect(
+          bearingBetween(53.9023, 27.5618, 55.7558, 37.6173), closeTo(67, 2));
+      // one degree of latitude is about 111.3 km, straight north
+      expect(distanceBetween(53, 27, 54, 27), closeTo(111319, 100));
+      expect(bearingBetween(53, 27, 54, 27), closeTo(0, 1e-9));
+      expect(bearingBetween(54, 27, 53, 27), closeTo(180, 1e-9));
+      expect(distanceBetween(53.9, 27.5, 53.9, 27.5), 0);
+    });
+
+    test('distance text', () {
+      expect(formatDistance(0), '0 м');
+      expect(formatDistance(999.4), '999 м');
+      expect(formatDistance(1000), '1.0 км');
+      expect(formatDistance(12345), '12.3 км');
+    });
+
+    test('age text', () {
+      expect(formatAge(const Duration(seconds: 12)), '12 с назад');
+      expect(formatAge(const Duration(minutes: 3)), '3 мин назад');
+      expect(formatAge(const Duration(hours: 2)), '2 ч назад');
+      expect(formatAge(const Duration(days: 4)), '4 дн назад');
+      expect(formatAge(const Duration(seconds: -5)), '0 с назад');
     });
   });
 }

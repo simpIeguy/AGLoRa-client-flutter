@@ -1,13 +1,11 @@
-import 'package:tsp_tracker/screens/screen_tracker_log.dart';
-import 'package:tsp_tracker/utils/map_link.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsp_tracker/services/map_link.dart';
+import 'package:tsp_tracker/ui/screens/tracker_log_screen.dart';
 
 import 'helpers.dart';
 
 void main() {
-  setUp(resetApp);
-
   group('links to a map app', () {
     test('geo link: the point and a labeled pin', () {
       expect(geoUri(53.902284, 27.561831, 'Tracker 1').toString(),
@@ -47,13 +45,14 @@ void main() {
     final now = DateTime.now().toUtc();
 
     Future<void> showLog(WidgetTester tester, UrlOpener open) async {
+      resetApp(openUrl: open);
       feed(pointMessage(
-          'Tracker2', 53.0, 27.0, now.subtract(Duration(minutes: 1)),
+          'Tracker2', 53.0, 27.0, now.subtract(const Duration(minutes: 1)),
           index: 0));
       feed(pointMessage('Tracker2', 53.902284, 27.561831, now, index: 1));
-      await tester.pumpWidget(MaterialApp(
-          home: TrackerLogScreen(identifier: 'Tracker2', openUrl: open)));
-      await tester.pump(Duration(seconds: 1));
+      await tester
+          .pumpWidget(inApp(const TrackerLogScreen(identifier: 'Tracker2')));
+      await tester.pump();
     }
 
     testWidgets('opens the newest point', (tester) async {
@@ -69,7 +68,6 @@ void main() {
       expect(opened.toString(),
           'geo:53.902284,27.561831?q=53.902284,27.561831(Tracker2)');
       expect(find.byType(SnackBar), findsNothing);
-      await tester.pumpWidget(SizedBox.shrink());
     });
 
     testWidgets('says so when nothing can open the link', (tester) async {
@@ -81,17 +79,14 @@ void main() {
 
       expect(find.text('Не удалось открыть карты на этом телефоне'),
           findsOneWidget);
-      await tester.pumpWidget(SizedBox.shrink());
     });
 
     testWidgets('no button without points', (tester) async {
-      await tester.pumpWidget(MaterialApp(
-          home: TrackerLogScreen(
-              identifier: 'Nobody', openUrl: (_) async => true)));
-      await tester.pump(Duration(seconds: 1));
+      resetApp();
+      await tester
+          .pumpWidget(inApp(const TrackerLogScreen(identifier: 'Nobody')));
       expect(find.text('Открыть в картах'), findsNothing);
       expect(find.text('Точек пока нет'), findsOneWidget);
-      await tester.pumpWidget(SizedBox.shrink());
     });
   });
 }

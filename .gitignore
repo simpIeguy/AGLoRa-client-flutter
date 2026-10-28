@@ -51,3 +51,4 @@ app.*.map.json
 /android/build/
 /android/replay_pid*.log
 /android/*.iml
+/_trash/

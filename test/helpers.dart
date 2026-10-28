@@ -1,13 +1,32 @@
-import 'package:tsp_tracker/aglora/aglora.dart';
-import 'package:tsp_tracker/aglora/data_source.dart';
-import 'package:tsp_tracker/aglora/memory.dart';
+import 'package:flutter/material.dart';
 import 'package:tsp_tracker/demo/demo_scenario.dart';
+import 'package:tsp_tracker/services/app_services.dart';
+import 'package:tsp_tracker/services/compass_service.dart';
+import 'package:tsp_tracker/services/location_service.dart';
+import 'package:tsp_tracker/services/map_link.dart';
+import 'package:tsp_tracker/ui/theme.dart';
 
-void resetApp() {
-  detachDataSource();
-  agloraAppMemory.reset();
-  resetDataReceiver();
+/// the app under test; made fresh by [resetApp] before every test
+late AppServices app;
+
+/// no real sensors, no timers: the tests tick the clock themselves
+void resetApp({
+  Stream<PhonePosition>? positions,
+  Stream<CompassReading>? compass,
+  UrlOpener? openUrl,
+}) {
+  app = AppServices(
+    location: LocationService(positions: positions ?? const Stream.empty()),
+    compass: CompassService(readings: compass ?? const Stream.empty()),
+    openUrl: openUrl ?? (_) async => true,
+  );
+  app.compass.start();
+  app.location.start();
 }
+
+/// a screen inside the app's scope and theme
+Widget inApp(Widget home) => AppScope(
+    services: app, child: MaterialApp(theme: buildAppTheme(), home: home));
 
 /// a "point" message in the firmware's format
 String pointMessage(String name, double lat, double lon, DateTime time,
@@ -27,6 +46,9 @@ String memoryMessage(String deviceName) =>
 void feed(String text, {int mtu = 20}) {
   for (int i = 0; i < text.length; i += mtu) {
     final end = i + mtu < text.length ? i + mtu : text.length;
-    newDataReceiver(text.substring(i, end).codeUnits);
+    app.link.receive(text.substring(i, end).codeUnits);
   }
 }
+
+/// broadcast streams deliver in microtasks: let them run
+Future<void> flush() => Future<void>.delayed(Duration.zero);

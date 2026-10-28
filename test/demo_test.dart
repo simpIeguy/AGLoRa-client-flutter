@@ -1,13 +1,9 @@
-import 'dart:async';
 import 'dart:io';
 
-import 'package:tsp_tracker/aglora/aglora.dart';
-import 'package:tsp_tracker/aglora/data_source.dart';
-import 'package:tsp_tracker/aglora/memory.dart';
-import 'package:tsp_tracker/demo/demo_data_source.dart';
-import 'package:tsp_tracker/demo/demo_scenario.dart';
-import 'package:tsp_tracker/demo/demo_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsp_tracker/demo/demo_data_source.dart';
+import 'package:tsp_tracker/demo/demo_runner.dart';
+import 'package:tsp_tracker/demo/demo_scenario.dart';
 
 import 'helpers.dart';
 
@@ -22,7 +18,7 @@ Set<String> playInstantly(String id) {
   for (final chunk in chunks) {
     feed(chunk.text);
   }
-  return agloraAppMemory.trackers.map((t) => t.identifier).toSet();
+  return app.store.latestPoints.map((t) => t.identifier).toSet();
 }
 
 void main() {
@@ -68,7 +64,7 @@ void main() {
 
   test('1 normal: both trackers, own one blue-ready', () {
     expect(playInstantly('normal'), {'Tracker1', 'Tracker2'});
-    expect(agloraAppMemory.connectedTracker, 'Tracker1');
+    expect(app.store.connectedTracker, 'Tracker1');
   });
 
   test('2 no own points: the connected tracker never shows up (A2 before)', () {
@@ -77,8 +73,8 @@ void main() {
 
   test('3 link loss: Tracker2 stops after 2 minutes', () {
     playInstantly('link_loss');
-    final t1 = agloraAppMemory.pointsOf('Tracker1').first.time;
-    final t2 = agloraAppMemory.pointsOf('Tracker2').first.time;
+    final t1 = app.store.pointsOf('Tracker1').first.time;
+    final t2 = app.store.pointsOf('Tracker2').first.time;
     expect(t1.difference(t2).inMinutes, greaterThanOrEqualTo(5));
   });
 
@@ -95,8 +91,8 @@ void main() {
     expect(messages.length - good, 1, reason: 'one broken message');
 
     playInstantly('ragged');
-    expect(agloraAppMemory.memory.length, good);
-    expect(agloraAppMemory.trackers, hasLength(2));
+    expect(app.store.pointCount, good);
+    expect(app.store.latestPoints, hasLength(2));
   });
 
   test('5 many trackers', () {
@@ -114,7 +110,7 @@ void main() {
         .listen((chunk) => received.write(String.fromCharCodes(chunk)));
 
     source.start();
-    await Future<void>.delayed(Duration(milliseconds: 50));
+    await Future<void>.delayed(const Duration(milliseconds: 50));
     expect(source.isFinished, isTrue);
     received.clear();
 
@@ -144,14 +140,10 @@ void main() {
   test('connecting a demo source requests the history', () async {
     final scenario = loadScenario('normal');
     final source = DemoDataSource(scenario, speed: 10);
-    attachDataSource(source);
+    app.link.attach(source);
     source.start();
-    await Future<void>.delayed(Duration(milliseconds: 100));
-    expect(agloraAppMemory.connectedTracker, 'Tracker1');
-    detachDataSource();
-    resetDataReceiver();
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(app.store.connectedTracker, 'Tracker1');
+    app.link.detach();
   });
 }
-
-/// broadcast streams deliver in microtasks: let them run
-Future<void> flush() => Future<void>.delayed(Duration.zero);

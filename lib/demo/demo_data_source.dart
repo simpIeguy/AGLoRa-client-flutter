@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import '../aglora/data.dart';
-import '../aglora/data_source.dart';
+import '../protocol/protocol.dart';
+import '../services/data_source.dart';
 import 'demo_scenario.dart';
 
 /// the firmware's BLE notification size (USE_BLE_MTU, esp32-ble.h)
@@ -10,7 +10,7 @@ const int demoBleMtu = 20;
 /// Plays a scenario instead of a tracker. Like the firmware, it splits every
 /// message into MTU pieces, keeps the points of other trackers it "received"
 /// and answers the app's requests (AGLORA::getRequest in aglora.cpp).
-class DemoDataSource implements AgloraDataSource {
+class DemoDataSource implements TrackerDataSource {
   DemoDataSource(this.scenario, {this.speed = 1});
 
   final DemoScenario scenario;
@@ -75,16 +75,16 @@ class DemoDataSource implements AgloraDataSource {
   void _rememberPoints(String text) {
     _sentText += text;
     while (true) {
-      final start = _sentText.indexOf('${packagePrefix}point');
+      final start = _sentText.indexOf('${messagePrefix}point');
       if (start < 0) {
         // the prefix itself may be cut between two chunks
-        const keep = packagePrefix.length + 'point'.length;
+        const keep = messagePrefix.length + 'point'.length;
         if (_sentText.length > keep) {
           _sentText = _sentText.substring(_sentText.length - keep);
         }
         return;
       }
-      final end = _sentText.indexOf(packagePostfix, start);
+      final end = _sentText.indexOf(messageTerminator, start);
       if (end < 0) {
         _sentText = _sentText.substring(start);
         return;
@@ -99,9 +99,9 @@ class DemoDataSource implements AgloraDataSource {
 
   String _memoryMessage() {
     final count = _storedPoints.length;
-    return '${packagePrefix}memory&ver=2.3&crc=ok'
+    return '${messagePrefix}memory&ver=2.3&crc=ok'
         '&dev_name=${scenario.connectedTracker}&dev_bat=100'
-        '&memsize=100&index=$count&overwrite=0$packagePostfix';
+        '&memsize=100&index=$count&overwrite=0$messageTerminator';
   }
 
   @override

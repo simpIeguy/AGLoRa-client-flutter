@@ -1,6 +1,7 @@
 // Builds the demo-mode scenarios (assets/demo/*.txt) from a recorded NMEA
 // track. Messages follow the current firmware: AGLORA::sendPackageToBLE and
 // sendToPhone() in full-stack/src, "AGLoRa-" prefix, "|" at the end.
+// ignore_for_file: avoid_print (a command-line tool reports to the console)
 //
 //   cd client-app
 //   dart run tool/make_demo_scenarios.dart ../emulator/src/main/resources/data/round1.txt assets/demo

@@ -46,3 +46,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Android build output and crash dumps of the Gradle JVM
+/android/build/
+/android/replay_pid*.log
+/android/*.iml

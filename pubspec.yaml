@@ -30,7 +30,7 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   geolocator: ^10.1.0
-  flutter_compass: ^0.7.0
+  flutter_compass: ^0.8.1
   # permission_handler: ^9.2.0
 
   flutter_blue_plus: ^1.32.1

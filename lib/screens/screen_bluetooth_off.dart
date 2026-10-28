@@ -4,7 +4,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 class BluetoothOffScreen extends StatelessWidget {
   const BluetoothOffScreen({Key? key, this.state}) : super(key: key);
 
-  final BluetoothState? state;
+  final BluetoothAdapterState? state;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +47,7 @@ class BluetoothOffScreen extends StatelessWidget {
               height: 30,
             ),
             Text(
-              'Bluetooth Adapter is ${state != null ? state.toString().substring(15) : 'not available'}.',
+              'Bluetooth Adapter is ${state?.name ?? 'not available'}.',
               style: Theme.of(context)
                   .primaryTextTheme
                   .titleSmall

@@ -16,16 +16,16 @@ class ConnectedDeviceTile extends StatelessWidget {
       ),
       title: Text(d.name),
       subtitle: Text('device connected'),
-      trailing: StreamBuilder<BluetoothDeviceState>(
-        stream: d.state,
-        initialData: BluetoothDeviceState.disconnected,
+      trailing: StreamBuilder<BluetoothConnectionState>(
+        stream: d.connectionState,
+        initialData: BluetoothConnectionState.disconnected,
         builder: (c, snapshot) {
-          if (snapshot.data == BluetoothDeviceState.connected) {
+          if (snapshot.data == BluetoothConnectionState.connected) {
             return ElevatedButton(
               child: Text('Open'),
               onPressed: () => Navigator.of(context)
                   .push(MaterialPageRoute(builder: (context) {
-                d.discoverServices();
+                startBluetoothListener(d);
                 return DeviceScreen(device: d);
               })),
             );

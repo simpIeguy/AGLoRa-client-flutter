@@ -14,12 +14,12 @@ class AGLoRaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder<BluetoothState>(
-          stream: FlutterBluePlus.instance.state,
-          initialData: BluetoothState.unknown,
+      home: StreamBuilder<BluetoothAdapterState>(
+          stream: FlutterBluePlus.adapterState,
+          initialData: BluetoothAdapterState.unknown,
           builder: (c, snapshot) {
             final state = snapshot.data;
-            if (state == BluetoothState.on) {
+            if (state == BluetoothAdapterState.on) {
               startCompassListener();
               return FindDevicesScreen();
             }

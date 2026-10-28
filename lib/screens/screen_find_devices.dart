@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import '../utils/bluetooth.dart';
-import '../utils/compass.dart';
 import 'widgets/widget_scan_result_tile.dart';
 import 'widgets/widget_connected_device_tile.dart';
 import 'screen_device.dart';
+import '../demo/demo_screen.dart';
 
 class FindDevicesScreen extends StatelessWidget {
   @override
@@ -12,6 +12,7 @@ class FindDevicesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Find AGLORA tracker'),
+        actions: [DemoModeButton()],
 //        backgroundColor: Colors.purple,
       ),
       body: RefreshIndicator(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:aglora_client/utils/saved_parameters.dart';
@@ -23,6 +24,30 @@ void startCompassListener() {
   }
   ;
 }
+
+/// any angle in degrees to 0 <= result < 360
+double normalizeDegrees(double degrees) => (degrees % 360 + 360) % 360;
+
+/// rotation (radians, clockwise) of an "up" arrow so it points at a target:
+/// [bearing] is the direction to the target, [phoneHeading] is where the top
+/// of the phone points (0 when the compass is off: the top is taken as north)
+double arrowAngle(double bearing, double phoneHeading) =>
+    normalizeDegrees(bearing - phoneHeading) * pi / 180;
+
+const List<String> _compassPoints = [
+  'С',
+  'СВ',
+  'В',
+  'ЮВ',
+  'Ю',
+  'ЮЗ',
+  'З',
+  'СЗ'
+];
+
+/// 8-point compass name of a direction in degrees
+String compassPoint(num degrees) =>
+    _compassPoints[((normalizeDegrees(degrees.toDouble()) + 22.5) ~/ 45) % 8];
 
 void enableCompass() {}
 

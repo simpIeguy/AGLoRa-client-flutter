@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+import '../demo/demo_screen.dart';
+
 class BluetoothOffScreen extends StatelessWidget {
   const BluetoothOffScreen({Key? key, this.state}) : super(key: key);
 
@@ -53,6 +55,8 @@ class BluetoothOffScreen extends StatelessWidget {
                   .titleSmall
                   ?.copyWith(color: Colors.white),
             ),
+            // the demo works without Bluetooth (debug builds only)
+            DemoModeButton(color: Colors.white),
           ],
         ),
       ),

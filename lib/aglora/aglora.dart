@@ -21,6 +21,12 @@ String _blePreviousData = '';
 int countOfTrackers = 0;
 int headerEndIndex = 0;
 
+/// drop buffered data, so a new link (or a test) starts clean
+void resetDataReceiver() {
+  _bleDataStack = '';
+  _blePreviousData = '';
+}
+
 void newDataReceiver(List<int> value) {
   String newData = '';
 
@@ -35,8 +41,9 @@ void newDataReceiver(List<int> value) {
   if (_bleDataStack.length > maxStackLength) {
     print(
         'Need to cut string, _bleDataStack = ${_bleDataStack.length}, maxStackLength = $maxStackLength');
-    _bleDataStack.substring(
-        _bleDataStack.length - maxStackLength - 1, _bleDataStack.length - 1);
+    // keep the tail: an unfinished message is always at the end
+    _bleDataStack =
+        _bleDataStack.substring(_bleDataStack.length - maxStackLength);
     if (kDebugMode) {
       print('Stack is cut to ${_bleDataStack.length} characters');
     }

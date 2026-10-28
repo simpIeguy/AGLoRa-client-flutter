@@ -47,6 +47,7 @@ class _UseCompassState extends State<WidgetUseCompass> {
           onTap: () {
             setState(() {
               useCompass = !useCompass;
+              useCompass ? enableCompass() : disableCompass();
             });
           },
         ),

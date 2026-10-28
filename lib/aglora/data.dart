@@ -13,14 +13,26 @@ class AGLORATrackerPoint {
       required this.latitude,
       required this.longitude,
       required this.time,
-      this.sensors});
+      this.sensors,
+      DateTime? receivedAt})
+      : receivedAt = receivedAt ?? DateTime.now();
 
   String identifier;
   double latitude;
   double longitude;
-  DateTime time;
+  DateTime time; // GPS time of the fix, UTC
+
+  /// phone's local time when the point came over BLE
+  DateTime receivedAt;
 
   List<AGLoRaSensor>? sensors;
+
+  String? sensor(String name) {
+    for (final s in sensors ?? <AGLoRaSensor>[]) {
+      if (s.name == name) return s.value;
+    }
+    return null;
+  }
 }
 
 var dataStreamController =

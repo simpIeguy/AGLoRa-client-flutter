@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+import 'demo/demo_screen.dart';
 import 'screens/screen_bluetooth_off.dart';
 import 'screens/screen_find_devices.dart';
 import 'utils/compass.dart';
@@ -12,6 +13,17 @@ void main() {
 class AGLoRaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // debug builds only: --dart-define=DEMO_SCENARIO=<id> opens the demo
+    if (isDemoRequestedAtLaunch) {
+      startCompassListener();
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: DemoDeviceScreen(
+            scenarioId: demoScenarioFromLaunch,
+            speed: double.tryParse(demoSpeedFromLaunch) ?? 1),
+      );
+    }
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: StreamBuilder<BluetoothAdapterState>(

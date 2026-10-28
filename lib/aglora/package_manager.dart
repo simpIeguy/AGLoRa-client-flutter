@@ -17,6 +17,12 @@ void packageManager(String package) {
     agloraAppMemory.setIdTo(myId);
   }
 
+  if (fields[0] == 'memory') {
+    final String? deviceName = deviceNameParsing(fields);
+    if (kDebugMode) print('\nPACKAGE MANAGER: Connected to $deviceName');
+    agloraAppMemory.setConnectedTracker(deviceName);
+  }
+
   if (fields[0] == 'newpoint') {
     agloraPoint = newPointParsing(fields);
     if (kDebugMode && (agloraPoint?.identifier != null)) {

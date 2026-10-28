@@ -3,14 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../aglora/data.dart';
+import '../aglora/memory.dart';
 import '../utils/saved_parameters.dart';
 import 'widgets/widget_lora_tracker_tile.dart';
 import 'widgets/widget_use_compass.dart';
 
 class DeviceScreen extends StatelessWidget {
-  const DeviceScreen({Key? key, required this.device}) : super(key: key);
+  const DeviceScreen({Key? key, this.device, this.demoTitle})
+      : assert(device != null || demoTitle != null),
+        super(key: key);
 
-  final BluetoothDevice device;
+  /// null in the demo mode
+  final BluetoothDevice? device;
+  final String? demoTitle;
 
   Widget _buildTrackersTiles(List<AGLORATrackerPoint> _trackersDataList) {
     return Column(
@@ -31,59 +36,16 @@ class DeviceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text(device.name),
-          actions: <Widget>[
-            StreamBuilder<BluetoothConnectionState>(
-              stream: device.connectionState,
-              initialData: BluetoothConnectionState.disconnected,
-              builder: (c, snapshot) {
-                VoidCallback? onPressed;
-                String text;
-                switch (snapshot.data) {
-                  case BluetoothConnectionState.connected:
-                    onPressed = () => device.disconnect();
-                    text = 'Disconnect';
-                    break;
-                  case BluetoothConnectionState.disconnected:
-                    onPressed = () =>
-                        device.connect().catchError((e) => print(e));
-                    text = 'Connect';
-                    break;
-                  default:
-                    onPressed = null;
-                    text = snapshot.data?.name.toUpperCase() ?? '';
-                    break;
-                }
-                return Row(
-                  children: [
-                    OutlinedButton(
-                        onPressed: onPressed,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(color: Colors.white, width: 1),
-                        ),
-                        child: Text(
-                          text,
-                          style: Theme.of(context)
-                              .primaryTextTheme
-                              .labelLarge
-                              ?.copyWith(color: Colors.white),
-                        )),
-                    SizedBox(width: 10),
-                    bluetoothStatusIcon(device: device),
-                    SizedBox(width: 10),
-                  ],
-                );
-              },
-            )
-          ],
+          title: Text(device?.name ?? demoTitle!),
+          actions: device == null ? [] : _buildConnectionActions(device!),
         ),
         body: SingleChildScrollView(
           child: Column(
             children: [
               StreamBuilder<List<AGLORATrackerPoint>>(
                 stream: trackersListStream,
-                initialData: [],
+                // points may have come before this screen started listening
+                initialData: agloraAppMemory.trackers,
                 builder: (c, snapshot) {
                   return _buildTrackersTiles(snapshot.data!);
                 },
@@ -95,6 +57,53 @@ class DeviceScreen extends StatelessWidget {
           color: Colors.white,
           child: WidgetUseCompass(),
         ));
+  }
+
+  List<Widget> _buildConnectionActions(BluetoothDevice device) {
+    return <Widget>[
+      StreamBuilder<BluetoothConnectionState>(
+        stream: device.connectionState,
+        initialData: BluetoothConnectionState.disconnected,
+        builder: (c, snapshot) {
+          VoidCallback? onPressed;
+          String text;
+          switch (snapshot.data) {
+            case BluetoothConnectionState.connected:
+              onPressed = () => device.disconnect();
+              text = 'Disconnect';
+              break;
+            case BluetoothConnectionState.disconnected:
+              onPressed = () => device.connect().catchError((e) => print(e));
+              text = 'Connect';
+              break;
+            default:
+              onPressed = null;
+              text = snapshot.data?.name.toUpperCase() ?? '';
+              break;
+          }
+          return Row(
+            children: [
+              OutlinedButton(
+                  onPressed: onPressed,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.white, width: 1),
+                  ),
+                  child: Text(
+                    text,
+                    style: Theme.of(c)
+                        .primaryTextTheme
+                        .labelLarge
+                        ?.copyWith(color: Colors.white),
+                  )),
+              SizedBox(width: 10),
+              bluetoothStatusIcon(device: device),
+              SizedBox(width: 10),
+            ],
+          );
+        },
+      )
+    ];
   }
 }
 

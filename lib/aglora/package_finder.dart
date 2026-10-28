@@ -19,6 +19,9 @@ import 'data.dart';
         packages[i] = '';
       } else {
         stackAfterProcessing = packagePrefix + packages[i];
+        // wait for the rest: parsing it now would store a point with a cut
+        // timestamp and without the sensors that come later
+        packages[i] = '';
       }
     }
   }

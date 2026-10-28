@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- name on the home screen; the name inside the app is lib/app_info.dart -->
+    <string name="app_name">Поиск БЛА</string>
+</resources>

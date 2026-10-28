@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+import '../app_info.dart';
 import '../demo/demo_screen.dart';
 
 class BluetoothOffScreen extends StatelessWidget {
@@ -17,24 +18,10 @@ class BluetoothOffScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Text(
-              'AGLORA',
+              appName,
               style: Theme.of(context)
                   .primaryTextTheme
                   .headlineMedium
-                  ?.copyWith(color: Colors.white),
-            ),
-            Text(
-              'Arduino/GPS/LORA',
-              style: Theme.of(context)
-                  .primaryTextTheme
-                  .titleSmall
-                  ?.copyWith(color: Colors.white),
-            ),
-            Text(
-              'Client for open-source tracker',
-              style: Theme.of(context)
-                  .primaryTextTheme
-                  .titleSmall
                   ?.copyWith(color: Colors.white),
             ),
             SizedBox(

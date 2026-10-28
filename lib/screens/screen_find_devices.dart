@@ -11,7 +11,7 @@ class FindDevicesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Find AGLORA tracker'),
+        title: Text('Поиск трекеров'),
         actions: [DemoModeButton()],
 //        backgroundColor: Colors.purple,
       ),

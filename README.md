@@ -1,11 +1,73 @@
-# AGLoRa-client-flutter
-Mobile app for AGLoRa (iOs, Android)
-Created by Eugeny Shlyagin (shlyagin@gmail.com)
+# Поиск БЛА
 
-LoRa tracker AGLoRa: https://github.com/Udj13/AGLoRa/
+Приложение для Android, которое показывает, где находятся трекеры: подключённый к телефону по Bluetooth и все, чьи координаты он получил по радио (LoRa). Главная задача — быстро найти упавший БЛА, но приложение подходит для любого объекта с трекером.
 
-Latest release (Android, APK): https://github.com/Udj13/AGLoRa-client-flutter/releases/tag/AGLoRa2.1
+## Что умеет
 
-AppStore: https://apps.apple.com/ru/app/aglora/id1600250635
+- Список трекеров. Цвет карточки показывает состояние: синий — подключённый трекер, зелёный — координаты свежее 1 минуты, жёлтый — от 1 до 5 минут, серый — больше 5 минут.
+- Стрелка и расстояние от телефона до последней точки трекера.
+- Лог последних 50 точек трекера. Долгое нажатие копирует координаты, кнопка «Открыть в картах» открывает последнюю точку в приложении карт.
+- Карта: схема, спутник и гибрид; поворот по компасу телефона.
+- Демо-режим без трекеров и Bluetooth (только в отладочной сборке).
 
-![Aglora Screenshot with map](https://github.com/Udj13/AGLoRa-client-flutter/assets/54446451/f16b3fa4-5a10-44ee-bcc4-0bf16a28f40e)
+## Сборка (Windows)
+
+Нужны Flutter SDK и Android SDK (через Android Studio).
+
+```bash
+flutter pub get
+```
+
+```bash
+flutter build apk --debug
+```
+
+Готовый файл: `build/app/outputs/flutter-apk/app-debug.apk`.
+
+Если сборка падает с ошибкой `Unable to establish loopback connection`, перед сборкой выполните в PowerShell (папка `C:\Temp` должна существовать):
+
+```bash
+$env:JAVA_TOOL_OPTIONS='-Djdk.net.unixdomain.tmpdir=C:\Temp'
+```
+
+Bluetooth в эмуляторе Android не работает: связь с трекером проверяется на настоящем телефоне.
+
+## Демо-режим
+
+Работает только в отладочной сборке. На стартовом экране кнопка «Демо-режим»: выбрать сценарий и скорость (×1 или ×10).
+
+Сценарий можно запустить сразу, без нажатий:
+
+```bash
+flutter run --dart-define=DEMO_SCENARIO=normal --dart-define=DEMO_SPEED=10
+```
+
+Сценарии (`assets/demo/`):
+
+| Сценарий | Что проверяет |
+|---|---|
+| `normal` | подключённый трекер и второй трекер шлют точки и двигаются |
+| `no_own_points` | приходят только точки второго трекера (так было до исправления прошивки) |
+| `link_loss` | второй трекер замолкает: цвет меняется на жёлтый, потом серый |
+| `ragged` | сообщения кусками, склеенные и битые |
+| `many` | пять трекеров одновременно |
+
+Сценарии делает скрипт из записанного трека NMEA:
+
+```bash
+dart run tool/make_demo_scenarios.dart ../emulator/src/main/resources/data/round1.txt assets/demo
+```
+
+## Проверки
+
+```bash
+flutter analyze
+```
+
+```bash
+flutter test
+```
+
+## Протокол
+
+Трекер присылает по Bluetooth текстовые сообщения вида `AGLoRa-<тип>&ver=…&ключ=значение…|`. Приложение понимает типы `point` (точка трекера) и `memory` (состояние памяти и имя подключённого трекера) и отправляет трекеру запросы `all`, `crc`, `clear`, `id<N>`. Формат задаёт прошивка трекера, менять его в приложении нельзя без правки прошивки.

@@ -1,3 +1,4 @@
+import '../app_info.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -48,7 +49,7 @@ class _DeviceDemoScreenState extends State<DeviceDemoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text("AGLoRa"),
+          title: Text(appName),
           actions: [
             Row(
               children: [

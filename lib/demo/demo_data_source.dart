@@ -89,8 +89,9 @@ class DemoDataSource implements TrackerDataSource {
         _sentText = _sentText.substring(start);
         return;
       }
-      final message = _sentText.substring(start, end + 1);
-      _sentText = _sentText.substring(end + 1);
+      final stop = end + messageTerminator.length;
+      final message = _sentText.substring(start, stop);
+      _sentText = _sentText.substring(stop);
 
       final index = RegExp(r'&index=(\d+)').firstMatch(message);
       if (index != null) _storedPoints[int.parse(index.group(1)!)] = message;

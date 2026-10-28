@@ -1,12 +1,14 @@
 // Builds the demo-mode scenarios (assets/demo/*.txt) from a recorded NMEA
 // track. Messages follow the current firmware: AGLORA::sendPackageToBLE and
-// sendToPhone() in full-stack/src, "AGLoRa-" prefix, "|" at the end.
+// sendToPhone() in full-stack/src, "AGLoRa-" prefix, "\r\n" at the end.
 // ignore_for_file: avoid_print (a command-line tool reports to the console)
 //
 //   cd client-app
 //   dart run tool/make_demo_scenarios.dart ../emulator/src/main/resources/data/round1.txt assets/demo
 
 import 'dart:io';
+
+import 'package:tsp_tracker/demo/demo_scenario.dart' show escapeLineBreaks;
 
 /// the firmware sends its own location every DATA_SENDING_INTERVAL; the demo
 /// uses a shorter interval so the movement is easier to see
@@ -120,7 +122,7 @@ String pointMessage(String name, double lat, double lon, DateTime time,
       '&timestamp=${_timestamp(time)}'
       '&gpsValid=1&sat=$sats&alt=${alt.toStringAsFixed(1)}'
       '&battery=$battery&dev_bat=100'
-      '${stored ? '&index=#&crc=ok' : ''}|';
+      '${stored ? '&index=#&crc=ok' : ''}\r\n';
 }
 
 class Event {
@@ -203,7 +205,7 @@ List<Event> raggedEvents(List<Event> whole) {
         out.add(Event(
             e.atMs - 500,
             'AGLoRa-point&ver=2.3&dev_batt=100&name=Tracker2'
-            '&lat=59.9x&lon=&timestamp=not-a-time&index=#&crc=ok|'));
+            '&lat=59.9x&lon=&timestamp=not-a-time&index=#&crc=ok\r\n'));
         out.add(e);
         break;
       case 8: // cut off message, then the full one
@@ -243,7 +245,7 @@ void writeScenario(
         e.text.replaceAllMapped('&index=#', (_) => '&index=${index++}');
     final delay = e.atMs - previousMs;
     previousMs = e.atMs;
-    out.writeln('${delay < 0 ? 0 : delay} $text');
+    out.writeln('${delay < 0 ? 0 : delay} ${escapeLineBreaks(text)}');
   }
   File('$dir/$id.txt').writeAsStringSync(out.toString());
   print('$id: ${events.length} lines, ${previousMs ~/ 1000} s');

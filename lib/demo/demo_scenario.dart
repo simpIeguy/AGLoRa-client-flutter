@@ -3,11 +3,19 @@
 ///   # comment
 ///   connected Tracker1             name of the tracker the phone "is on"
 ///   start 2009-11-27T21:40:09Z     scenario time of the first chunk
-///   1500 AGLoRa-point&...|         wait 1500 ms, then send the text as is
+///   1500 AGLoRa-point&...\r\n      wait 1500 ms, then send the text
 ///
-/// The text after the delay is sent exactly as written: it may be a whole
+/// The text after the delay is sent as written, only `\r` and `\n` become
+/// the line breaks the firmware ends its messages with. It may be a whole
 /// message, a piece of one or several glued together. Files are made by
 /// tool/make_demo_scenarios.dart from a recorded NMEA track.
+
+/// line breaks as `\r` and `\n`, so a message stays on one line of the file
+String escapeLineBreaks(String text) =>
+    text.replaceAll('\r', r'\r').replaceAll('\n', r'\n');
+
+String unescapeLineBreaks(String text) =>
+    text.replaceAll(r'\r', '\r').replaceAll(r'\n', '\n');
 
 class DemoChunk {
   const DemoChunk(this.atMs, this.text);
@@ -54,7 +62,7 @@ DemoScenario parseDemoScenario(String source) {
       final delay = int.tryParse(head);
       if (delay == null) continue;
       atMs += delay;
-      chunks.add(DemoChunk(atMs, rest));
+      chunks.add(DemoChunk(atMs, unescapeLineBreaks(rest)));
     }
   }
 

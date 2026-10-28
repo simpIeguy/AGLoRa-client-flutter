@@ -45,10 +45,14 @@ class MessageBuffer {
 
   final parts = stream.split(messagePrefix);
   for (int i = 0; i < parts.length; i++) {
+    // "\r\n" ends a message; a lone "\r" waits for its "\n"
+    final complete = parts[i].endsWith('\n');
     final part = parts[i].trim();
-    if (part.endsWith(messageTerminator)) {
-      final message = part.substring(0, part.length - messageTerminator.length);
+    if (part.endsWith(legacyTerminator)) {
+      final message = part.substring(0, part.length - legacyTerminator.length);
       if (message.isNotEmpty) messages.add(message);
+    } else if (complete && i > 0) {
+      if (part.isNotEmpty) messages.add(part);
     } else if (i == parts.length - 1 && i > 0) {
       // the last message may not be complete yet: wait for the rest, so
       // a point is not stored with a cut timestamp and without its sensors

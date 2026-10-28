@@ -68,9 +68,33 @@ void main() {
         containsAll(['Tracker2', 'Tracker3']));
   });
 
+  test('the firmware ends messages with \\r\\n, not with "|"', () {
+    // exactly what AGLORA::sendPackageToBLE builds, bleProtocolDivider "\r\n"
+    final text = pointMessage('Tracker2', 53.9, 27.5, now, index: 0);
+    expect(text, endsWith('&index=0&crc=ok\r\n'));
+    expect(text, isNot(contains('|')));
+    feed(text);
+    expect(app.store.latestPoints, hasLength(1));
+    expect(app.store.latestPoints.single.sensor('crc'), 'ok');
+  });
+
+  test('"\\r" and "\\n" in different chunks', () {
+    final text = pointMessage('Tracker2', 53.9, 27.5, now, index: 0);
+    app.link.receive(text.substring(0, text.length - 1).codeUnits);
+    expect(app.store.latestPoints, isEmpty, reason: 'the "\\n" is not here');
+    app.link.receive('\n'.codeUnits);
+    expect(app.store.latestPoints, hasLength(1));
+  });
+
+  test('"|" at the end is still understood', () {
+    feed('AGLoRa-point&ver=2.3&name=Tracker3&lat=53.9&lon=27.5'
+        '&timestamp=2026-10-28T12:00:00Z&sat=9|');
+    expect(app.store.latestPoints.single.sensor('sat'), '9');
+  });
+
   test('a broken message is skipped, the next one is read', () {
     feed('AGLoRa-point&ver=2.3&name=Tracker2&lat=53.9x&lon='
-        '&timestamp=not-a-time|');
+        '&timestamp=not-a-time\r\n');
     expect(app.store.latestPoints, isEmpty);
 
     feed(pointMessage('Tracker2', 53.9, 27.5, now, index: 1));
@@ -113,7 +137,7 @@ void main() {
 
   test('a memory message without a name keeps the connected tracker', () {
     feed(memoryMessage('Tracker1'));
-    feed('AGLoRa-memory&ver=2.3&memsize=100&index=0&overwrite=0|');
+    feed('AGLoRa-memory&ver=2.3&memsize=100&index=0&overwrite=0\r\n');
     expect(app.store.connectedTracker, 'Tracker1');
   });
 

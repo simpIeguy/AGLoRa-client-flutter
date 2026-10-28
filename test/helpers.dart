@@ -41,19 +41,19 @@ Widget inApp(
           home: home,
         ));
 
-/// a "point" message in the firmware's format
+/// a "point" message exactly as the firmware sends it (aglora.cpp)
 String pointMessage(String name, double lat, double lon, DateTime time,
     {int? index, double alt = 120.5, int battery = 87}) {
   return 'AGLoRa-point&ver=2.3&dev_batt=100&name=$name'
       '&lat=${lat.toStringAsFixed(6)}&lon=${lon.toStringAsFixed(6)}'
       '&timestamp=${formatAgloraTimestamp(time)}'
       '&gpsValid=1&sat=9&alt=${alt.toStringAsFixed(1)}&battery=$battery'
-      '&dev_bat=100${index == null ? '' : '&index=$index&crc=ok'}|';
+      '&dev_bat=100${index == null ? '' : '&index=$index&crc=ok'}\r\n';
 }
 
 String memoryMessage(String deviceName) =>
     'AGLoRa-memory&ver=2.3&crc=ok&dev_name=$deviceName&dev_bat=100'
-    '&memsize=100&index=0&overwrite=0|';
+    '&memsize=100&index=0&overwrite=0\r\n';
 
 /// like the firmware with USE_BLE_MTU: pieces of [mtu] characters
 void feed(String text, {int mtu = 20}) {

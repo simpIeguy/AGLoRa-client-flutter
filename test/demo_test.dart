@@ -29,11 +29,13 @@ void main() {
     final s = parseDemoScenario('# comment\n'
         'connected Tracker7\n'
         'start 2009-11-27T21:40:09Z\n'
-        '300 AGLoRa-point&a=1|\r\n'
+        '300 AGLoRa-point&a=1\\r\\n\r\n'
         '200 piece with spaces\n');
     expect(s.connectedTracker, 'Tracker7');
     expect(s.start, DateTime.utc(2009, 11, 27, 21, 40, 9));
     expect(s.chunks.map((c) => c.atMs), [300, 500]);
+    // \r\n in the file is the firmware's line break
+    expect(s.chunks.first.text, 'AGLoRa-point&a=1\r\n');
     expect(s.chunks.last.text, 'piece with spaces');
   });
 
@@ -84,7 +86,7 @@ void main() {
     final scenario = loadScenario('ragged');
     // complete messages as the joined stream has them: a cut-off one runs
     // into the next prefix and does not count
-    final messages = RegExp(r'AGLoRa-point(?:(?!AGLoRa-)[^|])*\|')
+    final messages = RegExp(r'AGLoRa-point(?:(?!AGLoRa-)[^\n])*\n')
         .allMatches(scenario.chunks.map((c) => c.text).join())
         .map((m) => m.group(0)!)
         .toList();
@@ -123,8 +125,8 @@ void main() {
   test('the player answers all/crc/id/clear like the firmware', () async {
     final scenario = parseDemoScenario('connected Tracker1\n'
         'start 2026-10-28T12:00:00Z\n'
-        '0 ${pointMessage('Tracker2', 53.9, 27.5, DateTime.utc(2026, 10, 28, 12), index: 0)}\n'
-        '0 ${pointMessage('Tracker1', 53.8, 27.4, DateTime.utc(2026, 10, 28, 12))}\n');
+        '0 ${escapeLineBreaks(pointMessage('Tracker2', 53.9, 27.5, DateTime.utc(2026, 10, 28, 12), index: 0))}\n'
+        '0 ${escapeLineBreaks(pointMessage('Tracker1', 53.8, 27.4, DateTime.utc(2026, 10, 28, 12)))}\n');
     final source = DemoDataSource(scenario, speed: 1);
     final received = StringBuffer();
     final sub = source.chunks

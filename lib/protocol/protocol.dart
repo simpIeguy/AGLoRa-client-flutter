@@ -1,10 +1,15 @@
-/// The tracker's BLE protocol: text messages `AGLoRa-<type>&key=value&…|`.
-/// The format is set by the firmware (sendToPhone.cpp, aglora.cpp), the app
-/// must follow it.
+/// The tracker's BLE protocol: text messages `AGLoRa-<type>&key=value&…`
+/// ending with "\r\n". The format is set by the firmware (sendToPhone.cpp,
+/// aglora.cpp, bleProtocolDivider), the app must follow it.
 library;
 
 const String messagePrefix = 'AGLoRa-';
-const String messageTerminator = '|';
+
+/// the end of a message, as the firmware sends it
+const String messageTerminator = '\r\n';
+
+/// an older end of a message; the app still accepts it
+const String legacyTerminator = '|';
 
 /// app → tracker requests (AGLORA::getRequest in the firmware)
 const String requestAll = 'all';

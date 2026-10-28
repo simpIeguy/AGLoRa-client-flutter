@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../aglora/data.dart';
 import '../aglora/memory.dart';
+import '../utils/map_link.dart';
 
 /// "53.902284, 27.561831": Google Maps understands it when pasted
 String formatCoordinates(double latitude, double longitude) =>
@@ -10,10 +11,14 @@ String formatCoordinates(double latitude, double longitude) =>
 
 /// last received points of one tracker, the newest on top
 class TrackerLogScreen extends StatelessWidget {
-  const TrackerLogScreen({Key? key, required this.identifier})
+  const TrackerLogScreen(
+      {Key? key, required this.identifier, this.openUrl = openExternally})
       : super(key: key);
 
   final String identifier;
+
+  /// replaced in tests, so no real map app is needed
+  final UrlOpener openUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -27,15 +32,45 @@ class TrackerLogScreen extends StatelessWidget {
           if (points.isEmpty) {
             return Center(child: Text('Точек пока нет'));
           }
-          return ListView.separated(
-            itemCount: points.length,
-            separatorBuilder: (_, __) => Divider(height: 1),
-            itemBuilder: (context, index) =>
-                _buildPointTile(context, points[index]),
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    icon: Icon(Icons.map_outlined),
+                    label: Text('Открыть в картах'),
+                    onPressed: () => _openInMaps(context, points.first),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: points.length,
+                  separatorBuilder: (_, __) => Divider(height: 1),
+                  itemBuilder: (context, index) =>
+                      _buildPointTile(context, points[index]),
+                ),
+              ),
+            ],
           );
         },
       ),
     );
+  }
+
+  /// the newest point: where the tracker was last seen
+  Future<void> _openInMaps(
+      BuildContext context, AGLORATrackerPoint point) async {
+    final opened = await openPointInMaps(
+        point.latitude, point.longitude, point.identifier,
+        open: openUrl);
+    if (opened || !context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+          SnackBar(content: Text('Не удалось открыть карты на этом телефоне')));
   }
 
   Widget _buildPointTile(BuildContext context, AGLORATrackerPoint point) {

@@ -1,4 +1,4 @@
-package com.example.aglora_client
+package by.tsp.tracker
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,4 +1,4 @@
-import 'package:aglora_client/aglora/parser_point.dart';
+import 'package:tsp_tracker/aglora/parser_point.dart';
 import 'package:flutter/foundation.dart';
 
 import '/aglora/parser_info.dart';

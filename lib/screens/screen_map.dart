@@ -22,7 +22,7 @@ const double mapRotationThreshold = 30;
 /// 0..1, smaller is smoother but slower to follow the phone's compass
 const double compassSmoothing = 0.15;
 
-const String _userAgent = 'com.example.aglora_client';
+const String _userAgent = 'by.tsp.tracker';
 
 enum MapLayerType { scheme, satellite, hybrid }
 

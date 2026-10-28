@@ -1,5 +1,5 @@
-import 'package:aglora_client/aglora/aglora.dart';
-import 'package:aglora_client/aglora/memory.dart';
+import 'package:tsp_tracker/aglora/aglora.dart';
+import 'package:tsp_tracker/aglora/memory.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers.dart';

@@ -1,8 +1,8 @@
-import 'package:aglora_client/aglora/data.dart';
-import 'package:aglora_client/aglora/memory.dart';
-import 'package:aglora_client/screens/screen_tracker_log.dart';
-import 'package:aglora_client/utils/compass.dart';
-import 'package:aglora_client/utils/tracker_status.dart';
+import 'package:tsp_tracker/aglora/data.dart';
+import 'package:tsp_tracker/aglora/memory.dart';
+import 'package:tsp_tracker/screens/screen_tracker_log.dart';
+import 'package:tsp_tracker/utils/compass.dart';
+import 'package:tsp_tracker/utils/tracker_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

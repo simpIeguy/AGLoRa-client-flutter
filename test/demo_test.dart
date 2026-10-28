@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:aglora_client/aglora/aglora.dart';
-import 'package:aglora_client/aglora/data_source.dart';
-import 'package:aglora_client/aglora/memory.dart';
-import 'package:aglora_client/demo/demo_data_source.dart';
-import 'package:aglora_client/demo/demo_scenario.dart';
-import 'package:aglora_client/demo/demo_screen.dart';
+import 'package:tsp_tracker/aglora/aglora.dart';
+import 'package:tsp_tracker/aglora/data_source.dart';
+import 'package:tsp_tracker/aglora/memory.dart';
+import 'package:tsp_tracker/demo/demo_data_source.dart';
+import 'package:tsp_tracker/demo/demo_scenario.dart';
+import 'package:tsp_tracker/demo/demo_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers.dart';

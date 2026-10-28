@@ -1,6 +1,6 @@
 import 'dart:core'; //https://api.flutter.dev/flutter/dart-core/DateTime-class.html
 
-import 'package:aglora_client/aglora/package_manager.dart';
+import 'package:tsp_tracker/aglora/package_manager.dart';
 import 'package:flutter/foundation.dart';
 
 import '/aglora/package_finder.dart';

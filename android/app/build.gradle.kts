@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.aglora_client"
+    namespace = "by.tsp.tracker"
     compileSdk = flutter.compileSdkVersion
     // NDK installed on this PC (flutter.ndkVersion 28.2 is not installed)
     ndkVersion = "30.0.16248370"
@@ -16,8 +16,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.aglora_client"
+        applicationId = "by.tsp.tracker"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

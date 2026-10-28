@@ -1,6 +1,6 @@
 import 'dart:core';
 
-import 'package:aglora_client/aglora/data.dart';
+import 'package:tsp_tracker/aglora/data.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';

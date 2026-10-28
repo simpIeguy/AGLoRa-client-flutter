@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_compass/flutter_compass.dart';
-import 'package:aglora_client/utils/saved_parameters.dart';
+import 'package:tsp_tracker/utils/saved_parameters.dart';
 
 var compassStreamController = StreamController<double>.broadcast();
 

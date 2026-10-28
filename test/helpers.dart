@@ -1,7 +1,7 @@
-import 'package:aglora_client/aglora/aglora.dart';
-import 'package:aglora_client/aglora/data_source.dart';
-import 'package:aglora_client/aglora/memory.dart';
-import 'package:aglora_client/demo/demo_scenario.dart';
+import 'package:tsp_tracker/aglora/aglora.dart';
+import 'package:tsp_tracker/aglora/data_source.dart';
+import 'package:tsp_tracker/aglora/memory.dart';
+import 'package:tsp_tracker/demo/demo_scenario.dart';
 
 void resetApp() {
   detachDataSource();

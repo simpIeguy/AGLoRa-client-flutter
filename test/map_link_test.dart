@@ -1,5 +1,5 @@
-import 'package:aglora_client/screens/screen_tracker_log.dart';
-import 'package:aglora_client/utils/map_link.dart';
+import 'package:tsp_tracker/screens/screen_tracker_log.dart';
+import 'package:tsp_tracker/utils/map_link.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

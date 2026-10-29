@@ -64,10 +64,7 @@ TrackerList buildTrackerList(TrackerStore store, DateTime now,
       alias: store.aliasOf(identifier),
       lastHeard: lastHeard,
       searchingSatellites: store.isSearchingSatellites(identifier),
-      status: trackerStatus(
-          time: lastHeard,
-          isConnected: store.isConnected(identifier),
-          now: now),
+      status: store.statusOf(identifier, now),
     );
   }
 

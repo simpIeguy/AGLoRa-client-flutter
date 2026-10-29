@@ -10,6 +10,7 @@ import '../format.dart';
 import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/coordinates_text.dart';
 import '../widgets/direction_arrow.dart';
 import '../widgets/status_dot.dart';
 import '../widgets/tracker_card.dart';
@@ -94,10 +95,7 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
 
     final heard = store.lastHeard(id);
     final now = services.clock.now;
-    final status = heard == null
-        ? TrackerStatus.waiting
-        : trackerStatus(
-            time: heard, isConnected: store.isConnected(id), now: now);
+    final status = store.statusOf(id, now);
     final lost = status == TrackerStatus.lost;
     final age = heard == null ? null : formatAge(now.toUtc().difference(heard));
 
@@ -287,12 +285,7 @@ class _Coordinates extends StatelessWidget {
                     ?.copyWith(color: p.muted)),
           Row(children: [
             Expanded(
-              child: Text(formatCoordinates(point.latitude, point.longitude),
-                  style: const TextStyle(
-                      fontFamily: AppText.mono,
-                      fontSize: AppText.main,
-                      fontWeight: FontWeight.w500,
-                      fontFeatures: [FontFeature.tabularFigures()])),
+              child: CoordinatesText(point.latitude, point.longitude),
             ),
             IconButton(
               tooltip: S.copyCoordinates,

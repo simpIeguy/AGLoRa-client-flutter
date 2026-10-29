@@ -11,6 +11,7 @@ import '../format.dart';
 import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/coordinates_text.dart';
 import '../widgets/direction_arrow.dart';
 import '../widgets/status_dot.dart';
 import '../widgets/tracker_card.dart';
@@ -226,7 +227,8 @@ void showMessage(BuildContext context, String text) {
 /// copies "53.90228, 27.56183" and says so, with the copied text
 Future<void> copyCoordinates(
     BuildContext context, double latitude, double longitude) async {
-  final text = formatCoordinates(latitude, longitude);
+  final text = formatCoordinates(
+      latitude, longitude, AppScope.of(context).settings.coordinates);
   await Clipboard.setData(ClipboardData(text: text));
   if (context.mounted) showMessage(context, S.copiedValue(text));
 }
@@ -249,10 +251,7 @@ class _MainCard extends StatelessWidget {
 
     final heard = store.lastHeard(identifier);
     final now = services.clock.now;
-    final status = heard == null
-        ? TrackerStatus.waiting
-        : trackerStatus(
-            time: heard, isConnected: store.isConnected(identifier), now: now);
+    final status = store.statusOf(identifier, now);
     final lost = status == TrackerStatus.lost;
     final since = heard == null ? null : now.toUtc().difference(heard);
     final direction = point == null
@@ -440,12 +439,7 @@ class _PointRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(formatCoordinates(point.latitude, point.longitude),
-                    style: const TextStyle(
-                        fontFamily: AppText.mono,
-                        fontSize: AppText.main,
-                        fontWeight: FontWeight.w500,
-                        fontFeatures: [FontFeature.tabularFigures()])),
+                CoordinatesText(point.latitude, point.longitude),
                 Text('$time · ${formatAge(now.toUtc().difference(point.time))}',
                     style: Theme.of(context)
                         .textTheme

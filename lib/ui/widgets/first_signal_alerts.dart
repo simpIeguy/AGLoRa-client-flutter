@@ -50,6 +50,8 @@ class _FirstSignalAlertsState extends State<FirstSignalAlerts> {
     final store = AppScope.of(context).store;
     final name = displayName(parseTrackerName(point.identifier),
         alias: store.aliasOf(point.identifier));
+    final coordinates = formatCoordinates(point.latitude, point.longitude,
+        AppScope.of(context).settings.coordinates);
     final messenger = widget.messengerKey.currentState;
     if (messenger == null) return;
 
@@ -62,7 +64,7 @@ class _FirstSignalAlertsState extends State<FirstSignalAlerts> {
       ..showMaterialBanner(MaterialBanner(
         leading: const Icon(Icons.notifications_active),
         content: Text('${S.cameOnline(name)}\n'
-            '${formatCoordinates(point.latitude, point.longitude)}'),
+            '$coordinates'),
         actions: [
           TextButton(
             onPressed: () {
@@ -74,8 +76,7 @@ class _FirstSignalAlertsState extends State<FirstSignalAlerts> {
           ),
           TextButton(
             onPressed: () {
-              unawaited(Clipboard.setData(ClipboardData(
-                  text: formatCoordinates(point.latitude, point.longitude))));
+              unawaited(Clipboard.setData(ClipboardData(text: coordinates)));
               close();
               messenger.showSnackBar(const SnackBar(content: Text(S.copied)));
             },

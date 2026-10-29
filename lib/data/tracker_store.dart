@@ -94,6 +94,40 @@ class TrackerStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Duration _fadingAfter = trackerActiveTimeout;
+  Duration _lostAfter = trackerLostTimeout;
+
+  /// "Связь пропадает после": no point for this long, the link is fading
+  Duration get fadingAfter => _fadingAfter;
+
+  /// "Связь потеряна после"; always longer than [fadingAfter]
+  Duration get lostAfter => _lostAfter;
+
+  /// both thresholds at once; refused (false) unless fading < lost
+  bool setThresholds({Duration? fadingAfter, Duration? lostAfter}) {
+    final fading = fadingAfter ?? _fadingAfter;
+    final lost = lostAfter ?? _lostAfter;
+    if (fading >= lost) return false;
+    if (fading == _fadingAfter && lost == _lostAfter) return true;
+    _fadingAfter = fading;
+    _lostAfter = lost;
+    notifyListeners();
+    return true;
+  }
+
+  /// the status of a tracker now, with the user's thresholds; waiting for
+  /// one never heard
+  TrackerStatus statusOf(String identifier, DateTime now) {
+    final heard = lastHeard(identifier);
+    if (heard == null) return TrackerStatus.waiting;
+    return trackerStatus(
+        time: heard,
+        isConnected: isConnected(identifier),
+        now: now,
+        fadingAfter: _fadingAfter,
+        lostAfter: _lostAfter);
+  }
+
   /// false when the same fix is already stored (resent by the tracker)
   bool addPoint(TrackerPoint point) {
     final key = trackerKey(point.identifier);
@@ -119,7 +153,7 @@ class TrackerStore extends ChangeNotifier {
   /// have fallen silent long ago.
   void _checkOnAir(String key, TrackerPoint point) {
     if (_onAir.contains(key)) return;
-    if (_now().toUtc().difference(point.time) >= trackerLostTimeout) return;
+    if (_now().toUtc().difference(point.time) >= _lostAfter) return;
     _onAir.add(key);
     final waited = _waitedFor.remove(key);
     if (waited != null) {
@@ -260,6 +294,15 @@ class TrackerStore extends ChangeNotifier {
   /// the phone's time (UTC) of the last message without a GPS fix
   DateTime? heardWithoutFixAt(String identifier) =>
       _noFix[trackerKey(identifier)]?.at;
+
+  /// "Очистить память приложения": all trackers, points, names and the
+  /// waiting list; the phone stays connected to its tracker, the settings
+  /// stay
+  void clearTrackers() {
+    final connected = _connectedTracker;
+    reset();
+    _connectedTracker = connected;
+  }
 
   /// forget everything: before a demo run and between tests
   void reset() {

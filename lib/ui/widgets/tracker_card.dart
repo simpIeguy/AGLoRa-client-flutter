@@ -12,6 +12,7 @@ import '../screens/full_screen_arrow.dart';
 import '../screens/tracker_screen.dart';
 import '../strings.dart';
 import '../theme.dart';
+import 'coordinates_text.dart';
 import 'direction_arrow.dart';
 import 'status_dot.dart';
 
@@ -239,12 +240,7 @@ class CoordinatesRow extends StatelessWidget {
           child: GestureDetector(
             // a long press on the coordinates copies them too
             onLongPress: copy,
-            child: Text(formatCoordinates(point.latitude, point.longitude),
-                style: const TextStyle(
-                    fontFamily: AppText.mono,
-                    fontSize: AppText.main,
-                    fontWeight: FontWeight.w500,
-                    fontFeatures: [FontFeature.tabularFigures()])),
+            child: CoordinatesText(point.latitude, point.longitude),
           ),
         ),
         IconButton(

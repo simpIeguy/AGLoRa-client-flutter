@@ -196,6 +196,31 @@ abstract final class S {
   static const String themeNight = 'Ночная';
   static const String themeNightHint =
       'Ночная: красные цвета на чёрном, не слепит и не сбивает ночное зрение.';
+  static const String sectionCoordinates = 'Координаты';
+  static const String coordinatesDecimal =
+      'Градусы, как в Google Картах и OsmAnd';
+  static const String coordinatesDms = 'Градусы, минуты, секунды';
+  static const String sectionNotifications = 'Уведомления';
+  static const String everyNewUav = 'О каждом новом БЛА';
+  static const String everyNewUavHint = 'Звук и вибрация, один раз';
+  static const String sectionLink = 'Связь с трекером';
+  static const String fadingAfter = 'Связь пропадает после';
+  static const String lostAfter = 'Связь потеряна после';
+  static const String thresholdsHint =
+      'Время считается от последней принятой точки. Подберите под то, как часто трекеры шлют координаты.';
+  static const String sectionScreen = 'Экран';
+  static const String keepScreenOn = 'Не гасить в полном экране';
+  static const String keepScreenOnHint = 'Расходует батарею';
+  static const String sectionData = 'Данные';
+  static const String clearMemory = 'Очистить память приложения';
+  static const String clearMemoryQuestion = 'Удалить все трекеры и точки?';
+  static const String clearMemoryHint =
+      'Трекеры, которые на связи, появятся снова.';
+  static const String memoryCleared = 'Память очищена';
+
+  /// keep in step with "version:" in pubspec.yaml (a test checks it)
+  static const String appVersion = '1.0.0';
+  static const String about = '$appName $appVersion';
 
   // demo
   static const String demoMode = 'Демо-режим';

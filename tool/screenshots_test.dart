@@ -11,6 +11,7 @@ import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
 import 'package:tsp_tracker/ui/screens/full_screen_arrow.dart';
 import 'package:tsp_tracker/ui/screens/map_screen.dart';
+import 'package:tsp_tracker/ui/screens/settings_screen.dart';
 import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
 import 'package:tsp_tracker/ui/screens/wait_tracker_screen.dart';
@@ -78,6 +79,18 @@ void main() {
   }
 
   for (final theme in [AppThemeChoice.light, AppThemeChoice.dark]) {
+    testWidgets('settings, ${theme.name}', (tester) async {
+      tester.view.physicalSize = const Size(390 * 3, 1180 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      resetApp();
+      app.settings.theme = theme;
+      await tester.pumpWidget(inApp(const SettingsScreen()));
+      await tester.pumpAndSettle();
+      await expectLater(find.byType(SettingsScreen),
+          matchesGoldenFile('../build/screenshots/settings_${theme.name}.png'));
+    });
+
     // no tiles here: the grey under them, the rest as in the app
     testWidgets('map, ${theme.name}', (tester) async {
       tester.view.physicalSize = const Size(390 * 3, 844 * 3);

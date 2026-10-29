@@ -1,9 +1,32 @@
 import '../util/geo.dart';
 
+/// how the coordinates are written, a choice in the settings
+enum CoordinateFormat {
+  /// "53.90228, 27.56183", as in Google Maps and OsmAnd
+  decimal,
+
+  /// "53°54′08″N 27°33′42″E"
+  dms,
+}
+
 /// "53.90228, 27.56183": 5 digits are about a metre; map apps understand it
-/// when pasted
-String formatCoordinates(double latitude, double longitude) =>
-    '${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)}';
+/// when pasted. Or degrees, minutes, seconds.
+String formatCoordinates(double latitude, double longitude,
+        [CoordinateFormat format = CoordinateFormat.decimal]) =>
+    switch (format) {
+      CoordinateFormat.decimal =>
+        '${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)}',
+      CoordinateFormat.dms =>
+        '${_dms(latitude, 'N', 'S')} ${_dms(longitude, 'E', 'W')}',
+    };
+
+/// 53.90228 → 53°54′08″N; a second is about 30 m
+String _dms(double degrees, String plus, String minus) {
+  final seconds = (degrees.abs() * 3600).round();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${seconds ~/ 3600}°${two(seconds ~/ 60 % 60)}′${two(seconds % 60)}″'
+      '${degrees < 0 ? minus : plus}';
+}
 
 /// the number and the unit apart: the card shows the number large
 ({String value, String unit}) distanceParts(double metres) {

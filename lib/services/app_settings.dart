@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../ui/format.dart';
 import '../ui/theme.dart';
 
 /// The user's choices from the settings screen. Kept until the app closes;
@@ -13,6 +14,17 @@ class AppSettings extends ChangeNotifier {
   set theme(AppThemeChoice value) {
     if (_theme == value) return;
     _theme = value;
+    notifyListeners();
+  }
+
+  CoordinateFormat _coordinates = CoordinateFormat.decimal;
+
+  /// on the screens and when copied; links to map apps are always decimal
+  CoordinateFormat get coordinates => _coordinates;
+
+  set coordinates(CoordinateFormat value) {
+    if (_coordinates == value) return;
+    _coordinates = value;
     notifyListeners();
   }
 

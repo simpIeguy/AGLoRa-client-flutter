@@ -11,6 +11,9 @@ import 'ui/theme.dart';
 import 'ui/widgets/first_signal_alerts.dart';
 
 void main() {
+  // the compass and GPS talk to Android through the binding: without it they
+  // fail silently and the app shows "no phone GPS" and no compass
+  WidgetsFlutterBinding.ensureInitialized();
   final services = AppServices()..start();
   runApp(AppScope(services: services, child: TrackerApp()));
 }

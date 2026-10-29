@@ -105,8 +105,7 @@ class _PointTile extends StatelessWidget {
     if (satellites != null) extras.add(S.satellites(satellites));
     final gpsValid = point.sensor('gpsValid');
     if (gpsValid != null) extras.add(gpsValid == '1' ? S.gpsOk : S.gpsNo);
-    final battery = point.sensor('battery');
-    if (battery != null) extras.add(S.battery(battery));
+    // no battery: the firmware does not measure it and always sends 100
     if (extras.isNotEmpty) details.add(extras.join(' · '));
 
     return ListTile(

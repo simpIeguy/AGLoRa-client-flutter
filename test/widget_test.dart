@@ -51,7 +51,8 @@ void main() {
     expect(cardColor(tester, 'БЛА 1'), AppColors.status(TrackerStatus.fading));
     expect(find.text('Связь пропадает'), findsOneWidget);
     expect(find.text('Подключён к телефону'), findsOneWidget);
-    expect(find.text('87%'), findsNWidgets(2), reason: 'battery');
+    expect(find.textContaining('87'), findsNothing,
+        reason: 'no battery: the firmware always sends a made-up value');
   });
 
   testWidgets('the UAV goes above the connected person', (tester) async {

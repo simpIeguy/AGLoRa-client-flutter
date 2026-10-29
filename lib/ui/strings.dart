@@ -115,7 +115,6 @@ abstract final class S {
   static String satellites(String v) => 'спутники $v';
   static const String gpsOk = 'GPS ок';
   static const String gpsNo = 'GPS нет';
-  static String battery(String v) => 'батарея $v%';
 
   // map
   static const String back = 'Назад';

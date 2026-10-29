@@ -80,8 +80,6 @@ class TrackerCard extends StatelessWidget {
   }
 
   Widget _header(TextTheme textTheme, Color foreground) {
-    final point = entry.latest;
-    final battery = point?.sensor('battery');
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -107,8 +105,8 @@ class TrackerCard extends StatelessWidget {
             ],
           ),
         ),
-        if (entry.lastHeard != null)
-          _AgeAndBattery(time: entry.lastHeard!, battery: battery),
+        // no battery: the firmware does not measure it and always sends 100
+        if (entry.lastHeard != null) _Age(time: entry.lastHeard!),
       ],
     );
   }
@@ -169,32 +167,22 @@ class TrackerCard extends StatelessWidget {
   }
 }
 
-class _AgeAndBattery extends StatelessWidget {
-  const _AgeAndBattery({required this.time, this.battery});
+class _Age extends StatelessWidget {
+  const _Age({required this.time});
 
   final DateTime time;
-  final String? battery;
 
   @override
   Widget build(BuildContext context) {
     final clock = AppScope.of(context).clock;
     return ListenableBuilder(
       listenable: clock,
-      builder: (context, _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(formatAge(clock.now.toUtc().difference(time)),
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(color: DefaultTextStyle.of(context).style.color)),
-          if (battery != null)
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.battery_std, size: 18),
-              Text('$battery%'),
-            ]),
-        ],
-      ),
+      builder: (context, _) => Text(
+          formatAge(clock.now.toUtc().difference(time)),
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(color: DefaultTextStyle.of(context).style.color)),
     );
   }
 }

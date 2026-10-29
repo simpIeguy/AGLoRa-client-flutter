@@ -8,6 +8,7 @@ import '../../data/tracker_list.dart';
 import '../../data/tracker_status.dart';
 import '../../data/tracker_store.dart';
 import '../../services/app_services.dart';
+import '../../util/geo.dart';
 import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
@@ -102,7 +103,7 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onHeading() {
     final heading = _services.compass.reading?.heading;
-    if (heading == null) return;
+    if (heading == null || !heading.isFinite) return;
     final previous = _smoothedHeading;
     if (previous == null) {
       _smoothedHeading = heading;
@@ -208,7 +209,10 @@ class _MapScreenState extends State<MapScreen> {
             distanceMarker(
                 LatLng((phoneAt.latitude + targetAt.latitude) / 2,
                     (phoneAt.longitude + targetAt.longitude) / 2),
-                const Distance().as(LengthUnit.Meter, phoneAt, targetAt)),
+                // ours, as on the card: latlong2's Distance can give "not a
+                // number" and then fails on rounding (the red error screen)
+                distanceBetween(phoneAt.latitude, phoneAt.longitude,
+                    targetAt.latitude, targetAt.longitude)),
           ]),
         ],
         if (phoneAt != null)

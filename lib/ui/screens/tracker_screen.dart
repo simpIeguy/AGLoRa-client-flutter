@@ -25,7 +25,7 @@ class TrackerScreen extends StatefulWidget {
 
   final String identifier;
 
-  /// points shown before "Все точки"
+  /// rows in sight in the points' window; the rest scroll
   static const int shortList = 5;
 
   @override
@@ -33,8 +33,6 @@ class TrackerScreen extends StatefulWidget {
 }
 
 class _TrackerScreenState extends State<TrackerScreen> {
-  bool _allPoints = false;
-
   String get _id => widget.identifier;
 
   @override
@@ -62,9 +60,6 @@ class _TrackerScreenState extends State<TrackerScreen> {
     final alias = store.aliasOf(_id);
     final points = store.pointsOf(_id);
     final latest = points.firstOrNull;
-    final shown = _allPoints || points.length <= TrackerScreen.shortList
-        ? points
-        : points.take(TrackerScreen.shortList).toList();
 
     return Column(children: [
       Padding(
@@ -109,17 +104,22 @@ class _TrackerScreenState extends State<TrackerScreen> {
             const _SectionTitle(S.trackerState),
             ..._stateRows(context, services, latest),
             if (points.isNotEmpty) ...[
-              const _SectionTitle(S.lastPoints),
-              for (final point in shown)
-                _PointRow(point: point, now: services.clock.now),
-              if (shown.length < points.length)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: () => setState(() => _allPoints = true),
-                    child: Text(S.allPoints(points.length)),
+              _SectionTitle(S.allPoints(points.length)),
+              // a window of five rows that scrolls by itself, so the
+              // screen does not grow with every point
+              SizedBox(
+                height: _PointRow.height *
+                    points.length.clamp(1, TrackerScreen.shortList),
+                child: Scrollbar(
+                  child: ListView.builder(
+                    primary: false,
+                    padding: EdgeInsets.zero,
+                    itemCount: points.length,
+                    itemBuilder: (context, i) =>
+                        _PointRow(point: points[i], now: services.clock.now),
                   ),
                 ),
+              ),
             ] else
               const Padding(
                 padding: EdgeInsets.all(AppSizes.screenPadding),
@@ -423,6 +423,9 @@ class _StateRow extends StatelessWidget {
 class _PointRow extends StatelessWidget {
   const _PointRow({required this.point, required this.now});
 
+  /// at least; the window above is five of these tall
+  static const double height = 64;
+
   final TrackerPoint point;
   final DateTime now;
 
@@ -432,7 +435,7 @@ class _PointRow extends StatelessWidget {
     final time = formatClock(point.time.toLocal());
     void copy() => copyCoordinates(context, point.latitude, point.longitude);
     return Container(
-      constraints: const BoxConstraints(minHeight: 64),
+      constraints: const BoxConstraints(minHeight: height),
       padding: const EdgeInsets.only(left: 4),
       decoration:
           BoxDecoration(border: Border(bottom: BorderSide(color: p.line))),

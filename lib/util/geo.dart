@@ -11,7 +11,8 @@ double distanceBetween(double lat1, double lon1, double lat2, double lon2) {
   final dLon = _radians(lon2 - lon1);
   final a = pow(sin(dLat / 2), 2) +
       cos(_radians(lat1)) * cos(_radians(lat2)) * pow(sin(dLon / 2), 2);
-  return 2 * earthRadius * asin(sqrt(a));
+  // rounding can push a just past 1: asin would give "not a number"
+  return 2 * earthRadius * asin(sqrt(a.clamp(0.0, 1.0)));
 }
 
 /// initial direction from the first point to the second, degrees

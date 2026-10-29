@@ -30,6 +30,8 @@ String _dms(double degrees, String plus, String minus) {
 
 /// the number and the unit apart: the card shows the number large
 ({String value, String unit}) distanceParts(double metres) {
+  // "not a number" must not turn a screen into an error
+  if (!metres.isFinite) return (value: '—', unit: 'м');
   final m = metres.round();
   if (m < 1000) return (value: '$m', unit: 'м');
   // tenths below 10 km, whole kilometres further

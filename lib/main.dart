@@ -14,6 +14,9 @@ void main() {
   // the compass and GPS talk to Android through the binding: without it they
   // fail silently and the app shows "no phone GPS" and no compass
   WidgetsFlutterBinding.ensureInitialized();
+  // upright only: the arrow and the compass are made for a phone held up,
+  // and turning the screen in a pocket or a glove only gets in the way
+  SystemChrome.setPreferredOrientations(const [DeviceOrientation.portraitUp]);
   // the IBM Plex fonts come with their license (SIL Open Font License)
   LicenseRegistry.addLicense(() async* {
     final text = await rootBundle.loadString('assets/fonts/OFL.txt');

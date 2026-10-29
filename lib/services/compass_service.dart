@@ -49,6 +49,13 @@ class CompassService extends ChangeNotifier {
     if (_subscription != null) return;
     try {
       _subscription = (_readings ?? _phoneReadings())?.listen((reading) {
+        // an uncalibrated sensor may give "not a number": it turned the map
+        // into an error screen ("Infinity or NaN toInt")
+        if (!reading.heading.isFinite) return;
+        final accuracy = reading.accuracy;
+        if (accuracy != null && !accuracy.isFinite) {
+          reading = CompassReading(reading.heading);
+        }
         _last = reading;
         notifyListeners();
       });

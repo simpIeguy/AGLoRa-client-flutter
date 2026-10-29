@@ -83,7 +83,7 @@ void main() {
       expect(find.textContaining('AGLoRa'), findsNothing);
       expect(find.text('Поиск БЛА 1.0.0'), findsOneWidget);
 
-      await tester.tap(find.text('Градусы, минуты, секунды'));
+      await tester.tap(find.text('Градусы, минуты, секунды (DMS), WGS 84'));
       await tester.pump();
 
       feed(pointMessage('UAV1', 53.90228, 27.56183, now, index: 0));

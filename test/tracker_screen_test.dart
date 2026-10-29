@@ -48,18 +48,22 @@ void main() {
     expect(find.text('Поделиться'), findsNothing);
   });
 
-  testWidgets('five points, then all of them', (tester) async {
+  testWidgets('the points in a window of five that scrolls', (tester) async {
     feedPoints('UAV1', 8);
     await show(tester, 'UAV1');
 
+    expect(find.text('Точки: 8'), findsOneWidget);
     // the newest twice: on the card and in the list
     expect(find.text('53.90000, 27.50000'), findsNWidgets(2));
     expect(find.text('53.90400, 27.50000'), findsOneWidget);
-    expect(find.text('53.90500, 27.50000'), findsNothing);
-    await tester.tap(find.text('Все точки: 8'));
+    expect(find.text('53.90700, 27.50000'), findsNothing);
+
+    // scrolled inside its window, the screen stays as it was
+    final title = tester.getTopLeft(find.text('Точки: 8'));
+    await tester.drag(find.text('53.90300, 27.50000'), const Offset(0, -300));
     await tester.pump();
     expect(find.text('53.90700, 27.50000'), findsOneWidget);
-    expect(find.textContaining('Все точки'), findsNothing);
+    expect(tester.getTopLeft(find.text('Точки: 8')), title);
   });
 
   testWidgets('no fix now: says so, the satellites of an old point hidden',
@@ -119,7 +123,9 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(find.text('Удалить трекер из списка'), 100);
+    // the screen, not the points' window inside it
+    await tester.scrollUntilVisible(find.text('Удалить трекер из списка'), 100,
+        scrollable: find.byType(Scrollable).first);
     await tester.tap(find.text('Удалить трекер из списка'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Удалить Человек 2 и все его точки?'),

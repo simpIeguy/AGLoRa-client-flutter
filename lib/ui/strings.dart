@@ -190,7 +190,7 @@ abstract final class S {
   static const String receivedByPhone = 'Принято телефоном';
   static const String gpsTime = 'Время GPS';
   static const String lastPoints = 'Последние точки';
-  static String allPoints(int n) => 'Все точки: $n';
+  static String allPoints(int n) => 'Точки: $n';
   static String copyCoordinatesAt(String time) => 'Копировать координаты $time';
   static String directionTo(String name) =>
       'Направление на $name, нажмите для полного экрана';
@@ -224,9 +224,8 @@ abstract final class S {
   static const String themeNightHint =
       'Ночная: красные цвета на чёрном, не слепит и не сбивает ночное зрение.';
   static const String sectionCoordinates = 'Координаты';
-  static const String coordinatesDecimal =
-      'Градусы, как в Google Картах и OsmAnd';
-  static const String coordinatesDms = 'Градусы, минуты, секунды';
+  static const String coordinatesDecimal = 'Десятичные градусы (DD), WGS 84';
+  static const String coordinatesDms = 'Градусы, минуты, секунды (DMS), WGS 84';
   static const String sectionNotifications = 'Уведомления';
   static const String everyNewUav = 'О каждом новом БЛА';
   static const String everyNewUavHint = 'Звук и вибрация, один раз';

@@ -66,7 +66,10 @@ class TrackerCard extends StatelessWidget {
                       if (entry.searchingSatellites)
                         _noFixNote(S.noFixLastGoodPoint),
                       if (entry.status != TrackerStatus.connected)
-                        _DirectionRow(point: point, foreground: foreground),
+                        _DirectionRow(
+                            point: point,
+                            foreground: foreground,
+                            stale: entry.status == TrackerStatus.lost),
                       _coordinatesRow(context, point, foreground),
                     ],
                   ],
@@ -190,10 +193,14 @@ class _Age extends StatelessWidget {
 /// arrow, direction and distance from the phone; double tap or long press
 /// on the arrow opens it full screen
 class _DirectionRow extends StatelessWidget {
-  const _DirectionRow({required this.point, required this.foreground});
+  const _DirectionRow(
+      {required this.point, required this.foreground, this.stale = false});
 
   final TrackerPoint point;
   final Color foreground;
+
+  /// the link is lost: the arrow leads to an old point
+  final bool stale;
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +231,7 @@ class _DirectionRow extends StatelessWidget {
                 child: DirectionArrow(
                   bearing: direction.bearing,
                   reliable: direction.isReliable,
+                  stale: stale,
                   size: AppSizes.cardArrow,
                   color: foreground,
                   mutedColor: muted,

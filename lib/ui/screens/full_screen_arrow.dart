@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/tracker_status.dart';
 import '../../protocol/tracker_name.dart';
 import '../../services/app_services.dart';
 import '../../util/geo.dart';
@@ -56,6 +57,12 @@ class FullScreenArrow extends StatelessWidget {
         currentDirection(services, point.latitude, point.longitude);
     final problem = directionProblemText(direction.problem);
     final bearing = direction.bearing;
+    final heard = services.store.lastHeard(identifier) ?? point.time;
+    final stale = trackerStatus(
+            time: heard,
+            isConnected: services.store.isConnected(identifier),
+            now: services.clock.now) ==
+        TrackerStatus.lost;
 
     // on a short screen the arrow shrinks and the rest scrolls
     return LayoutBuilder(
@@ -73,6 +80,7 @@ class FullScreenArrow extends StatelessWidget {
               DirectionArrow(
                 bearing: bearing,
                 reliable: direction.isReliable,
+                stale: stale,
                 size: AppSizes.bigArrow
                     .clamp(AppSizes.cardArrow, constraints.maxHeight * 0.4),
                 color: AppColors.amoledText,

@@ -11,6 +11,7 @@ import 'package:tsp_tracker/ui/screens/full_screen_arrow.dart';
 import 'package:tsp_tracker/ui/screens/tracker_log_screen.dart';
 import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
 import 'package:tsp_tracker/ui/theme.dart';
+import 'package:tsp_tracker/ui/widgets/direction_arrow.dart';
 import 'package:tsp_tracker/ui/widgets/first_signal_alerts.dart';
 
 import 'helpers.dart';
@@ -66,6 +67,8 @@ void main() {
     await showTrackers(tester);
     expect(find.text('Нет GPS телефона'), findsOneWidget);
     expect(find.text('GPS нет позиции'), findsOneWidget);
+    expect(arrowStyles(), contains(ArrowStyle.unavailable),
+        reason: 'no direction: a dashed arrow');
   });
 
   testWidgets('with phone GPS: distance and direction', (tester) async {
@@ -84,6 +87,7 @@ void main() {
     expect(find.text('на трекер 0° С'), findsOneWidget);
     expect(find.text('GPS ±6 м'), findsOneWidget);
     expect(find.text('Компас точный'), findsOneWidget);
+    expect(arrowStyles(), contains(ArrowStyle.filled));
 
     readings.add(const CompassReading(0, accuracy: 45));
     await tester.pump();
@@ -221,3 +225,9 @@ void main() {
     expect(find.textContaining('вышел на связь'), findsNothing);
   });
 }
+
+/// how the arrows on the screen are drawn
+List<ArrowStyle> arrowStyles() => [
+      for (final e in find.byType(ArrowShape).evaluate())
+        (e.widget as ArrowShape).style,
+    ];

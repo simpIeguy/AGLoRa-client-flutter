@@ -32,13 +32,21 @@ class PhonePosition {
 /// why there is no phone position
 enum LocationProblem { none, starting, serviceOff, noPermission, error }
 
+/// opens the phone's positions; null with the reason it could not
+typedef PositionsOpener = Future<Stream<PhonePosition>?> Function(
+    void Function(LocationProblem) setProblem);
+
 /// The phone's own position, shared by all screens.
 class LocationService extends ChangeNotifier {
-  /// [positions] replaces the phone's GPS in tests
-  LocationService({Stream<PhonePosition>? positions}) : _positions = positions;
+  /// [positions] replaces the phone's GPS in tests, [open] replaces the way
+  /// to it (permission included)
+  LocationService({Stream<PhonePosition>? positions, PositionsOpener? open})
+      : _open = open ??
+            (positions == null ? _phonePositions : (_) async => positions);
 
-  final Stream<PhonePosition>? _positions;
+  final PositionsOpener _open;
   StreamSubscription<PhonePosition>? _subscription;
+  bool _opening = false;
 
   PhonePosition? _position;
   LocationProblem _problem = LocationProblem.starting;
@@ -47,8 +55,10 @@ class LocationService extends ChangeNotifier {
   LocationProblem get problem => _problem;
 
   Future<void> start() async {
-    if (_subscription != null) return;
-    final positions = _positions ?? await _phonePositions();
+    if (_subscription != null || _opening) return;
+    _opening = true;
+    final positions = await _open(_setProblem);
+    _opening = false;
     if (positions == null) return;
     _subscription = positions.listen((position) {
       _position = position;
@@ -56,10 +66,22 @@ class LocationService extends ChangeNotifier {
       notifyListeners();
     }, onError: (Object e) {
       appLog('location: $e');
-      _setProblem(e is LocationServiceDisabledException
-          ? LocationProblem.serviceOff
-          : LocationProblem.error);
-    });
+      final off = e is LocationServiceDisabledException;
+      _setProblem(off ? LocationProblem.serviceOff : LocationProblem.error);
+      // location switched off: open it again when the user comes back
+      if (off) _stop();
+    }, onDone: _stop);
+  }
+
+  /// Again after a failure: the user may have allowed the location or
+  /// switched it on meanwhile. The app calls it when it comes back on screen.
+  Future<void> retry() async {
+    if (_subscription == null) await start();
+  }
+
+  void _stop() {
+    _subscription?.cancel();
+    _subscription = null;
   }
 
   void _setProblem(LocationProblem problem) {
@@ -68,7 +90,8 @@ class LocationService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Stream<PhonePosition>?> _phonePositions() async {
+  static Future<Stream<PhonePosition>?> _phonePositions(
+      void Function(LocationProblem) setProblem) async {
     try {
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -76,13 +99,13 @@ class LocationService extends ChangeNotifier {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        _setProblem(LocationProblem.noPermission);
+        setProblem(LocationProblem.noPermission);
         return null;
       }
       return Geolocator.getPositionStream().map(_fromGeolocator);
     } catch (e) {
       appLog('location: $e');
-      _setProblem(LocationProblem.error);
+      setProblem(LocationProblem.error);
       return null;
     }
   }
@@ -98,7 +121,7 @@ class LocationService extends ChangeNotifier {
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    _stop();
     super.dispose();
   }
 }

@@ -32,14 +32,20 @@ class AppServices {
   /// opens links outside the app (map apps)
   final UrlOpener openUrl;
 
+  AppLifecycleListener? _lifecycle;
+
   /// sensors and the timer; Bluetooth starts from the screens
   void start() {
     compass.start();
     location.start();
     clock.start();
+    // back from a permission dialog or the phone's settings: the location
+    // may be allowed or switched on now
+    _lifecycle = AppLifecycleListener(onResume: location.retry);
   }
 
   void dispose() {
+    _lifecycle?.dispose();
     link.detach();
     compass.dispose();
     location.dispose();

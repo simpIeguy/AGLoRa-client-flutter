@@ -29,7 +29,15 @@ class _DemoTrackersScreenState extends State<DemoTrackersScreen> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    startDemo(_services, widget.scenarioId, widget.speed,
+    unawaited(_start());
+  }
+
+  Future<void> _start() async {
+    // the user's trackers are written down first; the made-up ones are
+    // never kept
+    await _services.storage?.pause();
+    if (!mounted) return;
+    await startDemo(_services, widget.scenarioId, widget.speed,
         isWanted: () => mounted);
   }
 
@@ -41,6 +49,8 @@ class _DemoTrackersScreenState extends State<DemoTrackersScreen> {
       services.link.detach();
       // made-up trackers must not mix with real ones
       services.store.reset();
+      // and the user's own come back
+      services.storage?.resume();
     });
     super.dispose();
   }

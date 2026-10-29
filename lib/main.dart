@@ -4,25 +4,29 @@ import 'package:flutter/services.dart';
 
 import 'demo/demo_runner.dart';
 import 'services/app_services.dart';
+import 'services/app_storage.dart';
 import 'ui/screens/demo_screens.dart';
 import 'ui/screens/entry_screen.dart';
 import 'ui/strings.dart';
 import 'ui/theme.dart';
 import 'ui/widgets/first_signal_alerts.dart';
 
-void main() {
+Future<void> main() async {
   // the compass and GPS talk to Android through the binding: without it they
   // fail silently and the app shows "no phone GPS" and no compass
   WidgetsFlutterBinding.ensureInitialized();
   // upright only: the arrow and the compass are made for a phone held up,
   // and turning the screen in a pocket or a glove only gets in the way
-  SystemChrome.setPreferredOrientations(const [DeviceOrientation.portraitUp]);
+  await SystemChrome.setPreferredOrientations(
+      const [DeviceOrientation.portraitUp]);
   // the IBM Plex fonts come with their license (SIL Open Font License)
   LicenseRegistry.addLicense(() async* {
     final text = await rootBundle.loadString('assets/fonts/OFL.txt');
     yield LicenseEntryWithLineBreaks(const ['IBM Plex'], text);
   });
-  final services = AppServices()..start();
+  // the trackers and settings from the last launch, before the first screen
+  final services = AppServices(storage: PhoneStorage());
+  await services.start();
   runApp(AppScope(services: services, child: TrackerApp()));
 }
 

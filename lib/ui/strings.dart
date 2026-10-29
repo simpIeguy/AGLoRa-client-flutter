@@ -213,6 +213,9 @@ abstract final class S {
   static const String compassModeOn = 'По направлению телефона';
   static const String northUp = 'Север вверх';
   static const String whereAmI = 'Где я';
+  static const String tracks = 'След';
+  static const String tracksTitle = 'Чьи следы показывать';
+  static const String tracksHint = 'Последние 50 точек каждого трекера';
 
   // settings
   static const String sectionLook = 'Вид';

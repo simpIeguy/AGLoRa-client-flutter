@@ -295,6 +295,114 @@ class TrackerStore extends ChangeNotifier {
   DateTime? heardWithoutFixAt(String identifier) =>
       _noFix[trackerKey(identifier)]?.at;
 
+  // memory between launches (plan step 7)
+
+  /// raise when the layout below changes; older data is then dropped
+  static const int savedVersion = 1;
+
+  /// everything worth keeping after the app is closed, as plain JSON
+  /// values. Not kept: the connected tracker (it is picked again).
+  Map<String, Object?> saveState() => {
+        'version': savedVersion,
+        'points': {
+          for (final e in _points.entries)
+            if (e.value.isNotEmpty)
+              e.key: [for (final p in e.value) _pointToJson(p)],
+        },
+        'aliases': Map.of(_aliases),
+        'waiting': [
+          for (final w in _waiting.values)
+            {
+              'name': w.name.raw,
+              'since': w.since.millisecondsSinceEpoch,
+              'notify': w.notify,
+            },
+        ],
+        'hidden': _hidden.toList(),
+        'noFix': {
+          for (final e in _noFix.entries)
+            e.key: {
+              'identifier': e.value.identifier,
+              'at': e.value.at.millisecondsSinceEpoch,
+            },
+        },
+        'alertNewUavs': _alertNewUavs,
+        'fadingAfter': _fadingAfter.inSeconds,
+        'lostAfter': _lostAfter.inSeconds,
+      };
+
+  /// Back from [saveState]. Damaged or foreign data is ignored as a whole:
+  /// false, and the store stays empty rather than half-filled.
+  bool loadState(Object? json) {
+    try {
+      if (json is! Map || json['version'] != savedVersion) return false;
+      final points = <String, List<TrackerPoint>>{};
+      for (final e in (json['points'] as Map).entries) {
+        final list = [
+          for (final p in e.value as List) _pointFromJson(p as Map),
+        ]..sort((a, b) => b.time.compareTo(a.time));
+        points[e.key as String] = list.take(pointsPerTrackerLimit).toList();
+      }
+      final waiting = <String, WaitingTracker>{
+        for (final w in json['waiting'] as List)
+          parseTrackerName((w as Map)['name'] as String).key: WaitingTracker(
+              parseTrackerName(w['name'] as String),
+              since: DateTime.fromMillisecondsSinceEpoch(w['since'] as int,
+                  isUtc: true),
+              notify: w['notify'] as bool),
+      };
+      final noFix = <String, ({String identifier, DateTime at})>{
+        for (final MapEntry(:key, :value) in (json['noFix'] as Map).entries)
+          if (value case {'identifier': String id, 'at': int at})
+            key as String: (
+              identifier: id,
+              at: DateTime.fromMillisecondsSinceEpoch(at, isUtc: true),
+            ),
+      };
+      final fading = Duration(seconds: json['fadingAfter'] as int);
+      final lost = Duration(seconds: json['lostAfter'] as int);
+      if (fading >= lost) return false;
+
+      reset();
+      _points.addAll(points);
+      _aliases.addAll((json['aliases'] as Map).cast<String, String>());
+      _waiting.addAll(waiting);
+      _hidden.addAll((json['hidden'] as List).cast<String>());
+      _noFix.addAll(noFix);
+      // their "came on air" was told before the app closed
+      _onAir.addAll(points.keys);
+      _alertNewUavs = json['alertNewUavs'] as bool;
+      _fadingAfter = fading;
+      _lostAfter = lost;
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Map<String, Object?> _pointToJson(TrackerPoint p) => {
+        'id': p.identifier,
+        'lat': p.latitude,
+        'lon': p.longitude,
+        'time': p.time.millisecondsSinceEpoch,
+        'got': p.receivedAt.millisecondsSinceEpoch,
+        'sensors': {for (final s in p.sensors) s.name: s.value},
+      };
+
+  static TrackerPoint _pointFromJson(Map<Object?, Object?> p) => TrackerPoint(
+        identifier: p['id'] as String,
+        latitude: (p['lat'] as num).toDouble(),
+        longitude: (p['lon'] as num).toDouble(),
+        time:
+            DateTime.fromMillisecondsSinceEpoch(p['time'] as int, isUtc: true),
+        receivedAt: DateTime.fromMillisecondsSinceEpoch(p['got'] as int),
+        sensors: [
+          for (final e in (p['sensors'] as Map).entries)
+            TrackerSensor(name: e.key as String, value: e.value as String),
+        ],
+      );
+
   /// "Очистить память приложения": all trackers, points, names and the
   /// waiting list; the phone stays connected to its tracker, the settings
   /// stay

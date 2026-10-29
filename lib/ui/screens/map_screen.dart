@@ -157,6 +157,8 @@ class _MapScreenState extends State<MapScreen> {
           _services.clock,
           _services.location,
           _services.compass,
+          // the tracks ticked in "След"
+          _services.settings,
         ]),
         builder: (context, _) {
           final now = _services.clock.now;
@@ -197,6 +199,7 @@ class _MapScreenState extends State<MapScreen> {
       ),
       children: [
         if (widget.withTiles) ...tileLayers(_layerType),
+        ..._tracks(entries, chosen),
         if (phoneAt != null && targetAt != null) ...[
           PolylineLayer(polylines: [
             Polyline(
@@ -235,6 +238,69 @@ class _MapScreenState extends State<MapScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  /// where each tracker went: its last points, dotted, a dot at each; the
+  /// chosen one brighter, a lost one paler
+  List<Widget> _tracks(List<TrackerEntry> entries, TrackerEntry? chosen) {
+    final polylines = <Polyline>[];
+    final circles = <CircleMarker>[];
+    for (final e in entries) {
+      if (!_services.settings.isTrackShown(e.key)) continue;
+      final points = [
+        for (final p in _services.store.pointsOf(e.key))
+          LatLng(p.latitude, p.longitude)
+      ];
+      if (points.length < 2) continue;
+      final alpha = e == chosen
+          ? 1.0
+          : e.status == TrackerStatus.lost
+              ? 0.5
+              : 0.8;
+      final color = Colors.white.withValues(alpha: alpha);
+      polylines.add(Polyline(
+          points: points,
+          color: color,
+          strokeWidth: e == chosen ? 3 : 2,
+          isDotted: true));
+      // the newest has its marker already
+      for (final p in points.skip(1)) {
+        circles.add(
+            CircleMarker(point: p, radius: e == chosen ? 4 : 3, color: color));
+      }
+    }
+    if (polylines.isEmpty) return const [];
+    return [
+      PolylineLayer(polylines: polylines),
+      CircleLayer(circles: circles),
+    ];
+  }
+
+  /// "След": which trackers' tracks are drawn
+  Future<void> _chooseTracks(BuildContext context, List<TrackerEntry> entries) {
+    final settings = _services.settings;
+    return showModalBottomSheet<void>(
+      context: context,
+      builder: (context) => ListenableBuilder(
+        listenable: settings,
+        builder: (context, _) => SafeArea(
+          child: ListView(shrinkWrap: true, children: [
+            ListTile(
+              title: Text(S.tracksTitle,
+                  style: Theme.of(context).textTheme.titleMedium),
+              subtitle: const Text(S.tracksHint),
+            ),
+            for (final e in entries)
+              CheckboxListTile(
+                title:
+                    Text(displayName(e.name, alias: e.alias, mine: e.isMine)),
+                value: settings.isTrackShown(e.key),
+                onChanged: (v) => settings.setTrackShown(e.key, v ?? true),
+              ),
+          ]),
+        ),
+      ),
     );
   }
 
@@ -283,6 +349,15 @@ class _MapScreenState extends State<MapScreen> {
                   tooltip: S.whereAmI,
                   onTap: () => _whereAmI(context),
                   child: const Icon(Icons.my_location),
+                ),
+                const SizedBox(height: AppSizes.gap),
+                _MapButton(
+                  tooltip: S.tracks,
+                  // dark while some track is drawn, as in the mockup
+                  pressed: entries
+                      .any((e) => _services.settings.isTrackShown(e.key)),
+                  onTap: () => _chooseTracks(context, entries),
+                  child: const Icon(Icons.timeline),
                 ),
               ]),
             ],

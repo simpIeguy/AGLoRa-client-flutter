@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
@@ -73,6 +74,25 @@ void main() {
     expect(find.text('Вы'), findsOneWidget, reason: 'the chip');
     expect(find.text('Вы GROUND2'), findsOneWidget, reason: 'the card');
     expect(find.textContaining('Человек 2'), findsNothing);
+  });
+
+  testWidgets('"След": all tracks drawn, one can be switched off',
+      (tester) async {
+    resetApp();
+    feed(pointMessage(
+        'UAV1', 53.900, 27.562, now.subtract(const Duration(seconds: 30)),
+        index: 10));
+    await show(tester);
+    expect(find.byType(PolylineLayer), findsOneWidget,
+        reason: 'UAV1 has two points: a track');
+
+    await tester.tap(find.byTooltip('След'));
+    await tester.pumpAndSettle();
+    expect(find.text('Чьи следы показывать'), findsOneWidget);
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'БЛА 1'));
+    await tester.pump();
+    expect(app.settings.isTrackShown('UAV1'), isFalse);
+    expect(find.byType(PolylineLayer), findsNothing);
   });
 
   testWidgets('chosen from the outside; "Где я" without GPS says so',

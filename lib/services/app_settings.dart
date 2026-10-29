@@ -3,9 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../ui/format.dart';
 import '../ui/theme.dart';
 
-/// The user's choices from the settings screen. Kept until the app closes;
-/// remembering them between launches comes with the app's memory (TZ-3,
-/// block 3).
+/// The user's choices from the settings screen and the map. [AppStorage]
+/// keeps them between launches.
 class AppSettings extends ChangeNotifier {
   AppThemeChoice _theme = AppThemeChoice.auto;
 
@@ -37,6 +36,46 @@ class AppSettings extends ChangeNotifier {
   set keepScreenOn(bool value) {
     if (_keepScreenOn == value) return;
     _keepScreenOn = value;
+    notifyListeners();
+  }
+
+  /// trackers whose track the map does not draw (decision 10: all are
+  /// drawn by default)
+  final Set<String> _hiddenTracks = {};
+
+  bool isTrackShown(String key) => !_hiddenTracks.contains(key);
+
+  void setTrackShown(String key, bool shown) {
+    final changed = shown ? _hiddenTracks.remove(key) : _hiddenTracks.add(key);
+    if (changed) notifyListeners();
+  }
+
+  static const int savedVersion = 1;
+
+  Map<String, Object?> saveState() => {
+        'version': savedVersion,
+        'theme': _theme.name,
+        'coordinates': _coordinates.name,
+        'keepScreenOn': _keepScreenOn,
+        'hiddenTracks': _hiddenTracks.toList(),
+      };
+
+  /// back from [saveState]; a value that is not understood keeps the default
+  void loadState(Object? json) {
+    if (json is! Map || json['version'] != savedVersion) return;
+    T? pick<T extends Enum>(List<T> values, Object? name) =>
+        values.where((v) => v.name == name).firstOrNull;
+    _theme = pick(AppThemeChoice.values, json['theme']) ?? _theme;
+    _coordinates =
+        pick(CoordinateFormat.values, json['coordinates']) ?? _coordinates;
+    final keep = json['keepScreenOn'];
+    if (keep is bool) _keepScreenOn = keep;
+    final hidden = json['hiddenTracks'];
+    if (hidden is List) {
+      _hiddenTracks
+        ..clear()
+        ..addAll(hidden.whereType<String>());
+    }
     notifyListeners();
   }
 }

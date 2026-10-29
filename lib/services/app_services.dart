@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
 import '../data/tracker_store.dart';
 import 'app_settings.dart';
+import 'app_storage.dart';
 import 'clock.dart';
 import 'compass_service.dart';
 import 'location_service.dart';
@@ -20,13 +23,20 @@ class AppServices {
     AppSettings? settings,
     this.openUrl = openExternally,
     this.keepScreenOn = keepPhoneScreenOn,
+    StorageBackend? storage,
   })  : settings = settings ?? AppSettings(),
         store = store ?? TrackerStore(),
         compass = compass ?? CompassService(),
         location = location ?? LocationService(),
         clock = clock ?? Clock() {
     link = TrackerLink(this.store);
+    this.storage = storage == null
+        ? null
+        : AppStorage(this.store, this.settings, backend: storage);
   }
+
+  /// the memory between launches; null in tests that do not need it
+  late final AppStorage? storage;
 
   final AppSettings settings;
   final TrackerStore store;
@@ -43,17 +53,24 @@ class AppServices {
 
   AppLifecycleListener? _lifecycle;
 
-  /// sensors and the timer; Bluetooth starts from the screens
-  void start() {
+  /// what was kept from the last launch, the sensors and the timer;
+  /// Bluetooth starts from the screens
+  Future<void> start() async {
+    await storage?.start();
     compass.start();
-    location.start();
+    unawaited(location.start());
     clock.start();
-    // back from a permission dialog or the phone's settings: the location
-    // may be allowed or switched on now
-    _lifecycle = AppLifecycleListener(onResume: location.retry);
+    _lifecycle = AppLifecycleListener(
+      // back from a permission dialog or the phone's settings: the location
+      // may be allowed or switched on now
+      onResume: location.retry,
+      // in the background Android may close the app without a word
+      onPause: () => storage?.save(),
+    );
   }
 
   void dispose() {
+    storage?.dispose();
     _lifecycle?.dispose();
     link.detach();
     compass.dispose();

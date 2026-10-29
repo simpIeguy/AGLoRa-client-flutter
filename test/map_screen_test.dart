@@ -64,6 +64,17 @@ void main() {
     expect(find.byType(TrackerScreen), findsOneWidget);
   });
 
+  testWidgets('the phone\'s own tracker is "Вы", not "Человек 2"',
+      (tester) async {
+    resetApp();
+    feed(memoryMessage('GROUND2'));
+    await show(tester, chosen: 'GROUND2');
+    expect(find.textContaining(RegExp(r'^Вы · \d+ с$')), findsOneWidget);
+    expect(find.text('Вы'), findsOneWidget, reason: 'the chip');
+    expect(find.text('Вы GROUND2'), findsOneWidget, reason: 'the card');
+    expect(find.textContaining('Человек 2'), findsNothing);
+  });
+
   testWidgets('chosen from the outside; "Где я" without GPS says so',
       (tester) async {
     resetApp();

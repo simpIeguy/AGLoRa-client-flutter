@@ -249,7 +249,27 @@ class _MapScreenState extends State<MapScreen> {
                 onTap: () => Navigator.of(context).pop(),
                 child: const Icon(Icons.arrow_back),
               ),
-              const Spacer(),
+              const SizedBox(width: AppSizes.gap),
+              // the map's sources, up here: out of the way of the card
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Text(
+                      mapAttribution(_layerType),
+                      style: const TextStyle(
+                          fontSize: AppSizes.mapAttributionText,
+                          color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSizes.gap),
               Column(children: [
                 _compassButton(),
                 const SizedBox(height: AppSizes.gap),
@@ -264,21 +284,6 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
           const Spacer(),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: AppSizes.gap),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(4)),
-              child: Text(
-                mapAttribution(_layerType),
-                style: const TextStyle(
-                    fontSize: AppSizes.mapAttributionText, color: Colors.white),
-              ),
-            ),
-          ),
           if (chosen != null)
             _Panel(entries: entries, chosen: chosen, onChoose: _choose),
         ],
@@ -463,7 +468,9 @@ class _Chip extends StatelessWidget {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               StatusDot(status: entry.status),
               const SizedBox(width: AppSizes.gap),
-              Text(displayName(entry.name, alias: entry.alias),
+              Text(
+                  displayName(entry.name,
+                      alias: entry.alias, mine: entry.isMine),
                   style: TextStyle(
                       fontFamily: AppText.sans,
                       fontSize: AppText.small,

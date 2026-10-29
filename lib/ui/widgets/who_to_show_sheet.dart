@@ -39,7 +39,8 @@ class _WhoToShowSheet extends StatelessWidget {
               for (final entry in entries)
                 CheckboxListTile(
                   secondary: Icon(roleIcon(entry.name.role)),
-                  title: Text(displayName(entry.name, alias: entry.alias)),
+                  title: Text(displayName(entry.name,
+                      alias: entry.alias, mine: entry.isMine)),
                   subtitle: Text(entry.name.raw),
                   value: !store.isHidden(entry.key) || _locked(entry),
                   onChanged: _locked(entry)

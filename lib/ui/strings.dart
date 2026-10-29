@@ -77,8 +77,7 @@ abstract final class S {
   static const String sensors = 'Датчики';
   static const String useCompass = 'Компас телефона';
   static const String copyCoordinates = 'Копировать координаты';
-  static const String fullScreenHint =
-      'Двойной тап или долгое нажатие на стрелку — полный экран';
+  static const String fullScreenHint = 'Стрелка, нажмите для полного экрана';
 
   // names: UAV1 → "БЛА 1", GROUND2 → "Человек 2"
   static const String uav = 'БЛА';

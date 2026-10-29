@@ -77,7 +77,9 @@ class _TrackerScreenState extends State<TrackerScreen> {
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: AppSizes.gap),
-          Expanded(child: TrackerTitle(name: name, alias: alias)),
+          Expanded(
+              child: TrackerTitle(
+                  name: name, alias: alias, mine: store.isConnected(_id))),
           IconButton(
             tooltip: S.rename,
             icon: const Icon(Icons.edit_outlined),
@@ -201,7 +203,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        content: Text(S.removeTrackerQuestion(displayName(name, alias: alias))),
+        content: Text(S.removeTrackerQuestion(
+            displayName(name, alias: alias, mine: store.isConnected(_id)))),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -273,7 +276,8 @@ class _MainCard extends StatelessWidget {
     );
     if (point != null) {
       final name = displayName(parseTrackerName(identifier),
-          alias: store.aliasOf(identifier));
+          alias: store.aliasOf(identifier),
+          mine: store.isConnected(identifier));
       arrow = Semantics(
         container: true,
         button: true,
@@ -435,7 +439,9 @@ class _PointRow extends StatelessWidget {
       child: Row(children: [
         Expanded(
           child: GestureDetector(
-            onLongPress: copy,
+            // a tap copies, as on the cards
+            behavior: HitTestBehavior.opaque,
+            onTap: copy,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

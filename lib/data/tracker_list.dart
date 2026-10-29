@@ -30,6 +30,9 @@ class TrackerEntry {
 
   String get key => name.key;
   bool get isUav => name.role == TrackerRole.uav;
+
+  /// the tracker the phone is connected to: the user's own
+  bool get isMine => status == TrackerStatus.connected;
 }
 
 class TrackerList {

@@ -105,7 +105,8 @@ Marker trackerMarker(TrackerEntry entry,
             decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
-            child: Text('${displayName(entry.name, alias: entry.alias)} · $age',
+            child: Text(
+                '${displayName(entry.name, alias: entry.alias, mine: entry.isMine)} · $age',
                 style: TextStyle(
                     fontFamily: AppText.sans,
                     fontSize: AppText.small,

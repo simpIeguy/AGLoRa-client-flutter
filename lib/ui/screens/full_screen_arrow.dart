@@ -89,7 +89,8 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
     final textTheme = Theme.of(context).textTheme;
     final name = parseTrackerName(id);
     final alias = store.aliasOf(id);
-    final shownName = displayName(name, alias: alias);
+    final mine = store.isConnected(id);
+    final shownName = displayName(name, alias: alias, mine: mine);
     final point = store.pointsOf(id).firstOrNull;
     final searching = store.isSearchingSatellites(id);
 
@@ -100,7 +101,7 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
     final age = heard == null ? null : formatAge(now.toUtc().difference(heard));
 
     final header = [
-      TrackerTitle(name: name, alias: alias),
+      TrackerTitle(name: name, alias: alias, mine: mine),
       Row(children: [
         StatusDot(status: status),
         const SizedBox(width: AppSizes.gap),
@@ -285,7 +286,13 @@ class _Coordinates extends StatelessWidget {
                     ?.copyWith(color: p.muted)),
           Row(children: [
             Expanded(
-              child: CoordinatesText(point.latitude, point.longitude),
+              child: GestureDetector(
+                // a tap copies, as on the cards
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    copyCoordinates(context, point.latitude, point.longitude),
+                child: CoordinatesText(point.latitude, point.longitude),
+              ),
             ),
             IconButton(
               tooltip: S.copyCoordinates,

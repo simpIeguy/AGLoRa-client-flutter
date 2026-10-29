@@ -233,7 +233,13 @@ class _OwnTracker extends StatelessWidget {
           connected,
           OutlinedButton(
             onPressed: connected
-                ? () => d.disconnect()
+                // let this tracker go and back to the search: another one
+                // can be picked there
+                ? () {
+                    d.disconnect().catchError((e) => appLog('ble: $e'));
+                    AppScope.of(context).link.detach();
+                    Navigator.of(context).maybePop();
+                  }
                 : () => d.connect().catchError((e) => appLog('ble: $e')),
             child: Text(connected ? S.disconnectMe : S.connectMe),
           ),

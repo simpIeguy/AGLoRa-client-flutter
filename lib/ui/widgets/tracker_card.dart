@@ -25,8 +25,8 @@ IconData roleIcon(TrackerRole role) => switch (role) {
 /// One tracker, as in the Main mockup: the arrow, the name, the status dot
 /// and text, the distance in large digits; the coordinates below with a copy
 /// button. The card itself is neutral: the dot and the text tell the status.
-/// A tap opens the tracker's screen, a long press on the arrow the full
-/// screen.
+/// A tap on the arrow opens the full screen, on the coordinates copies them,
+/// anywhere else opens the tracker's screen.
 class TrackerCard extends StatelessWidget {
   const TrackerCard({super.key, required this.entry, this.framed = true});
 
@@ -72,15 +72,19 @@ class TrackerCard extends StatelessWidget {
 
 /// "БЛА 1 UAV1": the name and, smaller, the name in the firmware
 class TrackerTitle extends StatelessWidget {
-  const TrackerTitle({super.key, required this.name, this.alias});
+  const TrackerTitle(
+      {super.key, required this.name, this.alias, this.mine = false});
 
   final TrackerName name;
   final String? alias;
 
+  /// "Вы GROUND1" for the phone's own tracker
+  final bool mine;
+
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final shown = displayName(name, alias: alias);
+    final shown = displayName(name, alias: alias, mine: mine);
     return Text.rich(
       TextSpan(children: [
         TextSpan(text: shown),
@@ -149,7 +153,8 @@ class _TopRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TrackerTitle(name: entry.name, alias: entry.alias),
+                TrackerTitle(
+                    name: entry.name, alias: entry.alias, mine: entry.isMine),
                 Row(children: [
                   StatusDot(status: entry.status),
                   const SizedBox(width: AppSizes.gap),
@@ -215,8 +220,9 @@ class _Arrow extends StatelessWidget {
     void open() => Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => FullScreenArrow(identifier: point.identifier)));
     return GestureDetector(
-      onLongPress: open,
-      onDoubleTap: open,
+      // a tap on the arrow, not on the rest of the card: the compass screen
+      behavior: HitTestBehavior.opaque,
+      onTap: open,
       child: Semantics(label: S.fullScreenHint, child: arrow),
     );
   }
@@ -238,9 +244,14 @@ class CoordinatesRow extends StatelessWidget {
       child: Row(children: [
         Expanded(
           child: GestureDetector(
-            // a long press on the coordinates copies them too
-            onLongPress: copy,
-            child: CoordinatesText(point.latitude, point.longitude),
+            // a tap on the coordinates copies them, as the button does; the
+            // whole strip, not only the digits
+            behavior: HitTestBehavior.opaque,
+            onTap: copy,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.padding),
+              child: CoordinatesText(point.latitude, point.longitude),
+            ),
           ),
         ),
         IconButton(

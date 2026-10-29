@@ -46,12 +46,17 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
   }
 
   /// services are discovered by the data source once connected
-  void _open(BluetoothDevice device, {bool connect = false}) {
+  Future<void> _open(BluetoothDevice device, {bool connect = false}) async {
     unawaited(FlutterBluePlus.stopScan());
     AppScope.of(context).link.attach(BleDataSource(device));
-    if (connect) device.connect().catchError((e) => appLog('ble: $e'));
-    Navigator.of(context).push(
+    if (connect) {
+      unawaited(device.connect().catchError((e) => appLog('ble: $e')));
+    }
+    await Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => TrackersScreen(device: device)));
+    // back from the trackers ("Отключиться" or the back gesture): look
+    // again, the list from before is stale
+    if (mounted) _scan();
   }
 
   @override

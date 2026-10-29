@@ -82,10 +82,9 @@ void main() {
     expect(arrowStyles(), contains(ArrowStyle.outline),
         reason: 'an inaccurate compass: an outline, the color stays');
 
-    // a long press on the arrow opens the full screen
-    final arrow = find.bySemanticsLabel(
-        'Двойной тап или долгое нажатие на стрелку — полный экран');
-    await tester.longPress(arrow);
+    // a tap on the arrow opens the full screen
+    final arrow = find.bySemanticsLabel('Стрелка, нажмите для полного экрана');
+    await tester.tap(arrow);
     await tester.pumpAndSettle();
     expect(find.byType(FullScreenArrow), findsOneWidget);
     expect(find.text('направление приблизительное · точность GPS ±6\u00A0м'),
@@ -107,7 +106,7 @@ void main() {
     await readings.close();
   });
 
-  testWidgets('tap on a card opens its screen, long press copies',
+  testWidgets('a tap on the card opens its screen, on the coordinates copies',
       (tester) async {
     String? copied;
     tester.binding.defaultBinaryMessenger
@@ -119,11 +118,13 @@ void main() {
     });
 
     await showTrackers(tester);
-    // the coordinates on the card copy with a long press
-    await tester.longPress(find.text('53.91000, 27.57000'));
+    // a tap on the coordinates copies them, not opens the tracker
+    await tester.tap(find.text('53.91000, 27.57000'));
     await tester.pump();
     expect(copied, '53.91000, 27.57000');
     expect(find.text('Скопировано: 53.91000, 27.57000'), findsOneWidget);
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(find.byType(TrackerScreen), findsNothing);
 
     await tester.tap(find.text('БЛА 1 UAV1'));
     await tester.pumpAndSettle(const Duration(milliseconds: 100));

@@ -88,17 +88,20 @@ void main() {
     await tester.longPress(arrow);
     await tester.pumpAndSettle();
     expect(find.byType(FullScreenArrow), findsOneWidget);
-    expect(find.text('азимут 0° С'), findsOneWidget);
-    expect(find.text('53.91000, 27.57000'), findsOneWidget);
-    expect(find.text('Компас неточный: помашите телефоном восьмёркой'),
+    expect(find.text('направление приблизительное · точность GPS ±6\u00A0м'),
         findsOneWidget);
+    expect(find.text('53.91000, 27.57000'), findsOneWidget);
+    expect(find.text('Компас неточный'), findsOneWidget);
+    expect(find.text('Помашите телефоном восьмёркой'), findsOneWidget);
+    expect(screenKept, [true], reason: 'the screen stays on');
 
     // a double tap goes back
-    await tester.tap(find.text('Двойной тап — выход'));
+    await tester.tap(find.text('Двойной тап — выйти'));
     await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(find.text('Двойной тап — выход'));
+    await tester.tap(find.text('Двойной тап — выйти'));
     await tester.pumpAndSettle();
     expect(find.byType(FullScreenArrow), findsNothing);
+    expect(screenKept, [true, false], reason: 'and goes dark again after');
 
     await positions.close();
     await readings.close();

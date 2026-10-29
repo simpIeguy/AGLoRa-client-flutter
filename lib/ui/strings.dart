@@ -113,7 +113,21 @@ abstract final class S {
 
   // full screen
   static const String azimuth = 'азимут';
-  static const String exitFullScreen = 'Двойной тап — выход';
+  static const String exitFullScreen = 'Двойной тап — выйти';
+  static const String toLastKnownPoint =
+      'Стрелка ведёт к последней известной точке';
+  static const String noPhoneGps = 'Нет сигнала GPS';
+  static const String noPhoneGpsHint =
+      'Выйдите на открытое место. Стрелка и расстояние появятся, когда телефон найдёт спутники.';
+  static const String noCompassHint =
+      'Направление показано так, будто верх телефона смотрит на север';
+  static const String roughDirection = 'направление приблизительное';
+  // a no-break space: "±6 м" never splits over two lines
+  static String gpsAccuracyLine(int metres) => 'точность GPS ±$metres м';
+  static const String gpsAccuracyUnknown = 'точность GPS: нет данных';
+  static const String lastPoint = 'Последняя точка';
+  static String lastPointOf(String name) => 'Последняя точка $name';
+  static String arrowTo(String name) => 'Стрелка направления на $name';
 
   // tracker screen
   static const String noPointsYet = 'Точек пока нет';

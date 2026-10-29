@@ -30,11 +30,6 @@ abstract final class AppColors {
       Colors.white.withValues(alpha: 0.7);
   static const Color mutedText = Color(0xFF616161);
 
-  /// the full-screen arrow: black saves the battery on AMOLED screens
-  static const Color amoledBackground = Colors.black;
-  static const Color amoledText = Colors.white;
-  static const Color amoledMuted = Color(0xFFB0B0B0);
-
   /// phone GPS and compass lamps
   static final Color lampGood = Colors.green.shade600;
   static final Color lampFair = Colors.amber.shade600;
@@ -79,7 +74,7 @@ abstract final class AppSizes {
   static const double buttonRadius = 12;
   static const double screenPadding = 16;
   static const double outline = 1.5;
-  static const double bigArrow = 260;
+  static const double bigArrow = 300;
   static const double lamp = 12;
   static const double mapAttributionText = 10;
 }
@@ -161,6 +156,20 @@ class AppPalette extends ThemeExtension<AppPalette> {
     green: Color(0xFFFF5A4D),
     amber: Color(0xFFFF5A4D),
     onInk: Color(0xFF0A0000),
+  );
+
+  /// the full screen in the light and dark themes: white on black reads in
+  /// the sun and saves the battery on AMOLED screens
+  static const AppPalette full = AppPalette(
+    brightness: Brightness.dark,
+    background: Color(0xFF000000),
+    card: Color(0xFF181B1E),
+    line: Color(0xFF2C3135),
+    ink: Color(0xFFFFFFFF),
+    muted: Color(0xFFAEB5BB),
+    green: Color(0xFF4ADE80),
+    amber: Color(0xFFFBBF24),
+    onInk: Color(0xFF000000),
   );
 
   static AppPalette of(BuildContext context) =>

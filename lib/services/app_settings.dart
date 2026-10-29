@@ -15,4 +15,16 @@ class AppSettings extends ChangeNotifier {
     _theme = value;
     notifyListeners();
   }
+
+  bool _keepScreenOn = true;
+
+  /// the full screen keeps the phone's screen on: searching, the phone is in
+  /// the hand, not in a pocket
+  bool get keepScreenOn => _keepScreenOn;
+
+  set keepScreenOn(bool value) {
+    if (_keepScreenOn == value) return;
+    _keepScreenOn = value;
+    notifyListeners();
+  }
 }

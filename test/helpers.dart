@@ -9,16 +9,21 @@ import 'package:tsp_tracker/ui/theme.dart';
 /// the app under test; made fresh by [resetApp] before every test
 late AppServices app;
 
+/// the screen kept on (true) or let go (false), in order
+final List<bool> screenKept = [];
+
 /// no real sensors, no timers: the tests tick the clock themselves
 void resetApp({
   Stream<PhonePosition>? positions,
   Stream<CompassReading>? compass,
   UrlOpener? openUrl,
 }) {
+  screenKept.clear();
   app = AppServices(
     location: LocationService(positions: positions ?? const Stream.empty()),
     compass: CompassService(readings: compass ?? const Stream.empty()),
     openUrl: openUrl ?? (_) async => true,
+    keepScreenOn: (on) async => screenKept.add(on),
   );
   app.compass.start();
   app.location.start();

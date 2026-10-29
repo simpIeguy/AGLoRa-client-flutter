@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tsp_tracker/protocol/tracker_name.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
+import 'package:tsp_tracker/ui/screens/full_screen_arrow.dart';
 import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
 import 'package:tsp_tracker/ui/theme.dart';
@@ -37,6 +38,42 @@ void main() {
     await _loadFont('MaterialIcons',
         ['${sdk.path}/artifacts/material_fonts/materialicons-regular.otf']);
   });
+
+  // the full screen: the link, the link lost, a poor compass, no phone GPS
+  for (final (state, lost, compass, gps) in [
+    ('full', false, 15.0, true),
+    ('full_lost', true, 15.0, true),
+    ('full_compass', false, 45.0, true),
+    ('full_nogps', false, 15.0, false),
+    ('full_night', false, 15.0, true),
+  ]) {
+    testWidgets('full screen, $state', (tester) async {
+      tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      resetApp(
+          positions: gps
+              ? Stream.value(PhonePosition(
+                  latitude: 53.8945,
+                  longitude: 27.5440,
+                  accuracy: 6,
+                  time: DateTime.now()))
+              : null,
+          compass: Stream.value(CompassReading(30, accuracy: compass)));
+      if (state == 'full_night') app.settings.theme = AppThemeChoice.night;
+      final now = DateTime.now().toUtc();
+      feed(pointMessage('UAV1', 53.90228, 27.56183,
+          now.subtract(Duration(minutes: lost ? 14 : 0, seconds: 12)),
+          index: 0));
+
+      await tester.pumpWidget(inApp(const FullScreenArrow(identifier: 'UAV1')));
+      await tester.pump();
+      await tester.pump();
+      await expectLater(find.byType(FullScreenArrow),
+          matchesGoldenFile('../build/screenshots/$state.png'));
+    });
+  }
 
   for (final theme
       in AppThemeChoice.values.where((t) => t != AppThemeChoice.auto)) {

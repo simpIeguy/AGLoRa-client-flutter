@@ -6,6 +6,7 @@ import 'clock.dart';
 import 'compass_service.dart';
 import 'location_service.dart';
 import 'map_link.dart';
+import 'screen_keeper.dart';
 import 'tracker_link.dart';
 
 /// Everything the screens need, created once in main() and passed down by
@@ -18,6 +19,7 @@ class AppServices {
     Clock? clock,
     AppSettings? settings,
     this.openUrl = openExternally,
+    this.keepScreenOn = keepPhoneScreenOn,
   })  : settings = settings ?? AppSettings(),
         store = store ?? TrackerStore(),
         compass = compass ?? CompassService(),
@@ -35,6 +37,9 @@ class AppServices {
 
   /// opens links outside the app (map apps)
   final UrlOpener openUrl;
+
+  /// the full screen keeps the phone's screen on
+  final ScreenKeeper keepScreenOn;
 
   AppLifecycleListener? _lifecycle;
 

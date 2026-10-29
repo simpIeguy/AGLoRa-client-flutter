@@ -5,7 +5,6 @@ abstract final class S {
   static const String appName = 'Поиск БЛА';
 
   // Bluetooth
-  static const String findTrackers = 'Поиск трекеров';
   static String bluetoothState(String? state) => switch (state) {
         'off' => 'Bluetooth выключен',
         'on' => 'Bluetooth включён',
@@ -28,7 +27,6 @@ abstract final class S {
       'Включите трекер и поднесите телефон ближе. Список обновится сам.';
   static const String sectionConnected = 'Подключён';
   static const String sectionOurs = 'Наши трекеры';
-  static const String sectionOtherDevices = 'Другие устройства';
   static const String bluetoothLinkOk = 'Связь по Bluetooth есть';
   static String signal(String level) => 'Сигнал $level';
   static const String signalStrong = 'сильный';
@@ -38,7 +36,6 @@ abstract final class S {
   // Bluetooth off, permissions
   static const String bluetoothOffHint =
       'Телефон связывается с трекером по Bluetooth. Включите его, и список трекеров появится сам.';
-  static const String turnOnBluetooth = 'Включить Bluetooth';
   static const String turnOn = 'Включить';
   static const String details = 'Подробнее';
   static const String noBluetoothOnPhone = 'Bluetooth недоступен';
@@ -77,13 +74,11 @@ abstract final class S {
 
   // tracker list
   static const String noTrackersYet = 'Трекеров пока нет';
-  static const String toTracker = 'на трекер';
   static const String distance = 'расстояние';
   static const String tracker = 'трекер';
   static const String coordinates = 'координаты';
   static const String map = 'Карта';
   static const String sensors = 'Датчики';
-  static const String useCompass = 'Компас телефона';
   static const String copyCoordinates = 'Копировать координаты';
   static const String fullScreenHint = 'Стрелка, нажмите для полного экрана';
 
@@ -161,7 +156,6 @@ abstract final class S {
   static const String compassGood = 'Компас точный';
   static const String compassFair = 'Компас средний';
   static const String compassBad = 'Компас неточный';
-  static const String compassOff = 'Компас выключен';
   static const String compassNone = 'Компаса нет';
   static const String figureEight = 'Помашите телефоном восьмёркой';
 
@@ -197,7 +191,6 @@ abstract final class S {
   static String metres(String v) => '$v м';
   static const String receivedByPhone = 'Принято телефоном';
   static const String gpsTime = 'Время GPS';
-  static const String lastPoints = 'Последние точки';
   static String allPoints(int n) => 'Точки: $n';
   static String copyCoordinatesAt(String time) => 'Копировать координаты $time';
   static String directionTo(String name) =>

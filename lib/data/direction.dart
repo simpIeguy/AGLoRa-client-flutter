@@ -22,14 +22,13 @@ class Direction {
   bool get isReliable => problem == DirectionProblem.none;
 }
 
-/// [useCompass] off: the arrow takes the top of the phone for north, so the
-/// compass state does not matter
+/// the arrow always turns with the compass (decision 12): without a reading
+/// or with a poor one it is not to be trusted
 Direction directionTo({
   required double latitude,
   required double longitude,
   required double? phoneLatitude,
   required double? phoneLongitude,
-  required bool useCompass,
   required bool hasCompassReading,
   double? compassAccuracy,
 }) {
@@ -42,10 +41,9 @@ Direction directionTo({
       distanceBetween(phoneLatitude, phoneLongitude, latitude, longitude);
 
   var problem = DirectionProblem.none;
-  if (useCompass && !hasCompassReading) {
+  if (!hasCompassReading) {
     problem = DirectionProblem.noCompass;
-  } else if (useCompass &&
-      compassAccuracy != null &&
+  } else if (compassAccuracy != null &&
       compassAccuracy >= compassUnreliableFrom) {
     problem = DirectionProblem.compassUnreliable;
   }

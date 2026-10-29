@@ -23,9 +23,7 @@ class SensorLamps extends StatelessWidget {
             now: services.clock.now);
         final reading = services.compass.reading;
         final compass = compassLamp(
-            useCompass: services.compass.useCompass,
-            hasReading: reading != null,
-            accuracy: reading?.accuracy);
+            hasReading: reading != null, accuracy: reading?.accuracy);
 
         final accuracy = phone?.accuracy;
         final gpsText = phone == null
@@ -33,15 +31,13 @@ class SensorLamps extends StatelessWidget {
             : accuracy == null
                 ? S.gpsNoAccuracy
                 : S.gpsAccuracy(accuracy.round());
-        final compassText = !services.compass.useCompass
-            ? S.compassOff
-            : reading == null
-                ? S.compassNone
-                : switch (compass) {
-                    LampLevel.good => S.compassGood,
-                    LampLevel.fair => S.compassFair,
-                    _ => S.compassBad,
-                  };
+        final compassText = reading == null
+            ? S.compassNone
+            : switch (compass) {
+                LampLevel.good => S.compassGood,
+                LampLevel.fair => S.compassFair,
+                LampLevel.bad => S.compassBad,
+              };
 
         return Padding(
           padding: const EdgeInsets.symmetric(
@@ -74,14 +70,14 @@ class _Lamp extends StatelessWidget {
   final String text;
 
   /// like the status dots: filled good (green) or fair (amber), an empty
-  /// ring bad or off; the word next to it says which
+  /// ring bad; the word next to it says which
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     final decoration = switch (level) {
       LampLevel.good => BoxDecoration(color: p.green, shape: BoxShape.circle),
       LampLevel.fair => BoxDecoration(color: p.amber, shape: BoxShape.circle),
-      LampLevel.bad || LampLevel.off => BoxDecoration(
+      LampLevel.bad => BoxDecoration(
           shape: BoxShape.circle, border: Border.all(color: p.muted, width: 2)),
     };
     return Row(mainAxisSize: MainAxisSize.min, children: [

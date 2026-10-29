@@ -16,7 +16,6 @@ Direction currentDirection(
     longitude: longitude,
     phoneLatitude: phone?.latitude,
     phoneLongitude: phone?.longitude,
-    useCompass: services.compass.useCompass,
     hasCompassReading: reading != null,
     compassAccuracy: reading?.accuracy,
   );

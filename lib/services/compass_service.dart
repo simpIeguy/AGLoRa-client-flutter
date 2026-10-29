@@ -15,8 +15,8 @@ class CompassReading {
   final double? accuracy;
 }
 
-/// The phone's compass. With the compass off the arrows take the top of the
-/// phone for north.
+/// The phone's compass. Without readings the arrows take the top of the
+/// phone for north (and say they are not to be trusted).
 class CompassService extends ChangeNotifier {
   /// [readings] replaces the phone's sensor in tests
   CompassService({Stream<CompassReading>? readings}) : _readings = readings;
@@ -25,21 +25,12 @@ class CompassService extends ChangeNotifier {
   StreamSubscription<CompassReading>? _subscription;
 
   CompassReading? _last;
-  bool _useCompass = true;
 
-  /// the latest reading, also while the compass is switched off
+  /// the latest reading; null until the sensor speaks
   CompassReading? get reading => _last;
 
-  bool get useCompass => _useCompass;
-
-  set useCompass(bool value) {
-    if (_useCompass == value) return;
-    _useCompass = value;
-    notifyListeners();
-  }
-
-  /// what the arrows turn by: 0 with the compass off or without readings
-  double get arrowHeading => _useCompass ? (_last?.heading ?? 0) : 0;
+  /// what the arrows turn by: 0 without readings
+  double get arrowHeading => _last?.heading ?? 0;
 
   static Stream<CompassReading>? _phoneReadings() => FlutterCompass.events
       ?.where((e) => e.heading != null)

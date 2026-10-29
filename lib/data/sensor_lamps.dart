@@ -1,5 +1,5 @@
-/// green, yellow, red, grey lamps in the header
-enum LampLevel { good, fair, bad, off }
+/// green, yellow, red lamps in the header
+enum LampLevel { good, fair, bad }
 
 /// phone GPS better than this, metres: green
 const double gpsGoodAccuracy = 15;
@@ -27,11 +27,9 @@ LampLevel gpsLamp({
 
 /// [accuracy] null when the compass gives no estimate
 LampLevel compassLamp({
-  required bool useCompass,
   required bool hasReading,
   required double? accuracy,
 }) {
-  if (!useCompass) return LampLevel.off;
   if (!hasReading) return LampLevel.bad;
   if (accuracy == null) return LampLevel.fair;
   if (accuracy <= compassGoodAccuracy) return LampLevel.good;

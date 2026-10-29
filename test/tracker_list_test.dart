@@ -309,7 +309,6 @@ void main() {
   group('arrow problems and lamps (6, 7)', () {
     Direction direction({
       double? phoneLat = 53.9,
-      bool useCompass = true,
       bool hasReading = true,
       double? accuracy = 15,
     }) =>
@@ -318,7 +317,6 @@ void main() {
           longitude: 27.5,
           phoneLatitude: phoneLat,
           phoneLongitude: phoneLat == null ? null : 27.5,
-          useCompass: useCompass,
           hasCompassReading: hasReading,
           compassAccuracy: accuracy,
         );
@@ -332,9 +330,6 @@ void main() {
       expect(direction(hasReading: false).problem, DirectionProblem.noCompass);
       expect(
           direction(accuracy: 45).problem, DirectionProblem.compassUnreliable);
-      // compass off: the top of the phone is north, nothing to distrust
-      expect(direction(useCompass: false, hasReading: false).problem,
-          DirectionProblem.none);
     });
 
     test('GPS lamp', () {
@@ -350,14 +345,13 @@ void main() {
     });
 
     test('compass lamp', () {
-      LampLevel lamp(double? a, {bool on = true, bool has = true}) =>
-          compassLamp(useCompass: on, hasReading: has, accuracy: a);
+      LampLevel lamp(double? a, {bool has = true}) =>
+          compassLamp(hasReading: has, accuracy: a);
       expect(lamp(15), LampLevel.good);
       expect(lamp(30), LampLevel.fair);
       expect(lamp(45), LampLevel.bad);
       expect(lamp(null), LampLevel.fair);
       expect(lamp(15, has: false), LampLevel.bad);
-      expect(lamp(15, on: false), LampLevel.off);
     });
   });
 }

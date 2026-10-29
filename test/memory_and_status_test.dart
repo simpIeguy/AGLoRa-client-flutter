@@ -72,15 +72,6 @@ void main() {
       expect(statusAt(const Duration(hours: 1), connected: true),
           TrackerStatus.connected);
     });
-
-    test('text stays readable on every card color', () {
-      for (final status in TrackerStatus.values) {
-        final background = AppColors.status(status);
-        final text = AppColors.readableOn(background);
-        expect(_contrast(background, text), greaterThan(3.0),
-            reason: '$status');
-      }
-    });
   });
 
   group('arrow to the tracker (V1)', () {
@@ -144,6 +135,22 @@ void main() {
       expect(formatAge(const Duration(days: 4)), '4 дн назад');
       expect(formatAge(const Duration(seconds: -5)), '0 с назад');
     });
+  });
+
+  test('text stays readable in every theme, also the full screen', () {
+    for (final p in [
+      AppPalette.light,
+      AppPalette.dark,
+      AppPalette.night,
+      AppPalette.full,
+    ]) {
+      expect(_contrast(p.ink, p.card), greaterThan(4.5), reason: '$p ink');
+      expect(_contrast(p.ink, p.background), greaterThan(4.5));
+      expect(_contrast(p.muted, p.background), greaterThan(3.0),
+          reason: '$p muted');
+      expect(_contrast(p.onInk, p.ink), greaterThan(4.5),
+          reason: 'filled buttons');
+    }
   });
 }
 

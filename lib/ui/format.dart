@@ -1,14 +1,23 @@
 import '../util/geo.dart';
 
-/// "53.902284, 27.561831": map apps understand it when pasted
+/// "53.90228, 27.56183": 5 digits are about a metre; map apps understand it
+/// when pasted
 String formatCoordinates(double latitude, double longitude) =>
-    '${latitude.toStringAsFixed(6)}, ${longitude.toStringAsFixed(6)}';
+    '${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)}';
 
-/// "850 м", "1.2 км"
-String formatDistance(double metres) {
+/// the number and the unit apart: the card shows the number large
+({String value, String unit}) distanceParts(double metres) {
   final m = metres.round();
-  if (m < 1000) return '$m м';
-  return '${(m ~/ 100 / 10).toStringAsFixed(1)} км';
+  if (m < 1000) return (value: '$m', unit: 'м');
+  // tenths below 10 km, whole kilometres further
+  final km = m < 10000 ? (m ~/ 100 / 10).toStringAsFixed(1) : '${m ~/ 1000}';
+  return (value: km.replaceAll('.', ','), unit: 'км');
+}
+
+/// "850 м", "1,2 км", "12 км"
+String formatDistance(double metres) {
+  final d = distanceParts(metres);
+  return '${d.value} ${d.unit}';
 }
 
 /// "12 с назад", "3 мин назад", "2 ч назад", "4 дн назад"
@@ -26,22 +35,17 @@ String formatClock(DateTime time) {
   return '${two(time.hour)}:${two(time.minute)}:${two(time.second)}';
 }
 
+// clockwise from north, 22.5° each
 const List<String> _compassPoints = [
-  'С',
-  'СВ',
-  'В',
-  'ЮВ',
-  'Ю',
-  'ЮЗ',
-  'З',
-  'СЗ'
+  'С', 'ССВ', 'СВ', 'ВСВ', 'В', 'ВЮВ', 'ЮВ', 'ЮЮВ', //
+  'Ю', 'ЮЮЗ', 'ЮЗ', 'ЗЮЗ', 'З', 'ЗСЗ', 'СЗ', 'ССЗ',
 ];
 
-/// 8-point compass name of a direction in degrees
-String compassPoint(num degrees) =>
-    _compassPoints[((normalizeDegrees(degrees.toDouble()) + 22.5) ~/ 45) % 8];
+/// 16-point compass name of a direction in degrees, "ВСВ"
+String compassPoint(num degrees) => _compassPoints[
+    ((normalizeDegrees(degrees.toDouble()) + 11.25) ~/ 22.5) % 16];
 
-/// "45° СВ"
+/// "79° ВСВ"
 String formatBearing(double bearing) {
   final degrees = normalizeDegrees(bearing).round() % 360;
   return '$degrees° ${compassPoint(degrees)}';

@@ -44,9 +44,9 @@ void main() {
       expect(store.pointsOf('T').map((p) => p.time.minute), [1, 0, 59]);
     });
 
-    test('copied coordinates look like 53.902284, 27.561831', () {
-      expect(formatCoordinates(53.902284, 27.561831), '53.902284, 27.561831');
-      expect(formatCoordinates(-0.5, 7), '-0.500000, 7.000000');
+    test('copied coordinates look like 53.90228, 27.56183', () {
+      expect(formatCoordinates(53.902284, 27.561831), '53.90228, 27.56183');
+      expect(formatCoordinates(-0.5, 7), '-0.50000, 7.00000');
     });
   });
 
@@ -100,9 +100,14 @@ void main() {
 
     test('compass points', () {
       expect(compassPoint(0), 'С');
-      expect(compassPoint(79), 'В');
+      expect(compassPoint(70), 'ВСВ');
+      expect(compassPoint(79), 'В', reason: 'ВСВ ends at 78.75');
       expect(compassPoint(-100), 'З');
       expect(compassPoint(350), 'С');
+      expect(compassPoint(344), 'ССЗ');
+      expect(compassPoint(11.24), 'С');
+      expect(compassPoint(11.25), 'ССВ');
+      expect(compassPoint(212), 'ЮЮЗ');
       expect(normalizeDegrees(-90), 270);
       expect(formatBearing(-45), '315° СЗ');
     });
@@ -125,8 +130,11 @@ void main() {
     test('distance text', () {
       expect(formatDistance(0), '0 м');
       expect(formatDistance(999.4), '999 м');
-      expect(formatDistance(1000), '1.0 км');
-      expect(formatDistance(12345), '12.3 км');
+      expect(formatDistance(1000), '1,0 км');
+      expect(formatDistance(1249), '1,2 км');
+      expect(formatDistance(9999), '9,9 км');
+      expect(formatDistance(12345), '12 км');
+      expect(distanceParts(5800), (value: '5,8', unit: 'км'));
     });
 
     test('age text', () {

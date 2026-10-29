@@ -79,7 +79,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('1.1 км'), findsOneWidget);
+    expect(find.text('1,1 км'), findsOneWidget);
     expect(find.text('на трекер 0° С'), findsOneWidget);
     expect(find.text('GPS ±6 м'), findsOneWidget);
     expect(find.text('Компас точный'), findsOneWidget);
@@ -99,7 +99,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(FullScreenArrow), findsOneWidget);
     expect(find.text('азимут 0° С'), findsOneWidget);
-    expect(find.text('53.910000, 27.570000'), findsOneWidget);
+    expect(find.text('53.91000, 27.57000'), findsOneWidget);
     expect(find.text('Компас неточный: помашите телефоном восьмёркой'),
         findsOneWidget);
 
@@ -126,9 +126,9 @@ void main() {
 
     await showTrackers(tester);
     // the coordinates on the card copy with a long press
-    await tester.longPress(find.text('53.910000, 27.570000'));
+    await tester.longPress(find.text('53.91000, 27.57000'));
     await tester.pump();
-    expect(copied, '53.910000, 27.570000');
+    expect(copied, '53.91000, 27.57000');
     expect(find.text('Скопировано'), findsOneWidget);
 
     await tester.tap(find.textContaining('Человек 1'));
@@ -136,9 +136,9 @@ void main() {
     expect(find.byType(TrackerLogScreen), findsOneWidget);
     expect(find.text('Лог: Человек 1'), findsOneWidget);
 
-    await tester.longPress(find.text('53.902284, 27.561831'));
+    await tester.longPress(find.text('53.90228, 27.56183'));
     await tester.pump();
-    expect(copied, '53.902284, 27.561831');
+    expect(copied, '53.90228, 27.56183');
   });
 
   testWidgets('the screen redraws when a point comes', (tester) async {
@@ -209,8 +209,8 @@ void main() {
     final now = DateTime.now().toUtc();
     feed(pointMessage('UAV2', 53.9, 27.5, now, index: 0));
     await tester.pumpAndSettle();
-    expect(find.text('БЛА 2 вышел на связь\n53.900000, 27.500000'),
-        findsOneWidget);
+    expect(
+        find.text('БЛА 2 вышел на связь\n53.90000, 27.50000'), findsOneWidget);
 
     await tester.tap(find.text('Закрыть'));
     await tester.pumpAndSettle();

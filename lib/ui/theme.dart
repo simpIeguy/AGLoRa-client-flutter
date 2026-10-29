@@ -195,6 +195,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
 /// The three text sizes of the design: large numbers, main text, small
 /// text (the full screen uses [AppText.huge] instead of [AppText.large]).
 abstract final class AppText {
+  static const String sans = 'IBM Plex Sans';
+
+  /// coordinates and technical names (UAV1): digits of equal width
+  static const String mono = 'IBM Plex Mono';
+
   static const double huge = 80;
   static const double large = 32;
   static const double main = 17;
@@ -225,6 +230,7 @@ ThemeData buildAppTheme([AppPalette palette = AppPalette.light]) {
   );
   return ThemeData(
     colorScheme: scheme,
+    fontFamily: AppText.sans,
     scaffoldBackgroundColor: palette.background,
     extensions: [palette],
     textTheme: const TextTheme(

@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import 'demo/demo_runner.dart';
@@ -14,6 +16,11 @@ void main() {
   // the compass and GPS talk to Android through the binding: without it they
   // fail silently and the app shows "no phone GPS" and no compass
   WidgetsFlutterBinding.ensureInitialized();
+  // the IBM Plex fonts come with their license (SIL Open Font License)
+  LicenseRegistry.addLicense(() async* {
+    final text = await rootBundle.loadString('assets/fonts/OFL.txt');
+    yield LicenseEntryWithLineBreaks(const ['IBM Plex'], text);
+  });
   final services = AppServices()..start();
   runApp(AppScope(services: services, child: TrackerApp()));
 }

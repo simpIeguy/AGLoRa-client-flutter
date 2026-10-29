@@ -70,14 +70,33 @@ abstract final class S {
 
   // waiting for a tracker
   static const String waitTracker = 'Ждать трекер';
-  static const String waitNameHint = 'Имя трекера: uav1, UAV 1, ground2…';
-  static String recognized(String key, String name) =>
-      'Распознано: $key → $name';
+  static const String trackerName = 'Имя трекера';
+  static const String waitNameHint =
+      'Например uav1, UAV 1, ground2, или выберите ниже';
   static const String notRecognized =
       'Не похоже на имя трекера. Нужно UAV или GROUND и номер, например UAV1';
   static const String alreadyInList = 'Этот трекер уже в списке';
-  static const String aliasOptional = 'Своё название (необязательно)';
-  static const String add = 'Добавить';
+  static String chosen(List<String> keys) => 'Выбрано: ${keys.join(', ')}';
+  static const String aliasOptional = 'Название (необязательно)';
+  static const String aliasExample = 'Красный самолёт';
+  static const String aliasOnlyForOne =
+      'Название можно дать, когда выбран один трекер';
+  static const String notifyWhenOnAir = 'Уведомить, когда появится';
+  static String waitFor(String name) => 'Ждать $name';
+
+  /// "Ждать 3 трекера", "Ждать 5 трекеров", "Ждать 21 трекер"
+  static String waitForCount(int n) {
+    final tens = n % 100, ones = n % 10;
+    final word = tens >= 11 && tens <= 14
+        ? 'трекеров'
+        : ones == 1
+            ? 'трекер'
+            : ones >= 2 && ones <= 4
+                ? 'трекера'
+                : 'трекеров';
+    return 'Ждать $n $word';
+  }
+
   static const String cancel = 'Отмена';
   static const String remove = 'Убрать';
 

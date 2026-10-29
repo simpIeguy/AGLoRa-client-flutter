@@ -4,10 +4,11 @@ import 'package:tsp_tracker/data/sensor_lamps.dart';
 import 'package:tsp_tracker/data/tracker_list.dart';
 import 'package:tsp_tracker/data/tracker_status.dart';
 import 'package:tsp_tracker/data/tracker_store.dart';
+import 'package:tsp_tracker/data/wait_names.dart';
 import 'package:tsp_tracker/protocol/tracker_name.dart';
 import 'package:tsp_tracker/protocol/tracker_point.dart';
 import 'package:tsp_tracker/ui/names.dart';
-import 'package:tsp_tracker/ui/widgets/wait_tracker_dialog.dart';
+import 'package:tsp_tracker/ui/strings.dart';
 
 final DateTime now = DateTime.utc(2026, 10, 28, 12);
 
@@ -120,14 +121,35 @@ void main() {
   });
 
   group('waiting and the first signal (4)', () {
-    test('the input is recognized or explained', () {
-      bool none(String _) => false;
-      expect(waitInputHint('uav1', none), 'Распознано: UAV1 → БЛА 1');
-      expect(waitInputHint('Uav-1', none), 'Распознано: UAV1 → БЛА 1');
-      expect(waitInputHint('ground2', none), 'Распознано: GROUND2 → Человек 2');
-      expect(waitInputHint('hello', none), startsWith('Не похоже'));
-      expect(waitInputHint('UAV1', (k) => k == 'UAV1'),
-          'Этот трекер уже в списке');
+    test('quick picks: the taken ones in a row, then the first free', () {
+      final taken = {'UAV1', 'UAV2', 'UAV3', 'GROUND1', 'GROUND2'};
+      final quick = quickWaitNames(taken.contains);
+      expect(quick.map((q) => q.key), [
+        'UAV1', 'UAV2', 'UAV3', 'UAV4', 'UAV5', //
+        'GROUND1', 'GROUND2', 'GROUND3',
+      ]);
+      expect(quick.where((q) => q.taken).length, 5);
+      // a gap is a free name too
+      expect(quickWaitNames({'UAV2'}.contains).map((q) => q.key),
+          ['UAV1', 'UAV2', 'UAV3', 'GROUND1']);
+    });
+
+    test('"Ждать 3 трекера": the Russian plural', () {
+      expect(S.waitForCount(2), 'Ждать 2 трекера');
+      expect(S.waitForCount(5), 'Ждать 5 трекеров');
+      expect(S.waitForCount(11), 'Ждать 11 трекеров');
+      expect(S.waitForCount(21), 'Ждать 21 трекер');
+    });
+
+    test('waited silently: no alert, not even as a new UAV', () async {
+      final store = TrackerStore(now: () => now)
+        ..addWaiting(parseTrackerName('UAV4'), notify: false);
+      final signals = <FirstSignal>[];
+      store.firstSignals.listen(signals.add);
+      store.addPoint(at('UAV4', Duration.zero));
+      await Future<void>.delayed(Duration.zero);
+      expect(signals, isEmpty);
+      expect(store.waiting, isEmpty, reason: 'it is in the list now');
     });
 
     test('a waited tracker alerts once, then is an ordinary one', () async {

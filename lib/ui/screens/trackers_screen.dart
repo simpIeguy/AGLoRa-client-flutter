@@ -9,10 +9,10 @@ import '../strings.dart';
 import '../theme.dart';
 import '../widgets/sensor_lamps.dart';
 import '../widgets/tracker_card.dart';
-import '../widgets/wait_tracker_dialog.dart';
 import '../widgets/who_to_show_sheet.dart';
 import 'map_screen.dart';
 import 'settings_screen.dart';
+import 'wait_tracker_screen.dart';
 
 /// The main screen (the Main mockup): the phone's GPS and compass, "you"
 /// (the tracker the phone is connected to), then the UAVs, the people and
@@ -264,7 +264,8 @@ class _BottomBar extends StatelessWidget {
                   minimumSize: const Size.fromHeight(AppSizes.bigButton)),
               icon: const Icon(Icons.add),
               label: const Text(S.waitTracker),
-              onPressed: () => showWaitTrackerDialog(context),
+              onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WaitTrackerScreen())),
             ),
           ),
           const SizedBox(width: AppSizes.gap),

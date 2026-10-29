@@ -8,10 +8,13 @@ import 'tracker_status.dart';
 
 /// a tracker the user waits for: shown before its first point
 class WaitingTracker {
-  const WaitingTracker(this.name, {required this.since});
+  const WaitingTracker(this.name, {required this.since, this.notify = true});
 
   final TrackerName name;
   final DateTime since;
+
+  /// false: waited for silently, no "came on air" alert
+  final bool notify;
 }
 
 /// the first point of a tracker: the app tells the user once
@@ -45,8 +48,9 @@ class TrackerStore extends ChangeNotifier {
   /// trackers that already had their "came on air" moment
   final Set<String> _onAir = {};
 
-  /// waited trackers whose points so far were only old ones
-  final Set<String> _waitedFor = {};
+  /// waited trackers whose points so far were only old ones → whether to
+  /// alert when a fresh one comes
+  final Map<String, bool> _waitedFor = {};
 
   /// key → the last message without a GPS fix: the name as sent and the
   /// phone's time (UTC), the tracker's own time is cleared in such messages
@@ -104,7 +108,7 @@ class TrackerStore extends ChangeNotifier {
     }
 
     // with a point it is a tracker in the list, no longer a stub
-    if (_waiting.remove(key) != null) _waitedFor.add(key);
+    _stopWaiting(key);
     _checkOnAir(key, point);
     notifyListeners();
     return true;
@@ -117,8 +121,10 @@ class TrackerStore extends ChangeNotifier {
     if (_onAir.contains(key)) return;
     if (_now().toUtc().difference(point.time) >= trackerLostTimeout) return;
     _onAir.add(key);
-    if (_waitedFor.remove(key)) {
-      _firstSignals.add(FirstSignal(point, wasWaited: true));
+    final waited = _waitedFor.remove(key);
+    if (waited != null) {
+      // waited silently: no alert, not even as a new UAV
+      if (waited) _firstSignals.add(FirstSignal(point, wasWaited: true));
     } else if (_alertNewUavs &&
         parseTrackerName(point.identifier).role == TrackerRole.uav) {
       _firstSignals.add(FirstSignal(point, wasWaited: false));
@@ -131,8 +137,13 @@ class TrackerStore extends ChangeNotifier {
     final key = trackerKey(identifier);
     _noFix[key] = (identifier: identifier, at: _now().toUtc());
     // on air: no longer a stub; the alert waits for the first fix
-    if (_waiting.remove(key) != null) _waitedFor.add(key);
+    _stopWaiting(key);
     notifyListeners();
+  }
+
+  void _stopWaiting(String key) {
+    final waited = _waiting.remove(key);
+    if (waited != null) _waitedFor[key] = waited.notify;
   }
 
   /// the newest of the last point's GPS time and the last message without
@@ -204,10 +215,12 @@ class TrackerStore extends ChangeNotifier {
   }
 
   /// false when the tracker is already in the list or waited for
-  bool addWaiting(TrackerName name, {String? alias, DateTime? since}) {
+  /// [notify]: alert when it comes on air (the screen's switch, off there)
+  bool addWaiting(TrackerName name,
+      {String? alias, DateTime? since, bool notify = true}) {
     if (isKnown(name.key)) return false;
-    _waiting[name.key] =
-        WaitingTracker(name, since: since ?? DateTime.now().toUtc());
+    _waiting[name.key] = WaitingTracker(name,
+        since: since ?? DateTime.now().toUtc(), notify: notify);
     if (alias != null && alias.trim().isNotEmpty) {
       _aliases[name.key] = alias.trim();
     }

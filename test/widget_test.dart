@@ -147,8 +147,8 @@ void main() {
 
     await tester.enterText(find.byType(TextField).first, 'uav-3');
     await tester.pump();
-    expect(find.text('Распознано: UAV3 → БЛА 3'), findsOneWidget);
-    await tester.tap(find.text('Добавить'));
+    expect(find.text('БЛА 3 UAV3'), findsOneWidget, reason: 'recognized');
+    await tester.tap(find.text('Ждать БЛА 3'));
     await tester.pumpAndSettle();
 
     expect(find.text('Ждём первый сигнал'), findsOneWidget);

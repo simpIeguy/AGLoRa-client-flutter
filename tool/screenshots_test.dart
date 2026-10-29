@@ -12,6 +12,7 @@ import 'package:tsp_tracker/services/location_service.dart';
 import 'package:tsp_tracker/ui/screens/full_screen_arrow.dart';
 import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
+import 'package:tsp_tracker/ui/screens/wait_tracker_screen.dart';
 import 'package:tsp_tracker/ui/theme.dart';
 
 import '../test/helpers.dart';
@@ -72,6 +73,26 @@ void main() {
       await tester.pump();
       await expectLater(find.byType(FullScreenArrow),
           matchesGoldenFile('../build/screenshots/$state.png'));
+    });
+  }
+
+  for (final theme in [AppThemeChoice.light, AppThemeChoice.dark]) {
+    testWidgets('wait screen, ${theme.name}', (tester) async {
+      tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      resetApp();
+      app.settings.theme = theme;
+      final now = DateTime.now().toUtc();
+      for (final name in ['UAV1', 'UAV2', 'UAV3', 'GROUND1', 'GROUND2']) {
+        feed(pointMessage(name, 53.9, 27.5, now, index: 0));
+      }
+      await tester.pumpWidget(inApp(const WaitTrackerScreen()));
+      await tester.tap(find.text('UAV4'));
+      await tester.pumpAndSettle();
+      await expectLater(find.byType(WaitTrackerScreen),
+          matchesGoldenFile('../build/screenshots/wait_${theme.name}.png'));
     });
   }
 

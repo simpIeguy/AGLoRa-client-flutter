@@ -264,7 +264,7 @@ class _WaitingStub extends StatelessWidget {
     final p = AppPalette.of(context);
     final name = displayName(entry.name, alias: entry.alias);
     return CustomPaint(
-      painter: _DashedFrame(p.muted),
+      painter: DashedFrame(p.muted),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 72),
         child: Padding(
@@ -300,16 +300,18 @@ class _WaitingStub extends StatelessWidget {
   }
 }
 
-class _DashedFrame extends CustomPainter {
-  _DashedFrame(this.color);
+/// a dashed rounded frame: a tracker not heard yet, a name already taken
+class DashedFrame extends CustomPainter {
+  DashedFrame(this.color, {this.radius = AppSizes.cardRadius});
 
   final Color color;
+  final double radius;
 
   @override
   void paint(Canvas canvas, Size size) {
     final frame = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-          Offset.zero & size, const Radius.circular(AppSizes.cardRadius)));
+      ..addRRect(
+          RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius)));
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
@@ -323,5 +325,6 @@ class _DashedFrame extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DashedFrame old) => old.color != color;
+  bool shouldRepaint(DashedFrame old) =>
+      old.color != color || old.radius != radius;
 }

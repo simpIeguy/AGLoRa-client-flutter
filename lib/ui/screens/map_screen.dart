@@ -32,7 +32,7 @@ class MapScreen extends StatefulWidget {
     required this.centerLatitude,
     required this.centerLongitude,
     this.chosen,
-    @visibleForTesting this.withTiles = true,
+    this.withTiles = true,
   });
 
   final double centerLatitude;
@@ -41,7 +41,7 @@ class MapScreen extends StatefulWidget {
   /// the tracker to show first; the most important one when null
   final String? chosen;
 
-  /// false in tests: no tiles from the internet
+  /// false in tests and screen pictures: no tiles from the internet
   final bool withTiles;
 
   @override

@@ -115,20 +115,33 @@ abstract final class S {
   static const String azimuth = 'азимут';
   static const String exitFullScreen = 'Двойной тап — выход';
 
-  // log
-  static String logTitle(String name) => 'Лог: $name';
+  // tracker screen
   static const String noPointsYet = 'Точек пока нет';
   static const String openInMaps = 'Открыть в картах';
   static const String cannotOpenMaps =
       'Не удалось открыть карты на этом телефоне';
   static const String copied = 'Скопировано';
-  static String received(String clock, String age) => 'Принято $clock, $age';
-  static String gpsTime(String clock) => 'GPS-время $clock';
-  static String altitude(String v) => 'высота $v м';
-  static String speed(String v) => 'скорость $v';
-  static String satellites(String v) => 'спутники $v';
-  static const String gpsOk = 'GPS ок';
-  static const String gpsNo = 'GPS нет';
+  static const String trackerState = 'Состояние трекера';
+  static const String trackerGps = 'GPS трекера';
+  static const String gpsValid = 'Координаты верные';
+  static const String satellites = 'Спутники';
+  static const String altitude = 'Высота';
+  static String metres(String v) => '$v м';
+  static const String receivedByPhone = 'Принято телефоном';
+  static const String gpsTime = 'Время GPS';
+  static const String lastPoints = 'Последние точки';
+  static String allPoints(int n) => 'Все точки: $n';
+  static String copyCoordinatesAt(String time) => 'Копировать координаты $time';
+  static String directionTo(String name) =>
+      'Направление на $name, нажмите для полного экрана';
+  static const String rename = 'Переименовать';
+  static const String trackerTitle = 'Название трекера';
+  static String renameHint(String raw) => 'Пусто — будет имя из прошивки, $raw';
+  static const String save = 'Сохранить';
+  static const String removeTracker = 'Удалить трекер из списка';
+  static String removeTrackerQuestion(String name) =>
+      'Удалить $name и все его точки? Если трекер на связи, он появится снова.';
+  static const String delete = 'Удалить';
 
   // map
   static const String back = 'Назад';

@@ -9,7 +9,7 @@ import '../../services/app_services.dart';
 import '../format.dart';
 import '../names.dart';
 import '../screens/full_screen_arrow.dart';
-import '../screens/tracker_log_screen.dart';
+import '../screens/tracker_screen.dart';
 import '../strings.dart';
 import '../theme.dart';
 import 'direction_arrow.dart';
@@ -45,11 +45,10 @@ class TrackerCard extends StatelessWidget {
           side: BorderSide(color: p.line)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: point == null
-            ? null
-            : () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) =>
-                    TrackerLogScreen(identifier: point.identifier))),
+        // also without a fix: the screen tells what the tracker sends
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => TrackerScreen(
+                identifier: point?.identifier ?? entry.name.raw))),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(AppSizes.screenPadding,
               AppSizes.padding, AppSizes.gap, AppSizes.gap),
@@ -57,7 +56,7 @@ class TrackerCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _TopRow(entry: entry),
-              if (point != null) _CoordinatesRow(point: point),
+              if (point != null) CoordinatesRow(point: point),
             ],
           ),
         ),
@@ -97,6 +96,22 @@ class TrackerTitle extends StatelessWidget {
   }
 }
 
+/// under the status: "12 с назад", "14 мин, последняя точка" or
+/// "12 с назад · Трекер ищет спутники"
+String heardLine(
+    {required Duration? since,
+    required bool lost,
+    required bool searching,
+    required bool hasPoint}) {
+  if (since == null) return '';
+  final age = formatAge(since);
+  if (searching) {
+    return '$age · ${hasPoint ? S.noFixLastGoodPoint : S.searchingSatellites}';
+  }
+  // "14 мин, последняя точка", as in the mockup
+  return lost ? S.lostAge(formatDuration(since)) : age;
+}
+
 class _TopRow extends StatelessWidget {
   const _TopRow({required this.entry});
 
@@ -119,7 +134,6 @@ class _TopRow extends StatelessWidget {
         final heard = entry.lastHeard;
         final since =
             heard == null ? null : services.clock.now.toUtc().difference(heard);
-        final age = since == null ? '' : formatAge(since);
         final distance = direction?.distance;
         final parts = distance == null ? null : distanceParts(distance);
 
@@ -143,12 +157,11 @@ class _TopRow extends StatelessWidget {
                   padding:
                       const EdgeInsets.only(left: AppSizes.lamp + AppSizes.gap),
                   child: Text(
-                      entry.searchingSatellites
-                          ? '$age · ${point == null ? S.searchingSatellites : S.noFixLastGoodPoint}'
-                          : lost && since != null
-                              // "14 мин, последняя точка", as in the mockup
-                              ? S.lostAge(formatDuration(since))
-                              : age,
+                      heardLine(
+                          since: since,
+                          lost: lost,
+                          searching: entry.searchingSatellites,
+                          hasPoint: point != null),
                       style: textTheme.bodyMedium?.copyWith(color: p.muted)),
                 ),
               ],
@@ -204,8 +217,9 @@ class _Arrow extends StatelessWidget {
   }
 }
 
-class _CoordinatesRow extends StatelessWidget {
-  const _CoordinatesRow({required this.point});
+/// "53.90228, 27.56183" and a copy button, under a line
+class CoordinatesRow extends StatelessWidget {
+  const CoordinatesRow({super.key, required this.point});
 
   final TrackerPoint point;
 

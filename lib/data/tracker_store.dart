@@ -230,6 +230,24 @@ class TrackerStore extends ChangeNotifier {
     if (changed) notifyListeners();
   }
 
+  /// forget one tracker: its points, name and the rest; if it is still on
+  /// air it comes back as a new one
+  void removeTracker(String identifier) {
+    final key = trackerKey(identifier);
+    _points.remove(key);
+    _aliases.remove(key);
+    _waiting.remove(key);
+    _hidden.remove(key);
+    _onAir.remove(key);
+    _waitedFor.remove(key);
+    _noFix.remove(key);
+    notifyListeners();
+  }
+
+  /// the phone's time (UTC) of the last message without a GPS fix
+  DateTime? heardWithoutFixAt(String identifier) =>
+      _noFix[trackerKey(identifier)]?.at;
+
   /// forget everything: before a demo run and between tests
   void reset() {
     _points.clear();

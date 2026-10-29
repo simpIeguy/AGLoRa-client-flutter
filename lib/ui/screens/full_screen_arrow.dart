@@ -9,7 +9,7 @@ import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
 import '../widgets/direction_arrow.dart';
-import 'tracker_log_screen.dart';
+import 'tracker_screen.dart';
 
 /// A big arrow to the tracker on a black screen: readable in the sun,
 /// cheap on AMOLED batteries. A double tap goes back.

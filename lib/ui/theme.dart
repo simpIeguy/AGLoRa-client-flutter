@@ -71,6 +71,9 @@ abstract final class AppSizes {
   static const double cardRadius = 16;
   static const double cardArrow = 56;
 
+  /// the arrow on the tracker's screen
+  static const double trackerArrow = 96;
+
   /// the bottom bar buttons: larger than the rest, used most
   static const double bigButton = 56;
   static const double buttonRadius = 12;

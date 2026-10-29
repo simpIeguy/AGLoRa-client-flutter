@@ -7,7 +7,7 @@ import 'package:tsp_tracker/protocol/tracker_name.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
 import 'package:tsp_tracker/ui/screens/full_screen_arrow.dart';
-import 'package:tsp_tracker/ui/screens/tracker_log_screen.dart';
+import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
 import 'package:tsp_tracker/ui/theme.dart';
 import 'package:tsp_tracker/ui/widgets/direction_arrow.dart';
@@ -104,7 +104,8 @@ void main() {
     await readings.close();
   });
 
-  testWidgets('tap on a card opens its log, long press copies', (tester) async {
+  testWidgets('tap on a card opens its screen, long press copies',
+      (tester) async {
     String? copied;
     tester.binding.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
@@ -123,8 +124,8 @@ void main() {
 
     await tester.tap(find.text('БЛА 1 UAV1'));
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
-    expect(find.byType(TrackerLogScreen), findsOneWidget);
-    expect(find.text('Лог: БЛА 1'), findsOneWidget);
+    expect(find.byType(TrackerScreen), findsOneWidget);
+    expect(find.text('Состояние трекера'), findsOneWidget);
   });
 
   testWidgets('the screen redraws when a point comes', (tester) async {

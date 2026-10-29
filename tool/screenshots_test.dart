@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tsp_tracker/protocol/tracker_name.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
+import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
 import 'package:tsp_tracker/ui/theme.dart';
 
@@ -75,6 +76,33 @@ void main() {
       await tester.pump();
       await expectLater(find.byType(TrackersScreen),
           matchesGoldenFile('../build/screenshots/main_${theme.name}.png'));
+    });
+
+    testWidgets('tracker screen, ${theme.name}', (tester) async {
+      tester.view.physicalSize = const Size(390 * 3, 1120 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      resetApp(
+          positions: Stream.value(PhonePosition(
+              latitude: 53.8945,
+              longitude: 27.5440,
+              accuracy: 6,
+              time: DateTime.now())),
+          compass: Stream.value(const CompassReading(30, accuracy: 15)));
+      app.settings.theme = theme;
+      final now = DateTime.now().toUtc();
+      for (int i = 7; i >= 0; i--) {
+        feed(pointMessage('UAV1', 53.90228 - i * 0.0004, 27.56183 - i * 0.0011,
+            now.subtract(Duration(seconds: 12 + 30 * i)),
+            index: 7 - i, alt: 142.3));
+      }
+
+      await tester.pumpWidget(inApp(const TrackerScreen(identifier: 'UAV1')));
+      await tester.pump();
+      await tester.pump();
+      await expectLater(find.byType(TrackerScreen),
+          matchesGoldenFile('../build/screenshots/tracker_${theme.name}.png'));
     });
   }
 }

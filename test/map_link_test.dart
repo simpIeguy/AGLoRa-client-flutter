@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsp_tracker/services/map_link.dart';
-import 'package:tsp_tracker/ui/screens/tracker_log_screen.dart';
+import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 
 import 'helpers.dart';
 
@@ -41,7 +41,7 @@ void main() {
     });
   });
 
-  group('"Открыть в картах" on the log screen', () {
+  group('"Открыть в картах" on the tracker screen', () {
     final now = DateTime.now().toUtc();
 
     Future<void> showLog(WidgetTester tester, UrlOpener open) async {
@@ -51,7 +51,7 @@ void main() {
           index: 0));
       feed(pointMessage('Tracker2', 53.902284, 27.561831, now, index: 1));
       await tester
-          .pumpWidget(inApp(const TrackerLogScreen(identifier: 'Tracker2')));
+          .pumpWidget(inApp(const TrackerScreen(identifier: 'Tracker2')));
       await tester.pump();
     }
 
@@ -83,8 +83,7 @@ void main() {
 
     testWidgets('no button without points', (tester) async {
       resetApp();
-      await tester
-          .pumpWidget(inApp(const TrackerLogScreen(identifier: 'Nobody')));
+      await tester.pumpWidget(inApp(const TrackerScreen(identifier: 'Nobody')));
       expect(find.text('Открыть в картах'), findsNothing);
       expect(find.text('Точек пока нет'), findsOneWidget);
     });

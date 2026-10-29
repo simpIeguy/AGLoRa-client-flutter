@@ -188,6 +188,27 @@ void main() {
       expect(store.isKnown('GROUND5'), isFalse);
     });
 
+    test('one tracker removed: the rest stay, it can come back', () async {
+      final store = TrackerStore(now: () => now)
+        ..addPoint(at('UAV1', Duration.zero))
+        ..addPoint(at('UAV2', Duration.zero))
+        ..setAlias('UAV1', 'Первый')
+        ..heardWithoutFix('UAV1');
+      final signals = <FirstSignal>[];
+      store.firstSignals.listen(signals.add);
+
+      store.removeTracker('uav 1');
+      expect(store.pointsOf('UAV1'), isEmpty);
+      expect(store.aliasOf('UAV1'), isNull);
+      expect(store.isKnown('UAV1'), isFalse);
+      expect(store.pointsOf('UAV2'), hasLength(1));
+
+      // still on air: a new tracker again, with its "came on air"
+      store.addPoint(at('UAV1', const Duration(seconds: -5)));
+      await Future<void>.delayed(Duration.zero);
+      expect(signals.map((s) => s.point.identifier), ['UAV1']);
+    });
+
     test('any new UAV alerts by default; it can be switched off', () async {
       final store = TrackerStore(now: () => now);
       final signals = <FirstSignal>[];

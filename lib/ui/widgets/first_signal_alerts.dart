@@ -8,7 +8,7 @@ import '../../protocol/tracker_name.dart';
 import '../../services/app_services.dart';
 import '../format.dart';
 import '../names.dart';
-import '../screens/tracker_log_screen.dart';
+import '../screens/tracker_screen.dart';
 import '../strings.dart';
 
 /// "БЛА 1 вышел на связь": once per tracker, with a sound and a vibration.
@@ -68,8 +68,7 @@ class _FirstSignalAlertsState extends State<FirstSignalAlerts> {
             onPressed: () {
               close();
               widget.navigatorKey.currentState?.push(MaterialPageRoute(
-                  builder: (_) =>
-                      TrackerLogScreen(identifier: point.identifier)));
+                  builder: (_) => TrackerScreen(identifier: point.identifier)));
             },
             child: const Text(S.open),
           ),

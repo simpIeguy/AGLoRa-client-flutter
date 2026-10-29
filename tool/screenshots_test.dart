@@ -11,7 +11,6 @@ import 'package:tsp_tracker/data/scan_list.dart';
 import 'package:tsp_tracker/protocol/tracker_name.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
-import 'package:tsp_tracker/ui/screens/bluetooth_off_screen.dart';
 import 'package:tsp_tracker/ui/screens/find_devices_screen.dart';
 import 'package:tsp_tracker/ui/screens/full_screen_arrow.dart';
 import 'package:tsp_tracker/ui/screens/map_screen.dart';
@@ -103,10 +102,6 @@ void main() {
           onScan: () {},
           onStop: () {},
         ) as Widget
-      ),
-      (
-        'btoff',
-        BluetoothOffScreen(title: 'Bluetooth выключен', onTurnOn: () {})
       ),
       (
         'noperm',

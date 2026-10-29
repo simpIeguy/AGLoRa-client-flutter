@@ -49,8 +49,8 @@ class _DemoTrackersScreenState extends State<DemoTrackersScreen> {
       services.link.detach();
       // made-up trackers must not mix with real ones
       services.store.reset();
-      // and the user's own come back
-      services.storage?.resume();
+      // and the user's own come back, with the own tracker's link
+      services.storage?.resume().then((_) => services.connection?.reattach());
     });
     super.dispose();
   }

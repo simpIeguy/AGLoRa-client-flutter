@@ -17,10 +17,12 @@ void resetApp({
   Stream<PhonePosition>? positions,
   Stream<CompassReading>? compass,
   UrlOpener? openUrl,
+  LocationService? location,
 }) {
   screenKept.clear();
   app = AppServices(
-    location: LocationService(positions: positions ?? const Stream.empty()),
+    location: location ??
+        LocationService(positions: positions ?? const Stream.empty()),
     compass: CompassService(readings: compass ?? const Stream.empty()),
     openUrl: openUrl ?? (_) async => true,
     keepScreenOn: (on) async => screenKept.add(on),

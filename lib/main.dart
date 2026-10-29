@@ -6,7 +6,7 @@ import 'demo/demo_runner.dart';
 import 'services/app_services.dart';
 import 'services/app_storage.dart';
 import 'ui/screens/demo_screens.dart';
-import 'ui/screens/entry_screen.dart';
+import 'ui/screens/trackers_screen.dart';
 import 'ui/strings.dart';
 import 'ui/theme.dart';
 import 'ui/widgets/first_signal_alerts.dart';
@@ -25,7 +25,10 @@ Future<void> main() async {
     yield LicenseEntryWithLineBreaks(const ['IBM Plex'], text);
   });
   // the trackers and settings from the last launch, before the first screen
-  final services = AppServices(storage: PhoneStorage());
+  // and the own tracker connects again by itself (the emulator's demo
+  // launch has no Bluetooth)
+  final services =
+      AppServices(storage: PhoneStorage(), bluetooth: !isDemoRequestedAtLaunch);
   await services.start();
   runApp(AppScope(services: services, child: TrackerApp()));
 }
@@ -60,7 +63,8 @@ class TrackerApp extends StatelessWidget {
               ? DemoTrackersScreen(
                   scenarioId: demoScenarioFromLaunch,
                   speed: double.tryParse(demoSpeedFromLaunch) ?? 1)
-              : const EntryScreen(),
+              // the trackers at once; connecting is a button on it
+              : const TrackersScreen(),
         );
       },
     );

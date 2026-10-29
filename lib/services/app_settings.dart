@@ -50,6 +50,18 @@ class AppSettings extends ChangeNotifier {
     if (changed) notifyListeners();
   }
 
+  /// the user's own tracker: the app connects to it again by itself after a
+  /// launch; null after "Отключиться"
+  ({String id, String name})? _lastTracker;
+
+  ({String id, String name})? get lastTracker => _lastTracker;
+
+  set lastTracker(({String id, String name})? value) {
+    if (_lastTracker == value) return;
+    _lastTracker = value;
+    notifyListeners();
+  }
+
   static const int savedVersion = 1;
 
   Map<String, Object?> saveState() => {
@@ -58,6 +70,8 @@ class AppSettings extends ChangeNotifier {
         'coordinates': _coordinates.name,
         'keepScreenOn': _keepScreenOn,
         'hiddenTracks': _hiddenTracks.toList(),
+        if (_lastTracker case final t?)
+          'lastTracker': {'id': t.id, 'name': t.name},
       };
 
   /// back from [saveState]; a value that is not understood keeps the default
@@ -75,6 +89,9 @@ class AppSettings extends ChangeNotifier {
       _hiddenTracks
         ..clear()
         ..addAll(hidden.whereType<String>());
+    }
+    if (json['lastTracker'] case {'id': String id, 'name': String name}) {
+      _lastTracker = (id: id, name: name);
     }
     notifyListeners();
   }

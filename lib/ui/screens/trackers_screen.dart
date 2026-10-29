@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../../data/tracker_list.dart';
 import '../../protocol/tracker_name.dart';
 import '../../services/app_services.dart';
-import '../../util/log.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/link_banner.dart';
 import '../widgets/sensor_lamps.dart';
 import '../widgets/tracker_card.dart';
 import '../widgets/who_to_show_sheet.dart';
+import 'find_devices_screen.dart';
 import 'map_screen.dart';
 import 'settings_screen.dart';
 import 'wait_tracker_screen.dart';
 
-/// The main screen (the Main mockup): the phone's GPS and compass, "you"
-/// (the tracker the phone is connected to), then the UAVs, the people and
-/// the others. [device] is null in the demo.
+/// The main screen and the first one (the Main mockup): the phone's GPS and
+/// compass, "you" (the tracker the phone is connected to), then the UAVs,
+/// the people and the others. Connecting is the button in the top right
+/// corner. [demoTitle] in the demo.
 class TrackersScreen extends StatelessWidget {
-  const TrackersScreen({super.key, this.device, this.demoTitle})
-      : assert(device != null || demoTitle != null);
+  const TrackersScreen({super.key, this.demoTitle});
 
-  final BluetoothDevice? device;
   final String? demoTitle;
 
   @override
@@ -31,7 +30,7 @@ class TrackersScreen extends StatelessWidget {
       body: SafeArea(
         bottom: false,
         child: Column(children: [
-          _Header(title: demoTitle ?? S.appName),
+          _Header(title: demoTitle ?? S.appName, demo: demoTitle != null),
           Expanded(
             child: ListenableBuilder(
               // the clock moves trackers between the groups
@@ -63,7 +62,7 @@ class TrackersScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(AppSizes.screenPadding, 0,
           AppSizes.screenPadding, AppSizes.screenPadding),
       children: [
-        _OwnTracker(device: device),
+        _OwnTracker(demo: demoTitle != null),
         if (shown.isEmpty && list.archived.isEmpty)
           const Padding(
             padding: EdgeInsets.all(AppSizes.screenPadding * 2),
@@ -112,11 +111,13 @@ class TrackersScreen extends StatelessWidget {
       );
 }
 
-/// the app's name, the map and the settings; the phone's GPS and compass
+/// the app's name, the map, the settings and the connection; the phone's
+/// GPS and compass; what keeps Bluetooth from working
 class _Header extends StatelessWidget {
-  const _Header({required this.title});
+  const _Header({required this.title, required this.demo});
 
   final String title;
+  final bool demo;
 
   @override
   Widget build(BuildContext context) {
@@ -146,8 +147,10 @@ class _Header extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SettingsScreen())),
             ),
+            if (!demo) const ConnectButton(),
           ]),
           const SensorLamps(),
+          if (!demo) const LinkBanner(),
         ],
       ),
     );
@@ -169,21 +172,23 @@ class _Header extends StatelessWidget {
 }
 
 /// "Вы · GROUND1": the tracker the phone is connected to, and the button to
-/// let it go
+/// let it go; without one, the button to pick it
 class _OwnTracker extends StatelessWidget {
-  const _OwnTracker({required this.device});
+  const _OwnTracker({required this.demo});
 
-  final BluetoothDevice? device;
+  final bool demo;
 
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    final store = AppScope.of(context).store;
-    final name = store.connectedTracker ?? device?.platformName ?? '';
-    final searching = name.isNotEmpty && store.isSearchingSatellites(name);
+    final services = AppScope.of(context);
+    final store = services.store;
+    final connection = services.connection;
     final textTheme = Theme.of(context).textTheme;
 
-    Widget card(bool connected, Widget? button) => Container(
+    Widget card(
+            {required String name, required String state, Widget? button}) =>
+        Container(
           margin: const EdgeInsets.only(top: AppSizes.padding),
           constraints: const BoxConstraints(minHeight: 64),
           padding: const EdgeInsets.fromLTRB(
@@ -200,7 +205,8 @@ class _OwnTracker extends StatelessWidget {
                 children: [
                   Text.rich(
                     TextSpan(children: [
-                      const TextSpan(text: '${S.you} · '),
+                      TextSpan(
+                          text: name.isEmpty ? S.noOwnTracker : '${S.you} · '),
                       TextSpan(
                           text: name,
                           style: const TextStyle(fontFamily: AppText.mono)),
@@ -208,12 +214,7 @@ class _OwnTracker extends StatelessWidget {
                     style: textTheme.titleMedium,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                      connected
-                          ? searching
-                              ? '${S.connectedByBluetooth} · ${S.searchingSatellites}'
-                              : S.connectedByBluetooth
-                          : S.noBluetoothLink,
+                  Text(state,
                       style: textTheme.bodyMedium?.copyWith(color: p.muted)),
                 ],
               ),
@@ -222,28 +223,51 @@ class _OwnTracker extends StatelessWidget {
           ]),
         );
 
-    final d = device;
-    if (d == null) return card(true, null); // the demo: always connected
-    return StreamBuilder<BluetoothConnectionState>(
-      stream: d.connectionState,
-      initialData: BluetoothConnectionState.disconnected,
-      builder: (context, snapshot) {
-        final connected = snapshot.data == BluetoothConnectionState.connected;
-        return card(
-          connected,
-          OutlinedButton(
-            onPressed: connected
-                // let this tracker go and back to the search: another one
-                // can be picked there
-                ? () {
-                    d.disconnect().catchError((e) => appLog('ble: $e'));
-                    AppScope.of(context).link.detach();
-                    Navigator.of(context).maybePop();
-                  }
-                : () => d.connect().catchError((e) => appLog('ble: $e')),
-            child: Text(connected ? S.disconnectMe : S.connectMe),
-          ),
-        );
+    String linked(String name) =>
+        name.isNotEmpty && store.isSearchingSatellites(name)
+            ? '${S.connectedByBluetooth} · ${S.searchingSatellites}'
+            : S.connectedByBluetooth;
+
+    final pick = FilledButton(
+      onPressed: () => openConnectScreen(context),
+      child: const Text(S.connectMe),
+    );
+    // the demo: always connected to its made-up tracker
+    if (demo) {
+      final name = store.connectedTracker ?? '';
+      return card(
+          name: name, state: name.isEmpty ? S.noBluetoothLink : linked(name));
+    }
+    if (connection == null) {
+      return card(name: '', state: S.noBluetoothLink, button: pick);
+    }
+    return ListenableBuilder(
+      listenable: connection,
+      builder: (context, _) {
+        // the name the tracker gives itself in its messages, else its
+        // Bluetooth name
+        final name = store.connectedTracker ?? connection.name;
+        if (connection.isConnected) {
+          return card(
+            name: name,
+            state: linked(name),
+            button: OutlinedButton(
+              onPressed: connection.disconnect,
+              child: const Text(S.disconnectMe),
+            ),
+          );
+        }
+        if (connection.isConnecting) {
+          return card(
+            name: name,
+            state: S.connectingToOwn,
+            button: OutlinedButton(
+              onPressed: connection.disconnect,
+              child: const Text(S.cancel),
+            ),
+          );
+        }
+        return card(name: '', state: S.noBluetoothLink, button: pick);
       },
     );
   }

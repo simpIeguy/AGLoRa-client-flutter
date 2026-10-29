@@ -10,6 +10,7 @@ import 'compass_service.dart';
 import 'location_service.dart';
 import 'map_link.dart';
 import 'screen_keeper.dart';
+import 'tracker_connection.dart';
 import 'tracker_link.dart';
 
 /// Everything the screens need, created once in main() and passed down by
@@ -24,6 +25,7 @@ class AppServices {
     this.openUrl = openExternally,
     this.keepScreenOn = keepPhoneScreenOn,
     StorageBackend? storage,
+    bool bluetooth = false,
   })  : settings = settings ?? AppSettings(),
         store = store ?? TrackerStore(),
         compass = compass ?? CompassService(),
@@ -33,10 +35,15 @@ class AppServices {
     this.storage = storage == null
         ? null
         : AppStorage(this.store, this.settings, backend: storage);
+    connection = bluetooth ? TrackerConnection(link, this.settings) : null;
   }
 
   /// the memory between launches; null in tests that do not need it
   late final AppStorage? storage;
+
+  /// the phone's own tracker over Bluetooth; null in tests and the demo
+  /// launch (no Bluetooth there)
+  late final TrackerConnection? connection;
 
   final AppSettings settings;
   final TrackerStore store;
@@ -53,10 +60,11 @@ class AppServices {
 
   AppLifecycleListener? _lifecycle;
 
-  /// what was kept from the last launch, the sensors and the timer;
-  /// Bluetooth starts from the screens
+  /// what was kept from the last launch, the sensors, the timer and the
+  /// remembered tracker
   Future<void> start() async {
     await storage?.start();
+    connection?.start();
     compass.start();
     unawaited(location.start());
     clock.start();
@@ -71,6 +79,7 @@ class AppServices {
 
   void dispose() {
     storage?.dispose();
+    connection?.dispose();
     _lifecycle?.dispose();
     link.detach();
     compass.dispose();

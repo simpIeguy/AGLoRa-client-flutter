@@ -12,12 +12,14 @@ import '../strings.dart';
 import '../theme.dart';
 import '../widgets/status_dot.dart';
 import 'demo_screens.dart';
-import 'settings_screen.dart';
-import 'trackers_screen.dart';
 
-/// The Bluetooth scan, as in the Scan mockup. It starts by itself; the
-/// connected tracker on top, then our trackers (UAV…, GROUND…), then the
-/// other devices.
+/// "Подключить трекер" from the main screen's corner button
+Future<void> openConnectScreen(BuildContext context) => Navigator.of(context)
+    .push(MaterialPageRoute(builder: (_) => const FindDevicesScreen()));
+
+/// The Bluetooth search, as in the Scan mockup. It starts by itself; the
+/// connected tracker on top, then our trackers (UAV…, GROUND…), the other
+/// devices folded below. A pick connects and goes back to the trackers.
 class FindDevicesScreen extends StatefulWidget {
   const FindDevicesScreen({super.key});
 
@@ -45,18 +47,23 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
         .catchError((Object e) => appLog('ble: $e'));
   }
 
-  /// services are discovered by the data source once connected
-  Future<void> _open(BluetoothDevice device, {bool connect = false}) async {
+  @override
+  void dispose() {
     unawaited(FlutterBluePlus.stopScan());
-    AppScope.of(context).link.attach(BleDataSource(device));
-    if (connect) {
-      unawaited(device.connect().catchError((e) => appLog('ble: $e')));
+    super.dispose();
+  }
+
+  /// the own tracker from now on, remembered; back to the trackers
+  void _connect(BluetoothDevice device) {
+    final services = AppScope.of(context);
+    final connection = services.connection;
+    if (connection != null) {
+      unawaited(connection.connectTo(device));
+    } else {
+      services.link.attach(BleDataSource(device));
+      unawaited(device.connect().catchError((Object e) => appLog('ble: $e')));
     }
-    await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => TrackersScreen(device: device)));
-    // back from the trackers ("Отключиться" or the back gesture): look
-    // again, the list from before is stale
-    if (mounted) _scan();
+    Navigator.of(context).pop();
   }
 
   @override
@@ -87,7 +94,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                     ConnectedDevice(
                         name: d.platformName,
                         ready: d.isConnected,
-                        onOpen: () => _open(d)),
+                        onOpen: () => Navigator.of(context).pop()),
                 ],
                 found: [
                   for (final r in results.data!)
@@ -98,7 +105,7 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                           rssi: r.rssi,
                           device: r.device),
                 ],
-                onConnect: (d) => _open(d, connect: true),
+                onConnect: _connect,
                 onScan: _scan,
                 onStop: FlutterBluePlus.stopScan,
               );
@@ -166,20 +173,20 @@ class ScanView<T> extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  AppSizes.screenPadding, AppSizes.gap, AppSizes.gap, 0),
+                  AppSizes.gap, AppSizes.gap, AppSizes.gap, 0),
               child: Row(children: [
+                IconButton(
+                  tooltip: S.back,
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+                const SizedBox(width: AppSizes.gap),
                 Expanded(
-                  child: Text(S.findTrackers,
+                  child: Text(S.connectTracker,
                       style: textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w700)),
                 ),
                 const DemoModeButton(),
-                IconButton(
-                  tooltip: S.settings,
-                  icon: const Icon(Icons.settings_outlined),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const SettingsScreen())),
-                ),
               ]),
             ),
             Padding(
@@ -209,7 +216,25 @@ class ScanView<T> extends StatelessWidget {
                   if (connected.isNotEmpty) const _Section(S.sectionConnected),
                   for (final d in connected) _ConnectedCard(device: d),
                   ...group(S.sectionOurs, split.ours),
-                  ...group(S.sectionOtherDevices, split.others),
+                  // headphones, watches…: folded, so ours do not get lost
+                  if (split.others.isNotEmpty)
+                    Theme(
+                      data: Theme.of(context)
+                          .copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                        childrenPadding: EdgeInsets.zero,
+                        title: Text(S.otherDevices(split.others.length),
+                            style:
+                                textTheme.labelLarge?.copyWith(color: p.muted)),
+                        children: [
+                          for (final d in split.others)
+                            _FoundCard(
+                                device: d,
+                                onConnect: () => onConnect(d.device)),
+                        ],
+                      ),
+                    ),
                   if (connected.isEmpty && found.isEmpty)
                     Padding(
                       padding: const EdgeInsets.all(AppSizes.screenPadding * 2),

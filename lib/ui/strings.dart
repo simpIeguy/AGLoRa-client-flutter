@@ -39,6 +39,14 @@ abstract final class S {
   static const String bluetoothOffHint =
       'Телефон связывается с трекером по Bluetooth. Включите его, и список трекеров появится сам.';
   static const String turnOnBluetooth = 'Включить Bluetooth';
+  static const String turnOn = 'Включить';
+  static const String details = 'Подробнее';
+  static const String noBluetoothOnPhone = 'Bluetooth недоступен';
+  static const String connectTracker = 'Подключить трекер';
+  static const String trackerConnected = 'Трекер подключён';
+  static const String connectingToOwn = 'Подключение…';
+  static const String noOwnTracker = 'Трекер не подключён';
+  static String otherDevices(int n) => 'Другие устройства: $n';
   static const String permissionsNeeded = 'Нужны разрешения';
   static const String permissionsHint =
       'Без них приложение не найдёт трекер и не покажет, куда идти. Ничего не отправляется в интернет.';

@@ -1,36 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../strings.dart';
+import '../theme.dart';
 import 'demo_screens.dart';
 
+/// "Bluetooth выключен", as in the BtOff mockup. [onTurnOn] asks Android to
+/// switch it on; the scan opens by itself once it is on.
 class BluetoothOffScreen extends StatelessWidget {
-  const BluetoothOffScreen({super.key, this.state});
+  const BluetoothOffScreen({super.key, required this.title, this.onTurnOn});
 
-  final BluetoothAdapterState? state;
+  /// "Bluetooth выключен", "Bluetooth недоступен"…
+  final String title;
+
+  /// null where Android can not do it (no Bluetooth on the phone)
+  final VoidCallback? onTurnOn;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final p = AppPalette.of(context);
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: scheme.primary,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(S.appName,
-                style: textTheme.headlineMedium
-                    ?.copyWith(color: scheme.onPrimary)),
-            const SizedBox(height: 30),
-            Icon(Icons.bluetooth_disabled,
-                size: 100.0, color: scheme.onPrimary.withValues(alpha: 0.6)),
-            const SizedBox(height: 30),
-            Text(S.bluetoothState(state?.name),
-                style: textTheme.titleSmall?.copyWith(color: scheme.onPrimary)),
-            // the demo works without Bluetooth (debug builds only)
-            DemoModeButton(color: scheme.onPrimary),
-          ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.screenPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(children: [
+                Expanded(
+                  child: Text(S.appName,
+                      style: textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
+                // the demo works without Bluetooth (debug builds only)
+                const DemoModeButton(),
+              ]),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.bluetooth_disabled, size: 112, color: p.muted),
+                    const SizedBox(height: AppSizes.screenPadding),
+                    Text(title,
+                        textAlign: TextAlign.center,
+                        style: textTheme.headlineMedium),
+                    const SizedBox(height: AppSizes.screenPadding),
+                    Text(S.bluetoothOffHint,
+                        textAlign: TextAlign.center,
+                        style: textTheme.bodyMedium?.copyWith(color: p.muted)),
+                  ],
+                ),
+              ),
+              if (onTurnOn != null)
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(AppSizes.bigButton)),
+                  onPressed: onTurnOn,
+                  child: const Text(S.turnOnBluetooth),
+                ),
+              const SizedBox(height: AppSizes.gap),
+            ],
+          ),
         ),
       ),
     );

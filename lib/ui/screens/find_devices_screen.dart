@@ -1,28 +1,53 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+import '../../data/scan_list.dart';
+import '../../data/tracker_status.dart';
 import '../../services/app_services.dart';
 import '../../services/ble_data_source.dart';
 import '../../util/log.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/status_dot.dart';
 import 'demo_screens.dart';
+import 'settings_screen.dart';
 import 'trackers_screen.dart';
 
-/// Bluetooth scan: connected trackers on top, found ones below.
-class FindDevicesScreen extends StatelessWidget {
+/// The Bluetooth scan, as in the Scan mockup. It starts by itself; the
+/// connected tracker on top, then our trackers (UAV…, GROUND…), then the
+/// other devices.
+class FindDevicesScreen extends StatefulWidget {
   const FindDevicesScreen({super.key});
 
-  static const Duration _scanTime = Duration(seconds: 4);
+  static const Duration scanTime = Duration(seconds: 10);
+
+  @override
+  State<FindDevicesScreen> createState() => _FindDevicesScreenState();
+}
+
+class _FindDevicesScreenState extends State<FindDevicesScreen> {
+  DateTime? _scanStarted;
+
+  @override
+  void initState() {
+    super.initState();
+    _scan();
+  }
 
   // androidUsesFineLocation: Android hides scan results without location
   // permission; the app also needs it for distance and bearing to trackers
-  static Future<void> _scan() => FlutterBluePlus.startScan(
-      timeout: _scanTime, androidUsesFineLocation: true);
+  void _scan() {
+    _scanStarted = DateTime.now();
+    FlutterBluePlus.startScan(
+            timeout: FindDevicesScreen.scanTime, androidUsesFineLocation: true)
+        .catchError((Object e) => appLog('ble: $e'));
+  }
 
   /// services are discovered by the data source once connected
-  static void _open(BuildContext context, BluetoothDevice device,
-      {bool connect = false}) {
+  void _open(BluetoothDevice device, {bool connect = false}) {
+    unawaited(FlutterBluePlus.stopScan());
     AppScope.of(context).link.attach(BleDataSource(device));
     if (connect) device.connect().catchError((e) => appLog('ble: $e'));
     Navigator.of(context).push(
@@ -31,105 +56,313 @@ class FindDevicesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(S.findTrackers),
-        actions: const [DemoModeButton()],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _scan,
-        child: ListView(children: [
-          StreamBuilder<List<BluetoothDevice>>(
-            stream: Stream.periodic(const Duration(seconds: 2))
-                .map((_) => FlutterBluePlus.connectedDevices),
-            initialData: const [],
-            builder: (context, snapshot) => Column(children: [
-              for (final device in snapshot.data!)
-                _ConnectedDeviceTile(
-                    device: device, onOpen: () => _open(context, device)),
-            ]),
+    final clock = AppScope.of(context).clock;
+    return StreamBuilder<bool>(
+      stream: FlutterBluePlus.isScanning,
+      initialData: false,
+      builder: (context, scanning) => StreamBuilder<List<ScanResult>>(
+        stream: FlutterBluePlus.scanResults,
+        initialData: const [],
+        builder: (context, results) => StreamBuilder<List<BluetoothDevice>>(
+          stream: Stream.periodic(const Duration(seconds: 2))
+              .map((_) => FlutterBluePlus.connectedDevices),
+          initialData: FlutterBluePlus.connectedDevices,
+          builder: (context, connected) => ListenableBuilder(
+            // "Идёт поиск, 4 с" counts up
+            listenable: clock,
+            builder: (context, _) {
+              final started = _scanStarted;
+              return ScanView(
+                scanning: scanning.data!,
+                seconds: started == null
+                    ? 0
+                    : clock.now.difference(started).inSeconds,
+                connected: [
+                  for (final d in connected.data!)
+                    ConnectedDevice(
+                        name: d.platformName,
+                        ready: d.isConnected,
+                        onOpen: () => _open(d)),
+                ],
+                found: [
+                  for (final r in results.data!)
+                    if (r.advertisementData.connectable &&
+                        !r.device.isConnected)
+                      FoundDevice(
+                          name: r.device.platformName,
+                          rssi: r.rssi,
+                          device: r.device),
+                ],
+                onConnect: (d) => _open(d, connect: true),
+                onScan: _scan,
+                onStop: FlutterBluePlus.stopScan,
+              );
+            },
           ),
-          StreamBuilder<List<ScanResult>>(
-            stream: FlutterBluePlus.scanResults,
-            initialData: const [],
-            builder: (context, snapshot) => Column(children: [
-              for (final result in snapshot.data!)
-                _ScanResultTile(
-                  result: result,
-                  onConnect: () => _open(context, result.device, connect: true),
-                ),
-            ]),
-          ),
-        ]),
-      ),
-      floatingActionButton: StreamBuilder<bool>(
-        stream: FlutterBluePlus.isScanning,
-        initialData: false,
-        builder: (context, snapshot) => snapshot.data!
-            ? FloatingActionButton(
-                tooltip: S.stopScan,
-                backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                onPressed: FlutterBluePlus.stopScan,
-                child: const Icon(Icons.stop),
-              )
-            : const FloatingActionButton(
-                tooltip: S.startScan,
-                onPressed: _scan,
-                child: Icon(Icons.search),
-              ),
+        ),
       ),
     );
   }
 }
 
-class _ConnectedDeviceTile extends StatelessWidget {
-  const _ConnectedDeviceTile({required this.device, required this.onOpen});
+/// a tracker the phone is already connected to
+class ConnectedDevice {
+  const ConnectedDevice(
+      {required this.name, required this.ready, required this.onOpen});
 
-  final BluetoothDevice device;
+  final String name;
+
+  /// false while it connects
+  final bool ready;
   final VoidCallback onOpen;
+}
+
+/// The look of the scan, apart from Bluetooth so tests and the screen
+/// pictures can show it.
+class ScanView<T> extends StatelessWidget {
+  const ScanView({
+    super.key,
+    required this.scanning,
+    required this.seconds,
+    required this.connected,
+    required this.found,
+    required this.onConnect,
+    required this.onScan,
+    required this.onStop,
+  });
+
+  final bool scanning;
+
+  /// since the scan started
+  final int seconds;
+  final List<ConnectedDevice> connected;
+  final List<FoundDevice<T>> found;
+  final void Function(T device) onConnect;
+  final VoidCallback onScan;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.gps_fixed),
-      title: Text(device.platformName),
-      subtitle: const Text(S.deviceConnected),
-      trailing: StreamBuilder<BluetoothConnectionState>(
-        stream: device.connectionState,
-        initialData: BluetoothConnectionState.disconnected,
-        builder: (context, snapshot) =>
-            snapshot.data == BluetoothConnectionState.connected
-                ? ElevatedButton(onPressed: onOpen, child: const Text(S.open))
-                : const Text(S.connecting),
+    final p = AppPalette.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    final split = splitFound(found);
+    final muted = textTheme.bodyMedium?.copyWith(color: p.muted);
+
+    List<Widget> group(String title, List<FoundDevice<T>> devices) => [
+          if (devices.isNotEmpty) _Section(title),
+          for (final d in devices)
+            _FoundCard(device: d, onConnect: () => onConnect(d.device)),
+        ];
+
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSizes.screenPadding, AppSizes.gap, AppSizes.gap, 0),
+              child: Row(children: [
+                Expanded(
+                  child: Text(S.findTrackers,
+                      style: textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
+                const DemoModeButton(),
+                IconButton(
+                  tooltip: S.settings,
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const SettingsScreen())),
+                ),
+              ]),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSizes.screenPadding,
+                  AppSizes.gap, AppSizes.screenPadding, 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  minHeight: 4,
+                  value: scanning ? null : 0,
+                  color: p.ink,
+                  backgroundColor: p.line,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, AppSizes.gap, 20, 0),
+              child: Text(
+                  scanning ? S.scanning(seconds) : S.scanDone(found.length),
+                  style: muted),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(AppSizes.screenPadding, 0,
+                    AppSizes.screenPadding, AppSizes.screenPadding),
+                children: [
+                  if (connected.isNotEmpty) const _Section(S.sectionConnected),
+                  for (final d in connected) _ConnectedCard(device: d),
+                  ...group(S.sectionOurs, split.ours),
+                  ...group(S.sectionOtherDevices, split.others),
+                  if (connected.isEmpty && found.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(AppSizes.screenPadding * 2),
+                      child: Text(S.scanHint,
+                          style: muted, textAlign: TextAlign.center),
+                    ),
+                ],
+              ),
+            ),
+            Container(
+              decoration:
+                  BoxDecoration(border: Border(top: BorderSide(color: p.line))),
+              padding: const EdgeInsets.fromLTRB(AppSizes.screenPadding,
+                  AppSizes.padding, AppSizes.screenPadding, 24),
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(AppSizes.bigButton)),
+                onPressed: scanning ? onStop : onScan,
+                child: Text(scanning ? S.stopScan : S.startScan),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ScanResultTile extends StatelessWidget {
-  const _ScanResultTile({required this.result, required this.onConnect});
+class _Section extends StatelessWidget {
+  const _Section(this.text);
 
-  final ScanResult result;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(4, AppSizes.screenPadding, 4, 0),
+        child: Text(text,
+            style: Theme.of(context)
+                .textTheme
+                .labelLarge
+                ?.copyWith(color: AppPalette.of(context).muted)),
+      );
+}
+
+class _Card extends StatelessWidget {
+  const _Card(
+      {required this.leading,
+      required this.title,
+      required this.subtitle,
+      required this.button});
+
+  final Widget leading;
+  final String title;
+  final String subtitle;
+  final Widget button;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      margin: const EdgeInsets.only(top: AppSizes.gap),
+      constraints: const BoxConstraints(minHeight: 72),
+      padding: const EdgeInsets.fromLTRB(
+          AppSizes.screenPadding, AppSizes.gap, AppSizes.gap, AppSizes.gap),
+      decoration: BoxDecoration(
+        color: p.card,
+        border: Border.all(color: p.line),
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+      ),
+      child: Row(children: [
+        leading,
+        const SizedBox(width: AppSizes.padding),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+              Text(subtitle,
+                  style: textTheme.bodyMedium?.copyWith(color: p.muted)),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSizes.gap),
+        button,
+      ]),
+    );
+  }
+}
+
+class _ConnectedCard extends StatelessWidget {
+  const _ConnectedCard({required this.device});
+
+  final ConnectedDevice device;
+
+  @override
+  Widget build(BuildContext context) => _Card(
+        leading: StatusDot(
+            status:
+                device.ready ? TrackerStatus.active : TrackerStatus.waiting),
+        title: device.name.isEmpty ? S.unnamedDevice : device.name,
+        subtitle: device.ready ? S.bluetoothLinkOk : S.connecting,
+        button: FilledButton(
+          onPressed: device.ready ? device.onOpen : null,
+          child: const Text(S.open),
+        ),
+      );
+}
+
+class _FoundCard<T> extends StatelessWidget {
+  const _FoundCard({required this.device, required this.onConnect});
+
+  final FoundDevice<T> device;
   final VoidCallback onConnect;
 
-  static Icon _signalIcon(int rssi) {
-    if (rssi >= -70) return const Icon(Icons.signal_cellular_4_bar);
-    if (rssi >= -80) return const Icon(Icons.network_cell);
-    return const Icon(Icons.network_cell_outlined);
+  @override
+  Widget build(BuildContext context) {
+    final bars = signalBars(device.rssi);
+    final level = switch (bars) {
+      4 => S.signalStrong,
+      1 => S.signalWeak,
+      _ => S.signalMedium,
+    };
+    return _Card(
+      leading: Semantics(
+          label: S.signal(level),
+          child: CustomPaint(
+              size: const Size(28, 24),
+              painter: _BarsPainter(bars, AppPalette.of(context)))),
+      title: device.name.isEmpty ? S.unnamedDevice : device.name,
+      subtitle: S.signal(level),
+      button:
+          OutlinedButton(onPressed: onConnect, child: const Text(S.connect)),
+    );
+  }
+}
+
+/// four bars, [bars] of them dark
+class _BarsPainter extends CustomPainter {
+  _BarsPainter(this.bars, this.p);
+
+  final int bars;
+  final AppPalette p;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < 4; i++) {
+      final h = 7.0 + i * 4.5;
+      canvas.drawRRect(
+          RRect.fromRectAndRadius(Rect.fromLTWH(2 + i * 7.0, 22 - h, 4, h),
+              const Radius.circular(1)),
+          Paint()..color = i < bars ? p.ink : p.line);
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final name = result.device.platformName;
-    return ListTile(
-      minTileHeight: AppSizes.minTap,
-      title: Text(name.isEmpty ? S.unnamedDevice : name,
-          overflow: TextOverflow.ellipsis),
-      leading: _signalIcon(result.rssi),
-      trailing: ElevatedButton(
-        onPressed: result.advertisementData.connectable ? onConnect : null,
-        child: const Text(S.connect),
-      ),
-    );
-  }
+  bool shouldRepaint(_BarsPainter old) => old.bars != bars || old.p != p;
 }

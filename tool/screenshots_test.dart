@@ -5,12 +5,17 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tsp_tracker/data/scan_list.dart';
 import 'package:tsp_tracker/protocol/tracker_name.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
+import 'package:tsp_tracker/ui/screens/bluetooth_off_screen.dart';
+import 'package:tsp_tracker/ui/screens/find_devices_screen.dart';
 import 'package:tsp_tracker/ui/screens/full_screen_arrow.dart';
 import 'package:tsp_tracker/ui/screens/map_screen.dart';
+import 'package:tsp_tracker/ui/screens/permissions_screen.dart';
 import 'package:tsp_tracker/ui/screens/settings_screen.dart';
 import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
@@ -79,6 +84,54 @@ void main() {
   }
 
   for (final theme in [AppThemeChoice.light, AppThemeChoice.dark]) {
+    for (final (name, screen) in [
+      (
+        'scan',
+        ScanView<int>(
+          scanning: true,
+          seconds: 4,
+          connected: [
+            ConnectedDevice(name: 'GROUND1', ready: true, onOpen: () {}),
+          ],
+          found: const [
+            FoundDevice(name: 'UAV2', rssi: -55, device: 2),
+            FoundDevice(name: 'UAV3', rssi: -68, device: 3),
+            FoundDevice(name: 'Mi Band 7', rssi: -75, device: 4),
+            FoundDevice(name: '', rssi: -90, device: 5),
+          ],
+          onConnect: (_) {},
+          onScan: () {},
+          onStop: () {},
+        ) as Widget
+      ),
+      (
+        'btoff',
+        BluetoothOffScreen(title: 'Bluetooth выключен', onTurnOn: () {})
+      ),
+      (
+        'noperm',
+        PermissionsScreen(
+            bluetooth: true,
+            location: false,
+            onAllow: () {},
+            onOpenSettings: () {})
+      ),
+    ]) {
+      testWidgets('$name, ${theme.name}', (tester) async {
+        tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+        tester.view.devicePixelRatio = 3;
+        addTearDown(tester.view.reset);
+        resetApp();
+        app.settings.theme = theme;
+        await tester.pumpWidget(inApp(screen));
+        await tester.pump();
+        await expectLater(
+            find.byWidget(screen),
+            matchesGoldenFile(
+                '../build/screenshots/${name}_${theme.name}.png'));
+      });
+    }
+
     testWidgets('settings, ${theme.name}', (tester) async {
       tester.view.physicalSize = const Size(390 * 3, 1180 * 3);
       tester.view.devicePixelRatio = 3;

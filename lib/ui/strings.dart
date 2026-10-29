@@ -16,14 +16,42 @@ abstract final class S {
         _ => 'Bluetooth: нет данных',
       };
   static const String connect = 'Подключить';
-  static const String disconnect = 'Отключить';
   static const String open = 'Открыть';
   static const String connecting = 'Подключение…';
-  static const String disconnecting = 'Отключение…';
-  static const String deviceConnected = 'подключён';
-  static const String unnamedDevice = 'без имени';
+  static const String unnamedDevice = 'Без имени';
   static const String stopScan = 'Остановить поиск';
-  static const String startScan = 'Искать';
+  static const String startScan = 'Искать снова';
+  static String scanning(int seconds) => 'Идёт поиск, $seconds с';
+  static String scanDone(int found) =>
+      found == 0 ? 'Ничего не найдено' : 'Найдено: $found';
+  static const String scanHint =
+      'Включите трекер и поднесите телефон ближе. Список обновится сам.';
+  static const String sectionConnected = 'Подключён';
+  static const String sectionOurs = 'Наши трекеры';
+  static const String sectionOtherDevices = 'Другие устройства';
+  static const String bluetoothLinkOk = 'Связь по Bluetooth есть';
+  static String signal(String level) => 'Сигнал $level';
+  static const String signalStrong = 'сильный';
+  static const String signalMedium = 'средний';
+  static const String signalWeak = 'слабый';
+
+  // Bluetooth off, permissions
+  static const String bluetoothOffHint =
+      'Телефон связывается с трекером по Bluetooth. Включите его, и список трекеров появится сам.';
+  static const String turnOnBluetooth = 'Включить Bluetooth';
+  static const String permissionsNeeded = 'Нужны разрешения';
+  static const String permissionsHint =
+      'Без них приложение не найдёт трекер и не покажет, куда идти. Ничего не отправляется в интернет.';
+  static const String permBluetooth = 'Bluetooth';
+  static const String permBluetoothWhy =
+      'Чтобы найти трекер и подключиться к нему.';
+  static const String permLocation = 'Местоположение';
+  static const String permLocationWhy =
+      'Чтобы показать расстояние и направление до трекера. Android требует его и для поиска Bluetooth.';
+  static const String allowed = 'Разрешено.';
+  static const String notAllowed = 'Не разрешено.';
+  static const String allow = 'Разрешить';
+  static const String openAppSettings = 'Открыть настройки приложения';
 
   // main screen
   static const String you = 'Вы';

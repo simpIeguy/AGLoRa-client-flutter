@@ -26,31 +26,40 @@ class TrackerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: S.appName,
-      theme: buildAppTheme(),
-      debugShowCheckedModeBanner: false,
-      navigatorKey: _navigatorKey,
-      scaffoldMessengerKey: _messengerKey,
-      builder: (context, child) => FirstSignalAlerts(
+    final settings = AppScope.of(context).settings;
+    return ListenableBuilder(
+      listenable: settings,
+      builder: (context, home) {
+        final themes = themesFor(settings.theme);
+        return MaterialApp(
+          title: S.appName,
+          theme: buildAppTheme(themes.light),
+          darkTheme: buildAppTheme(themes.dark),
+          themeMode: themes.mode,
+          debugShowCheckedModeBanner: false,
           navigatorKey: _navigatorKey,
-          messengerKey: _messengerKey,
-          child: child!),
-      home: isDemoRequestedAtLaunch
-          // debug builds only: --dart-define=DEMO_SCENARIO=<id> opens the demo
-          ? DemoTrackersScreen(
-              scenarioId: demoScenarioFromLaunch,
-              speed: double.tryParse(demoSpeedFromLaunch) ?? 1)
-          : StreamBuilder<BluetoothAdapterState>(
-              stream: FlutterBluePlus.adapterState,
-              initialData: BluetoothAdapterState.unknown,
-              builder: (context, snapshot) {
-                final state = snapshot.data;
-                if (state == BluetoothAdapterState.on) {
-                  return const FindDevicesScreen();
-                }
-                return BluetoothOffScreen(state: state);
-              }),
+          scaffoldMessengerKey: _messengerKey,
+          builder: (context, child) => FirstSignalAlerts(
+              navigatorKey: _navigatorKey,
+              messengerKey: _messengerKey,
+              child: child!),
+          home: isDemoRequestedAtLaunch
+              // debug builds only: --dart-define=DEMO_SCENARIO=<id> opens the demo
+              ? DemoTrackersScreen(
+                  scenarioId: demoScenarioFromLaunch,
+                  speed: double.tryParse(demoSpeedFromLaunch) ?? 1)
+              : StreamBuilder<BluetoothAdapterState>(
+                  stream: FlutterBluePlus.adapterState,
+                  initialData: BluetoothAdapterState.unknown,
+                  builder: (context, snapshot) {
+                    final state = snapshot.data;
+                    if (state == BluetoothAdapterState.on) {
+                      return const FindDevicesScreen();
+                    }
+                    return BluetoothOffScreen(state: state);
+                  }),
+        );
+      },
     );
   }
 }

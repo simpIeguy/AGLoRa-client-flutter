@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../data/tracker_store.dart';
+import 'app_settings.dart';
 import 'clock.dart';
 import 'compass_service.dart';
 import 'location_service.dart';
@@ -15,14 +16,17 @@ class AppServices {
     CompassService? compass,
     LocationService? location,
     Clock? clock,
+    AppSettings? settings,
     this.openUrl = openExternally,
-  })  : store = store ?? TrackerStore(),
+  })  : settings = settings ?? AppSettings(),
+        store = store ?? TrackerStore(),
         compass = compass ?? CompassService(),
         location = location ?? LocationService(),
         clock = clock ?? Clock() {
     link = TrackerLink(this.store);
   }
 
+  final AppSettings settings;
   final TrackerStore store;
   final CompassService compass;
   final LocationService location;
@@ -51,6 +55,7 @@ class AppServices {
     location.dispose();
     clock.dispose();
     store.dispose();
+    settings.dispose();
   }
 }
 

@@ -185,6 +185,7 @@ abstract final class S {
   static const String compassModeOff = 'Обычный режим';
   static const String compassModeOn = 'По направлению телефона';
   static const String northUp = 'Север вверх';
+  static const String whereAmI = 'Где я';
 
   // settings
   static const String sectionLook = 'Вид';

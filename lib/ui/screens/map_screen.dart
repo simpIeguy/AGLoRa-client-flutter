@@ -1,16 +1,21 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 
+import '../../data/tracker_list.dart';
 import '../../data/tracker_status.dart';
+import '../../data/tracker_store.dart';
 import '../../services/app_services.dart';
+import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/status_dot.dart';
+import '../widgets/tracker_card.dart';
 import 'map/map_layers.dart';
 import 'map/map_markers.dart';
+import 'tracker_screen.dart';
 
 /// degrees of two-finger twist before the map starts to rotate
 const double mapRotationThreshold = 30;
@@ -18,12 +23,26 @@ const double mapRotationThreshold = 30;
 /// 0..1, smaller is smoother but slower to follow the phone's compass
 const double compassSmoothing = 0.15;
 
+/// The map, as in the Map mockup: the trackers as dots with labels, the
+/// phone with a cone where it points, a line with the distance to the chosen
+/// tracker. Below: the trackers to choose from and the chosen one's card.
 class MapScreen extends StatefulWidget {
-  const MapScreen(
-      {super.key, required this.centerLatitude, required this.centerLongitude});
+  const MapScreen({
+    super.key,
+    required this.centerLatitude,
+    required this.centerLongitude,
+    this.chosen,
+    @visibleForTesting this.withTiles = true,
+  });
 
   final double centerLatitude;
   final double centerLongitude;
+
+  /// the tracker to show first; the most important one when null
+  final String? chosen;
+
+  /// false in tests: no tiles from the internet
+  final bool withTiles;
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -37,6 +56,10 @@ class _MapScreenState extends State<MapScreen> {
   double _rotation = 0; // degrees, as the map reports it
   bool _followCompass = false;
   double? _smoothedHeading;
+
+  /// the key of the chosen tracker
+  late String? _chosen =
+      widget.chosen == null ? null : TrackerStore.trackerKey(widget.chosen!);
 
   StreamSubscription<MapEvent>? _mapEventSubscription;
 
@@ -104,131 +127,183 @@ class _MapScreenState extends State<MapScreen> {
     setState(() => _followCompass = false);
   }
 
+  void _whereAmI(BuildContext context) {
+    final phone = _services.location.position;
+    if (phone == null) {
+      showMessage(context, S.noPhonePosition);
+      return;
+    }
+    _mapController.move(
+        LatLng(phone.latitude, phone.longitude), _mapController.zoom);
+  }
+
+  /// a chip or a dot: this tracker now, the map goes to it
+  void _choose(TrackerEntry entry) {
+    setState(() => _chosen = entry.key);
+    final point = entry.latest!;
+    _mapController.move(
+        LatLng(point.latitude, point.longitude), _mapController.zoom);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.mapBackground,
-      body: Stack(children: [
-        FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(
-            center: LatLng(widget.centerLatitude, widget.centerLongitude),
-            zoom: 13.0,
-            minZoom: mapMinZoom,
-            maxZoom: mapMaxZoom,
-            // with the race on, rotation needs a real twist of the fingers
-            enableMultiFingerGestureRace: true,
-            rotationThreshold: mapRotationThreshold,
-          ),
-          children: [
-            ...tileLayers(_layerType),
-            ListenableBuilder(
-              listenable: _services.location,
-              builder: (context, _) {
-                final phone = _services.location.position;
-                if (phone == null) return const SizedBox.shrink();
-                return MarkerLayer(rotate: true, markers: [
-                  phoneMarker(phone.latitude, phone.longitude),
-                ]);
-              },
-            ),
-            ListenableBuilder(
-              // new points and colors by timer
-              listenable: Listenable.merge([_services.store, _services.clock]),
-              builder: (context, _) {
-                final now = _services.clock.now;
-                return MarkerLayer(
-                  rotate: true,
-                  markers: [
-                    for (final point in _services.store.latestPoints)
-                      trackerMarker(context, point,
-                          now: now,
-                          status: trackerStatus(
-                              // on air without a fix: alive at the last
-                              // good point
-                              time:
-                                  _services.store.lastHeard(point.identifier) ??
-                                      point.time,
-                              isConnected:
-                                  _services.store.isConnected(point.identifier),
-                              now: now)),
-                  ],
-                );
-              },
-            ),
+      body: ListenableBuilder(
+        // new points, colors by timer, the phone moving and turning
+        listenable: Listenable.merge([
+          _services.store,
+          _services.clock,
+          _services.location,
+          _services.compass,
+        ]),
+        builder: (context, _) {
+          final now = _services.clock.now;
+          // as on the main screen: the hidden ones are not on the map either
+          final entries = [
+            for (final e in buildTrackerList(_services.store, now).shown)
+              if (e.latest != null) e
+          ];
+          final chosen = entries.where((e) => e.key == _chosen).firstOrNull ??
+              entries.firstOrNull;
+          return Stack(children: [
+            _map(context, entries, chosen, now),
+            SafeArea(child: _controls(context, entries, chosen)),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Widget _map(BuildContext context, List<TrackerEntry> entries,
+      TrackerEntry? chosen, DateTime now) {
+    final phone = _services.location.position;
+    final phoneAt =
+        phone == null ? null : LatLng(phone.latitude, phone.longitude);
+    final target = chosen?.latest;
+    final targetAt =
+        target == null ? null : LatLng(target.latitude, target.longitude);
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        center: LatLng(widget.centerLatitude, widget.centerLongitude),
+        zoom: 13.0,
+        minZoom: mapMinZoom,
+        maxZoom: mapMaxZoom,
+        // with the race on, rotation needs a real twist of the fingers
+        enableMultiFingerGestureRace: true,
+        rotationThreshold: mapRotationThreshold,
+      ),
+      children: [
+        if (widget.withTiles) ...tileLayers(_layerType),
+        if (phoneAt != null && targetAt != null) ...[
+          PolylineLayer(polylines: [
+            Polyline(
+                points: [phoneAt, targetAt],
+                color: Colors.white.withValues(alpha: 0.9),
+                strokeWidth: 2,
+                isDotted: true),
+          ]),
+          MarkerLayer(rotate: true, markers: [
+            distanceMarker(
+                LatLng((phoneAt.latitude + targetAt.latitude) / 2,
+                    (phoneAt.longitude + targetAt.longitude) / 2),
+                const Distance().as(LengthUnit.Meter, phoneAt, targetAt)),
+          ]),
+        ],
+        if (phoneAt != null)
+          // turns with the map: the cone keeps pointing at the true heading
+          MarkerLayer(markers: [
+            phoneMarker(phoneAt.latitude, phoneAt.longitude,
+                heading: _services.compass.reading?.heading),
+          ]),
+        MarkerLayer(
+          rotate: true,
+          markers: [
+            // the chosen one on top of the others
+            for (final e in [
+              for (final e in entries)
+                if (e != chosen) e,
+              if (chosen != null) chosen,
+            ])
+              trackerMarker(e,
+                  now: now, chosen: e == chosen, onTap: () => _choose(e)),
           ],
         ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.gap),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: ElevatedButton.styleFrom(
-                          foregroundColor: AppColors.mapControlIcon,
-                          minimumSize:
-                              const Size(AppSizes.minTap, AppSizes.minTap)),
-                      icon: const Icon(Icons.turn_left_outlined),
-                      label: const Text(S.back),
-                    ),
-                    const Spacer(),
-                    Column(children: [
-                      _compassButton(),
-                      const SizedBox(height: AppSizes.gap),
-                      _layerButton(),
-                    ]),
-                  ],
+      ],
+    );
+  }
+
+  Widget _controls(
+      BuildContext context, List<TrackerEntry> entries, TrackerEntry? chosen) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSizes.gap),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _MapButton(
+                tooltip: S.back,
+                onTap: () => Navigator.of(context).pop(),
+                child: const Icon(Icons.arrow_back),
+              ),
+              const Spacer(),
+              Column(children: [
+                _compassButton(),
+                const SizedBox(height: AppSizes.gap),
+                _layerButton(),
+                const SizedBox(height: AppSizes.gap),
+                _MapButton(
+                  tooltip: S.whereAmI,
+                  onTap: () => _whereAmI(context),
+                  child: const Icon(Icons.my_location),
                 ),
-                Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    color: AppColors.mapAttributionBackground,
-                    child: Text(
-                      mapAttribution(_layerType),
-                      style: const TextStyle(
-                          fontSize: AppSizes.mapAttributionText,
-                          color: AppColors.onLight),
-                    ),
-                  ),
-                ),
-              ],
+              ]),
+            ],
+          ),
+          const Spacer(),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: AppSizes.gap),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(4)),
+              child: Text(
+                mapAttribution(_layerType),
+                style: const TextStyle(
+                    fontSize: AppSizes.mapAttributionText, color: Colors.white),
+              ),
             ),
           ),
-        ),
-      ]),
+          if (chosen != null)
+            _Panel(entries: entries, chosen: chosen, onChoose: _choose),
+        ],
+      ),
     );
   }
 
   Widget _compassButton() {
     final Widget icon;
     if (_followCompass) {
-      icon = Icon(Icons.navigation, color: AppColors.connected);
-    } else if (!_isNorthUp) {
+      icon = const Icon(Icons.navigation);
+    } else {
       // the needle shows where north is on the rotated map
       icon = Transform.rotate(
         angle: _rotation * pi / 180,
-        child: const Icon(CupertinoIcons.location_north_fill,
-            color: AppColors.northNeedle),
+        child: const CustomPaint(
+            size: Size.square(26), painter: _NorthNeedlePainter()),
       );
-    } else {
-      icon =
-          const Icon(Icons.explore_outlined, color: AppColors.mapControlIcon);
     }
-    return FloatingActionButton(
-      heroTag: 'compass',
-      backgroundColor: AppColors.mapControl,
+    return _MapButton(
       tooltip: _followCompass
           ? S.compassModeOff
           : (_isNorthUp ? S.compassModeOn : S.northUp),
-      onPressed: _onCompassButton,
+      onTap: _onCompassButton,
+      pressed: _followCompass,
       child: icon,
     );
   }
@@ -246,14 +321,156 @@ class _MapScreenState extends State<MapScreen> {
             child: Text(mapLayerNames[type]!),
           ),
       ],
-      child: const Material(
-        color: AppColors.mapControl,
-        shape: CircleBorder(),
-        elevation: 4,
-        child: SizedBox(
-          width: 56,
-          height: 56,
-          child: Icon(Icons.layers_outlined, color: AppColors.mapControlIcon),
+      child: const _MapButton(child: Icon(Icons.layers_outlined)),
+    );
+  }
+}
+
+/// a white square button over the map; [pressed]: dark, the mode is on
+class _MapButton extends StatelessWidget {
+  const _MapButton(
+      {required this.child, this.onTap, this.tooltip, this.pressed = false});
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final String? tooltip;
+  final bool pressed;
+
+  @override
+  Widget build(BuildContext context) {
+    const p = AppPalette.light; // white on any imagery, in every theme
+    final button = Material(
+      color: pressed ? p.ink : AppColors.mapControl,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+          side: BorderSide(color: pressed ? p.ink : p.line)),
+      child: InkWell(
+        // no tap of its own inside the layers menu: the menu takes it
+        onTap: onTap,
+        customBorder: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
+        child: SizedBox.square(
+          dimension: AppSizes.minTap,
+          child: IconTheme(
+              data: IconThemeData(color: pressed ? p.onInk : p.ink),
+              child: Center(child: child)),
+        ),
+      ),
+    );
+    return tooltip == null ? button : Tooltip(message: tooltip, child: button);
+  }
+}
+
+/// red to the north, dark to the south
+class _NorthNeedlePainter extends CustomPainter {
+  const _NorthNeedlePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 24;
+    canvas.drawPath(
+        Path()
+          ..moveTo(12 * s, 2 * s)
+          ..lineTo(17 * s, 13 * s)
+          ..lineTo(7 * s, 13 * s)
+          ..close(),
+        Paint()..color = AppColors.northNeedle);
+    canvas.drawPath(
+        Path()
+          ..moveTo(12 * s, 22 * s)
+          ..lineTo(7 * s, 13 * s)
+          ..lineTo(17 * s, 13 * s)
+          ..close(),
+        Paint()..color = AppPalette.light.ink);
+  }
+
+  @override
+  bool shouldRepaint(_NorthNeedlePainter old) => false;
+}
+
+/// the trackers to choose from and the chosen one's card
+class _Panel extends StatelessWidget {
+  const _Panel(
+      {required this.entries, required this.chosen, required this.onChoose});
+
+  final List<TrackerEntry> entries;
+  final TrackerEntry chosen;
+  final void Function(TrackerEntry) onChoose;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      padding: const EdgeInsets.only(top: AppSizes.padding),
+      decoration: BoxDecoration(
+        color: p.card,
+        border: Border.all(color: p.line),
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
+            child: Row(children: [
+              for (final e in entries) ...[
+                _Chip(entry: e, chosen: e == chosen, onTap: () => onChoose(e)),
+                const SizedBox(width: AppSizes.gap),
+              ],
+            ]),
+          ),
+          TrackerCard(entry: chosen, framed: false),
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.entry, required this.chosen, required this.onTap});
+
+  final TrackerEntry entry;
+  final bool chosen;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final lost = entry.status == TrackerStatus.lost;
+    final color = chosen
+        ? p.onInk
+        : lost
+            ? p.muted
+            : p.ink;
+    return Semantics(
+      selected: chosen,
+      button: true,
+      child: Material(
+        color: chosen ? p.ink : Colors.transparent,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+            side: chosen
+                ? BorderSide.none
+                : BorderSide(color: p.line, width: AppSizes.outline)),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: AppSizes.minTap),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              StatusDot(status: entry.status),
+              const SizedBox(width: AppSizes.gap),
+              Text(displayName(entry.name, alias: entry.alias),
+                  style: TextStyle(
+                      fontFamily: AppText.sans,
+                      fontSize: AppText.small,
+                      fontWeight: FontWeight.w600,
+                      color: color)),
+            ]),
+          ),
         ),
       ),
     );

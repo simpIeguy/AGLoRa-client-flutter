@@ -10,6 +10,7 @@ import 'package:tsp_tracker/protocol/tracker_name.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
 import 'package:tsp_tracker/ui/screens/full_screen_arrow.dart';
+import 'package:tsp_tracker/ui/screens/map_screen.dart';
 import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
 import 'package:tsp_tracker/ui/screens/wait_tracker_screen.dart';
@@ -77,6 +78,42 @@ void main() {
   }
 
   for (final theme in [AppThemeChoice.light, AppThemeChoice.dark]) {
+    // no tiles here: the grey under them, the rest as in the app
+    testWidgets('map, ${theme.name}', (tester) async {
+      tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      resetApp(
+          positions: Stream.value(PhonePosition(
+              latitude: 53.8945,
+              longitude: 27.5440,
+              accuracy: 6,
+              time: DateTime.now())),
+          compass: Stream.value(const CompassReading(30, accuracy: 15)));
+      app.settings.theme = theme;
+      final now = DateTime.now().toUtc();
+      feed(pointMessage(
+          'UAV1', 53.90228, 27.56183, now.subtract(const Duration(seconds: 12)),
+          index: 0));
+      feed(pointMessage(
+          'UAV2', 53.91010, 27.53402, now.subtract(const Duration(minutes: 3)),
+          index: 1));
+      feed(pointMessage(
+          'UAV3', 53.92106, 27.57377, now.subtract(const Duration(minutes: 14)),
+          index: 2));
+      feed(pointMessage('GROUND2', 53.88710, 27.55410,
+          now.subtract(const Duration(seconds: 8)),
+          index: 3));
+
+      await tester.pumpWidget(inApp(const MapScreen(
+          centerLatitude: 53.902, centerLongitude: 27.552, withTiles: false)));
+      await tester.pump();
+      await tester.pump();
+      await expectLater(find.byType(MapScreen),
+          matchesGoldenFile('../build/screenshots/map_${theme.name}.png'));
+    });
+
     testWidgets('wait screen, ${theme.name}', (tester) async {
       tester.view.physicalSize = const Size(390 * 3, 844 * 3);
       tester.view.devicePixelRatio = 3;

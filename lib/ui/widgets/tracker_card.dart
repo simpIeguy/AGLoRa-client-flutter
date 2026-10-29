@@ -27,9 +27,13 @@ IconData roleIcon(TrackerRole role) => switch (role) {
 /// A tap opens the tracker's screen, a long press on the arrow the full
 /// screen.
 class TrackerCard extends StatelessWidget {
-  const TrackerCard({super.key, required this.entry});
+  const TrackerCard({super.key, required this.entry, this.framed = true});
 
   final TrackerEntry entry;
+
+  /// false: no frame and background of its own, inside another card (the
+  /// map's panel)
+  final bool framed;
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +43,10 @@ class TrackerCard extends StatelessWidget {
     final p = AppPalette.of(context);
     final point = entry.latest;
     return Material(
-      color: p.card,
+      color: framed ? p.card : Colors.transparent,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-          side: BorderSide(color: p.line)),
+          side: framed ? BorderSide(color: p.line) : BorderSide.none),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         // also without a fix: the screen tells what the tracker sends

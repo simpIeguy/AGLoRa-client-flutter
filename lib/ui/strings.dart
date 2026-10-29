@@ -49,6 +49,11 @@ abstract final class S {
   static const String statusLost = 'Связь потеряна, последняя точка';
   static const String statusWaiting = 'Ждём первый сигнал';
 
+  // on air, but the tracker's GPS has no fix
+  static const String searchingSatellites = 'Трекер ищет спутники';
+  static const String noFixLastGoodPoint =
+      'Нет спутников, показана последняя верная точка';
+
   // waiting for a tracker
   static const String waitTracker = 'Ждать трекер';
   static const String waitNameHint = 'Имя трекера: uav1, UAV 1, ground2…';

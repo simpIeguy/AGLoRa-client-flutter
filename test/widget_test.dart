@@ -170,6 +170,20 @@ void main() {
     expect(find.text('Связь есть'), findsOneWidget);
   });
 
+  testWidgets('no GPS fix on the tracker: the card says so', (tester) async {
+    await tester.pumpWidget(inApp(const TrackersScreen(demoTitle: 'Демо')));
+    feed(pointMessage('UAV6', 0, 0, DateTime.now().toUtc(), index: 0));
+    await tester.pump();
+    expect(find.text('Трекер ищет спутники'), findsOneWidget);
+    expect(find.text('Связь есть'), findsOneWidget);
+
+    feed(pointMessage('UAV6', 53.9, 27.5,
+        DateTime.now().toUtc().add(const Duration(seconds: 1)),
+        index: 1));
+    await tester.pump();
+    expect(find.text('Трекер ищет спутники'), findsNothing);
+  });
+
   testWidgets('a waited stub can be removed', (tester) async {
     app.store.addWaiting(parseTrackerName('GROUND4'));
     await tester.pumpWidget(inApp(const TrackersScreen(demoTitle: 'Демо')));

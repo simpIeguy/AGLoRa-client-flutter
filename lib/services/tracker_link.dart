@@ -60,6 +60,9 @@ class TrackerLink {
       case PointMessage(:final point):
         final added = store.addPoint(point);
         appLog('link: point ${point.identifier}${added ? '' : ' (known)'}');
+      case NoFixMessage(:final identifier):
+        store.heardWithoutFix(identifier);
+        appLog('link: $identifier without GPS fix');
       case MemoryMessage(:final deviceName):
         if (deviceName != null) store.setConnectedTracker(deviceName);
       case InfoMessage():

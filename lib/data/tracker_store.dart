@@ -48,6 +48,10 @@ class TrackerStore extends ChangeNotifier {
   /// waited trackers whose points so far were only old ones
   final Set<String> _waitedFor = {};
 
+  /// key → the last message without a GPS fix: the name as sent and the
+  /// phone's time (UTC), the tracker's own time is cleared in such messages
+  final Map<String, ({String identifier, DateTime at})> _noFix = {};
+
   final DateTime Function() _now;
 
   /// [now] replaces the phone's clock in tests
@@ -121,6 +125,43 @@ class TrackerStore extends ChangeNotifier {
     }
   }
 
+  /// The tracker is on air but its GPS has no fix: it is alive, its
+  /// coordinates are not. Points with a fix stay as they were.
+  void heardWithoutFix(String identifier) {
+    final key = trackerKey(identifier);
+    _noFix[key] = (identifier: identifier, at: _now().toUtc());
+    // on air: no longer a stub; the alert waits for the first fix
+    if (_waiting.remove(key) != null) _waitedFor.add(key);
+    notifyListeners();
+  }
+
+  /// the newest of the last point's GPS time and the last message without
+  /// a fix, UTC; null for a tracker never heard
+  DateTime? lastHeard(String identifier) {
+    final key = trackerKey(identifier);
+    final points = _points[key];
+    final fix = points == null || points.isEmpty ? null : points.first.time;
+    final noFix = _noFix[key]?.at;
+    if (fix == null || noFix == null) return fix ?? noFix;
+    return noFix.isAfter(fix) ? noFix : fix;
+  }
+
+  /// the last message came without a GPS fix: the coordinates shown are the
+  /// last good ones (or none yet)
+  bool isSearchingSatellites(String identifier) {
+    final key = trackerKey(identifier);
+    final noFix = _noFix[key]?.at;
+    if (noFix == null) return false;
+    final points = _points[key];
+    return points == null || points.isEmpty || noFix.isAfter(points.first.time);
+  }
+
+  /// heard only without a fix so far: names as sent
+  List<String> get trackersWithoutPoints => [
+        for (final e in _noFix.entries)
+          if (_points[e.key]?.isNotEmpty != true) e.value.identifier,
+      ];
+
   /// tracker's points, the newest first
   List<TrackerPoint> pointsOf(String identifier) => List.unmodifiable(
       _points[trackerKey(identifier)] ?? const <TrackerPoint>[]);
@@ -157,7 +198,9 @@ class TrackerStore extends ChangeNotifier {
   /// a tracker that already sent points is not waited for
   bool isKnown(String identifier) {
     final key = trackerKey(identifier);
-    return _points.containsKey(key) || _waiting.containsKey(key);
+    return _points.containsKey(key) ||
+        _waiting.containsKey(key) ||
+        _noFix.containsKey(key);
   }
 
   /// false when the tracker is already in the list or waited for
@@ -195,6 +238,7 @@ class TrackerStore extends ChangeNotifier {
     _hidden.clear();
     _onAir.clear();
     _waitedFor.clear();
+    _noFix.clear();
     _connectedTracker = null;
     notifyListeners();
   }

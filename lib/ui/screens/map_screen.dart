@@ -144,7 +144,11 @@ class _MapScreenState extends State<MapScreen> {
                       trackerMarker(context, point,
                           now: now,
                           status: trackerStatus(
-                              time: point.time,
+                              // on air without a fix: alive at the last
+                              // good point
+                              time:
+                                  _services.store.lastHeard(point.identifier) ??
+                                      point.time,
                               isConnected:
                                   _services.store.isConnected(point.identifier),
                               now: now)),

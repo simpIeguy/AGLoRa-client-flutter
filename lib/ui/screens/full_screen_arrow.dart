@@ -92,6 +92,10 @@ class FullScreenArrow extends StatelessWidget {
                     style: textTheme.headlineSmall?.merge(text)),
               Text(formatAge(services.clock.now.toUtc().difference(point.time)),
                   style: textTheme.titleLarge?.merge(muted)),
+              if (services.store.isSearchingSatellites(point.identifier))
+                Text(S.noFixLastGoodPoint,
+                    style: textTheme.titleLarge?.merge(muted),
+                    textAlign: TextAlign.center),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(

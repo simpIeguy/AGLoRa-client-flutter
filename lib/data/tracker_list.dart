@@ -10,14 +10,23 @@ class TrackerEntry {
     required this.status,
     this.latest,
     this.alias,
+    this.lastHeard,
+    this.searchingSatellites = false,
   });
 
   final TrackerName name;
   final TrackerStatus status;
 
-  /// null while the tracker is waited for
+  /// the last point with a GPS fix; null while waited for or while heard
+  /// only without a fix
   final TrackerPoint? latest;
   final String? alias;
+
+  /// the last message of any kind, UTC; null while waited for
+  final DateTime? lastHeard;
+
+  /// the last message came without a GPS fix
+  final bool searchingSatellites;
 
   String get key => name.key;
   bool get isUav => name.role == TrackerRole.uav;
@@ -47,18 +56,26 @@ class TrackerList {
 /// [includeHidden]: for the "who to show" list, with the unticked ones
 TrackerList buildTrackerList(TrackerStore store, DateTime now,
     {bool includeHidden = false}) {
-  final all = <TrackerEntry>[];
-  for (final point in store.latestPoints) {
-    all.add(TrackerEntry(
-      name: parseTrackerName(point.identifier),
+  TrackerEntry heard(String identifier, TrackerPoint? point) {
+    final lastHeard = store.lastHeard(identifier)!;
+    return TrackerEntry(
+      name: parseTrackerName(identifier),
       latest: point,
-      alias: store.aliasOf(point.identifier),
+      alias: store.aliasOf(identifier),
+      lastHeard: lastHeard,
+      searchingSatellites: store.isSearchingSatellites(identifier),
       status: trackerStatus(
-          time: point.time,
-          isConnected: store.isConnected(point.identifier),
+          time: lastHeard,
+          isConnected: store.isConnected(identifier),
           now: now),
-    ));
+    );
   }
+
+  final all = <TrackerEntry>[
+    for (final point in store.latestPoints) heard(point.identifier, point),
+    for (final identifier in store.trackersWithoutPoints)
+      heard(identifier, null),
+  ];
   for (final waited in store.waiting) {
     all.add(TrackerEntry(
       name: waited.name,
@@ -71,13 +88,13 @@ TrackerList buildTrackerList(TrackerStore store, DateTime now,
   final archived = <TrackerEntry>[];
   int hidden = 0;
   for (final entry in all) {
-    final point = entry.latest;
+    final heardAt = entry.lastHeard;
     final canHide = !entry.isUav && entry.status != TrackerStatus.connected;
     if (canHide && !includeHidden && store.isHidden(entry.key)) {
       hidden++;
-    } else if (point != null &&
+    } else if (heardAt != null &&
         entry.status != TrackerStatus.connected &&
-        now.toUtc().difference(point.time) >= trackerArchiveAfter) {
+        now.toUtc().difference(heardAt) >= trackerArchiveAfter) {
       archived.add(entry);
     } else {
       shown.add(entry);
@@ -85,8 +102,8 @@ TrackerList buildTrackerList(TrackerStore store, DateTime now,
   }
 
   int byFreshness(TrackerEntry a, TrackerEntry b) {
-    final ta = a.latest?.time;
-    final tb = b.latest?.time;
+    final ta = a.lastHeard;
+    final tb = b.lastHeard;
     if (ta == null || tb == null) return 0;
     return tb.compareTo(ta);
   }

@@ -58,9 +58,13 @@ class TrackerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _header(textTheme, foreground),
-                    if (point == null)
+                    if (entry.status == TrackerStatus.waiting)
                       _waitingRow(context)
+                    else if (point == null)
+                      _noFixNote(S.searchingSatellites)
                     else ...[
+                      if (entry.searchingSatellites)
+                        _noFixNote(S.noFixLastGoodPoint),
                       if (entry.status != TrackerStatus.connected)
                         _DirectionRow(point: point, foreground: foreground),
                       _coordinatesRow(context, point, foreground),
@@ -103,10 +107,16 @@ class TrackerCard extends StatelessWidget {
             ],
           ),
         ),
-        if (point != null) _AgeAndBattery(time: point.time, battery: battery),
+        if (entry.lastHeard != null)
+          _AgeAndBattery(time: entry.lastHeard!, battery: battery),
       ],
     );
   }
+
+  Widget _noFixNote(String text) => Padding(
+        padding: const EdgeInsets.only(top: AppSizes.gap),
+        child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+      );
 
   Widget _waitingRow(BuildContext context) {
     final store = AppScope.of(context).store;

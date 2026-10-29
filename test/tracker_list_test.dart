@@ -205,6 +205,64 @@ void main() {
     });
   });
 
+  group('on air without a GPS fix', () {
+    test('heard only without a fix: in the list, no coordinates', () {
+      final store = TrackerStore(now: () => now)..heardWithoutFix('uav 5');
+      final entry = buildTrackerList(store, now).shown.single;
+      expect(entry.key, 'UAV5');
+      expect(entry.latest, isNull);
+      expect(entry.searchingSatellites, isTrue);
+      expect(entry.status, TrackerStatus.active);
+      expect(store.isKnown('UAV5'), isTrue);
+    });
+
+    test('a fix, then none: the last good point, the link is alive', () {
+      var clock = now;
+      final store = TrackerStore(now: () => clock)
+        ..addPoint(at('UAV1', const Duration(minutes: 10), lat: 54));
+      expect(
+          buildTrackerList(store, now).shown.single.status, TrackerStatus.lost);
+
+      store.heardWithoutFix('UAV1');
+      var entry = buildTrackerList(store, now).shown.single;
+      expect(entry.status, TrackerStatus.active);
+      expect(entry.latest!.latitude, 54, reason: 'coordinates of the fix');
+      expect(entry.searchingSatellites, isTrue);
+      expect(entry.lastHeard, now);
+
+      // satellites are back
+      clock = now.add(const Duration(seconds: 30));
+      store.addPoint(at('UAV1', const Duration(seconds: -30), lat: 55));
+      entry = buildTrackerList(store, clock).shown.single;
+      expect(entry.searchingSatellites, isFalse);
+      expect(entry.latest!.latitude, 55);
+    });
+
+    test('a waited tracker leaves the stubs, alerts on its first fix',
+        () async {
+      final store = TrackerStore(now: () => now);
+      final signals = <FirstSignal>[];
+      store.firstSignals.listen(signals.add);
+      store.addWaiting(parseTrackerName('UAV3'));
+
+      store.heardWithoutFix('UAV3');
+      await Future<void>.delayed(Duration.zero);
+      expect(store.waiting, isEmpty);
+      expect(signals, isEmpty, reason: 'nowhere to go yet');
+
+      store.addPoint(at('UAV3', Duration.zero));
+      await Future<void>.delayed(Duration.zero);
+      expect(signals.single.wasWaited, isTrue);
+    });
+
+    test('a reset forgets it', () {
+      final store = TrackerStore()..heardWithoutFix('UAV1');
+      store.reset();
+      expect(store.trackersWithoutPoints, isEmpty);
+      expect(store.lastHeard('UAV1'), isNull);
+    });
+  });
+
   group('arrow problems and lamps (6, 7)', () {
     Direction direction({
       double? phoneLat = 53.9,

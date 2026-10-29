@@ -125,9 +125,32 @@ void main() {
     expect(messages, hasLength(1));
   });
 
-  test('(0, 0) means no GPS fix and is skipped', () {
+  test('(0, 0) means no GPS fix: no point, but the tracker is on air', () {
     feed(pointMessage('Tracker2', 0, 0, now, index: 0));
     expect(app.store.latestPoints, isEmpty);
+    expect(app.store.trackersWithoutPoints, ['Tracker2']);
+    expect(app.store.isSearchingSatellites('Tracker2'), isTrue);
+  });
+
+  test('no fix, as the firmware sends it: zero coordinates and time', () {
+    // the packet is cleared before reading GPS: the date is 2000-00-00
+    final message = parseMessage('point&dev_batt=100&name=UAV1'
+        '&lat=0.000000&lon=0.000000&timestamp=2000-00-00T00:00:00Z'
+        '&gpsValid=0&sat=0&alt=0.0&battery=100');
+    expect(message, isA<NoFixMessage>());
+    expect((message as NoFixMessage).identifier, 'UAV1');
+  });
+
+  test('gpsValid=0 is no fix even with coordinates, gpsValid=1 is a fix', () {
+    const base = 'point&name=UAV1&lat=53.9&lon=27.5'
+        '&timestamp=2026-10-28T12:00:00Z';
+    expect(parseMessage('$base&gpsValid=0'), isA<NoFixMessage>());
+    expect(parseMessage('$base&gpsValid=1'), isA<PointMessage>());
+    expect(parseMessage(base), isA<PointMessage>(),
+        reason: 'old firmware without the flag');
+    expect(parseMessage('point&lat=0&lon=0&timestamp=2026-10-28T12:00:00Z'),
+        isNull,
+        reason: 'no name: nothing to show');
   });
 
   test('the memory message tells which tracker the phone is on', () {

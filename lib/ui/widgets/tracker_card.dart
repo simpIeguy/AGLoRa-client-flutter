@@ -76,16 +76,19 @@ class TrackerTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
+    final shown = displayName(name, alias: alias);
     return Text.rich(
       TextSpan(children: [
-        TextSpan(text: displayName(name, alias: alias)),
-        TextSpan(
-            text: ' ${name.raw}',
-            style: TextStyle(
-                fontFamily: AppText.mono,
-                fontSize: AppText.small,
-                fontWeight: FontWeight.w500,
-                color: p.muted)),
+        TextSpan(text: shown),
+        // "Tracker9" is shown as it is: no need to say it twice
+        if (shown != name.raw)
+          TextSpan(
+              text: ' ${name.raw}',
+              style: TextStyle(
+                  fontFamily: AppText.mono,
+                  fontSize: AppText.small,
+                  fontWeight: FontWeight.w500,
+                  color: p.muted)),
       ]),
       style: Theme.of(context).textTheme.titleMedium,
       maxLines: 1,

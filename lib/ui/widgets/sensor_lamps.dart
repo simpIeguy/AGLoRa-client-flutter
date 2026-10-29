@@ -45,7 +45,7 @@ class SensorLamps extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.padding, vertical: AppSizes.gap / 2),
+              horizontal: 0, vertical: AppSizes.gap / 2),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -73,17 +73,24 @@ class _Lamp extends StatelessWidget {
   final LampLevel level;
   final String text;
 
+  /// like the status dots: filled good (green) or fair (amber), an empty
+  /// ring bad or off; the word next to it says which
   @override
   Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final decoration = switch (level) {
+      LampLevel.good => BoxDecoration(color: p.green, shape: BoxShape.circle),
+      LampLevel.fair => BoxDecoration(color: p.amber, shape: BoxShape.circle),
+      LampLevel.bad || LampLevel.off => BoxDecoration(
+          shape: BoxShape.circle, border: Border.all(color: p.muted, width: 2)),
+    };
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Container(
-        width: AppSizes.lamp,
-        height: AppSizes.lamp,
-        decoration:
-            BoxDecoration(color: AppColors.lamp(level), shape: BoxShape.circle),
-      ),
-      const SizedBox(width: AppSizes.gap / 2),
-      Text(text, style: Theme.of(context).textTheme.titleSmall),
+          width: AppSizes.lamp, height: AppSizes.lamp, decoration: decoration),
+      const SizedBox(width: AppSizes.gap),
+      Text(text,
+          style:
+              Theme.of(context).textTheme.bodyMedium?.copyWith(color: p.muted)),
     ]);
   }
 }

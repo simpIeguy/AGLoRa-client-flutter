@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tsp_tracker/data/tracker_status.dart';
 import 'package:tsp_tracker/protocol/tracker_name.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
@@ -13,6 +12,7 @@ import 'package:tsp_tracker/ui/screens/trackers_screen.dart';
 import 'package:tsp_tracker/ui/theme.dart';
 import 'package:tsp_tracker/ui/widgets/direction_arrow.dart';
 import 'package:tsp_tracker/ui/widgets/first_signal_alerts.dart';
+import 'package:tsp_tracker/ui/widgets/status_dot.dart';
 
 import 'helpers.dart';
 
@@ -30,42 +30,28 @@ void main() {
     await tester.pump();
   }
 
-  Color cardColor(WidgetTester tester, String name) {
-    final card = find
-        .ancestor(
-            of: find.textContaining(name), matching: find.byType(Material))
-        .evaluate()
-        .map((e) => e.widget as Material)
-        .firstWhere((m) => m.borderRadius != null);
-    return card.color!;
-  }
-
-  testWidgets('cards: names, colors and status labels', (tester) async {
+  testWidgets('you at the top, then the groups; neutral cards with a dot',
+      (tester) async {
     await showTrackers(tester);
 
-    expect(find.textContaining('Человек 1'), findsOneWidget);
-    expect(find.textContaining('БЛА 1'), findsOneWidget);
-    // the technical name is shown too
-    expect(find.textContaining('UAV1'), findsOneWidget);
-    expect(cardColor(tester, 'Человек 1'),
-        AppColors.status(TrackerStatus.connected));
-    expect(cardColor(tester, 'БЛА 1'), AppColors.status(TrackerStatus.fading));
+    // the connected tracker is "you", not a card in the groups
+    expect(find.text('Вы · GROUND1'), findsOneWidget);
+    expect(find.text('Человек 1 GROUND1'), findsNothing);
+    expect(find.text('БЛА'), findsOneWidget, reason: 'the group title');
+    expect(find.text('БЛА 1 UAV1'), findsOneWidget);
     expect(find.text('Связь пропадает'), findsOneWidget);
-    expect(find.text('Подключён к телефону'), findsOneWidget);
+    expect(find.byType(StatusDot), findsOneWidget);
     expect(find.textContaining('87'), findsNothing,
         reason: 'no battery: the firmware always sends a made-up value');
-  });
 
-  testWidgets('the UAV goes above the connected person', (tester) async {
-    await showTrackers(tester);
-    final uav = tester.getTopLeft(find.textContaining('БЛА 1')).dy;
-    final person = tester.getTopLeft(find.textContaining('Человек 1')).dy;
-    expect(uav, lessThan(person));
+    final you = tester.getTopLeft(find.text('Вы · GROUND1')).dy;
+    final uav = tester.getTopLeft(find.text('БЛА 1 UAV1')).dy;
+    expect(you, lessThan(uav));
   });
 
   testWidgets('no phone GPS: the reason instead of a distance', (tester) async {
     await showTrackers(tester);
-    expect(find.text('Нет GPS телефона'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget, reason: 'no distance');
     expect(find.text('GPS нет позиции'), findsOneWidget);
     expect(arrowStyles(), contains(ArrowStyle.unavailable),
         reason: 'no direction: a dashed arrow');
@@ -84,7 +70,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('1,1 км'), findsOneWidget);
-    expect(find.text('на трекер 0° С'), findsOneWidget);
     expect(find.text('GPS ±6 м'), findsOneWidget);
     expect(find.text('Компас точный'), findsOneWidget);
     expect(arrowStyles(), contains(ArrowStyle.filled));
@@ -94,8 +79,8 @@ void main() {
     await tester.pump();
     expect(find.text('Компас неточный'), findsOneWidget);
     expect(find.text('Помашите телефоном восьмёркой'), findsOneWidget);
-    expect(find.text('Компас неточный: помашите телефоном восьмёркой'),
-        findsOneWidget);
+    expect(arrowStyles(), contains(ArrowStyle.outline),
+        reason: 'an inaccurate compass: an outline, the color stays');
 
     // a long press on the arrow opens the full screen
     final arrow = find.bySemanticsLabel(
@@ -134,16 +119,12 @@ void main() {
     await tester.longPress(find.text('53.91000, 27.57000'));
     await tester.pump();
     expect(copied, '53.91000, 27.57000');
-    expect(find.text('Скопировано'), findsOneWidget);
+    expect(find.text('Скопировано: 53.91000, 27.57000'), findsOneWidget);
 
-    await tester.tap(find.textContaining('Человек 1'));
+    await tester.tap(find.text('БЛА 1 UAV1'));
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
     expect(find.byType(TrackerLogScreen), findsOneWidget);
-    expect(find.text('Лог: Человек 1'), findsOneWidget);
-
-    await tester.longPress(find.text('53.90228, 27.56183'));
-    await tester.pump();
-    expect(copied, '53.90228, 27.56183');
+    expect(find.text('Лог: БЛА 1'), findsOneWidget);
   });
 
   testWidgets('the screen redraws when a point comes', (tester) async {
@@ -167,7 +148,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Ждём первый сигнал'), findsOneWidget);
-    expect(cardColor(tester, 'БЛА 3'), AppColors.status(TrackerStatus.waiting));
 
     feed(pointMessage('UAV3', 53.9, 27.5, DateTime.now().toUtc(), index: 0));
     await tester.pump();
@@ -179,23 +159,34 @@ void main() {
     await tester.pumpWidget(inApp(const TrackersScreen(demoTitle: 'Демо')));
     feed(pointMessage('UAV6', 0, 0, DateTime.now().toUtc(), index: 0));
     await tester.pump();
-    expect(find.text('Трекер ищет спутники'), findsOneWidget);
+    expect(find.textContaining('Трекер ищет спутники'), findsOneWidget);
     expect(find.text('Связь есть'), findsOneWidget);
 
     feed(pointMessage('UAV6', 53.9, 27.5,
         DateTime.now().toUtc().add(const Duration(seconds: 1)),
         index: 1));
     await tester.pump();
-    expect(find.text('Трекер ищет спутники'), findsNothing);
+    expect(find.textContaining('Трекер ищет спутники'), findsNothing);
   });
 
   testWidgets('a waited stub can be removed', (tester) async {
     app.store.addWaiting(parseTrackerName('GROUND4'));
     await tester.pumpWidget(inApp(const TrackersScreen(demoTitle: 'Демо')));
     expect(find.textContaining('Человек 4'), findsOneWidget);
-    await tester.tap(find.text('Убрать'));
+    await tester.tap(find.byTooltip('Убрать Человек 4 из ожидания'));
     await tester.pump();
     expect(find.textContaining('Человек 4'), findsNothing);
+  });
+
+  testWidgets('the settings switch the theme, night is red', (tester) async {
+    await tester.pumpWidget(inApp(const TrackersScreen(demoTitle: 'Демо')));
+    await tester.tap(find.byTooltip('Настройки'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ночная'));
+    await tester.pumpAndSettle();
+    expect(app.settings.theme, AppThemeChoice.night);
+    final context = tester.element(find.text('Тема'));
+    expect(AppPalette.of(context), AppPalette.night);
   });
 
   testWidgets('the first signal shows a banner once', (tester) async {

@@ -20,14 +20,17 @@ String formatDistance(double metres) {
   return '${d.value} ${d.unit}';
 }
 
-/// "12 с назад", "3 мин назад", "2 ч назад", "4 дн назад"
-String formatAge(Duration age) {
+/// "12 с", "3 мин", "2 ч", "4 дн"
+String formatDuration(Duration age) {
   if (age.isNegative) age = Duration.zero;
-  if (age.inMinutes < 1) return '${age.inSeconds} с назад';
-  if (age.inHours < 1) return '${age.inMinutes} мин назад';
-  if (age.inDays < 1) return '${age.inHours} ч назад';
-  return '${age.inDays} дн назад';
+  if (age.inMinutes < 1) return '${age.inSeconds} с';
+  if (age.inHours < 1) return '${age.inMinutes} мин';
+  if (age.inDays < 1) return '${age.inHours} ч';
+  return '${age.inDays} дн';
 }
+
+/// "12 с назад", "3 мин назад", "2 ч назад", "4 дн назад"
+String formatAge(Duration age) => '${formatDuration(age)} назад';
 
 /// 24-hour clock, "07:05:09"
 String formatClock(DateTime time) {

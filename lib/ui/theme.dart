@@ -69,7 +69,13 @@ abstract final class AppSizes {
   static const double gap = 8;
   static const double padding = 12;
   static const double cardRadius = 16;
-  static const double cardArrow = 72;
+  static const double cardArrow = 56;
+
+  /// the bottom bar buttons: larger than the rest, used most
+  static const double bigButton = 56;
+  static const double buttonRadius = 12;
+  static const double screenPadding = 16;
+  static const double outline = 1.5;
   static const double bigArrow = 260;
   static const double lamp = 12;
   static const double mapAttributionText = 10;
@@ -262,11 +268,41 @@ ThemeData buildAppTheme([AppPalette palette = AppPalette.light]) {
     dividerColor: palette.line,
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-          minimumSize: const Size(AppSizes.minTap, AppSizes.minTap)),
+        minimumSize: const Size(AppSizes.minTap, AppSizes.minTap),
+        backgroundColor: palette.ink,
+        foregroundColor: palette.onInk,
+        textStyle: const TextStyle(
+            fontFamily: AppText.sans,
+            fontSize: AppText.main,
+            fontWeight: FontWeight.w600),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
+      ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-          minimumSize: const Size(AppSizes.minTap, AppSizes.minTap)),
+        minimumSize: const Size(AppSizes.minTap, AppSizes.minTap),
+        foregroundColor: palette.ink,
+        side: BorderSide(color: palette.ink, width: AppSizes.outline),
+        textStyle: const TextStyle(
+            fontFamily: AppText.sans,
+            fontSize: AppText.small,
+            fontWeight: FontWeight.w600),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
+      ),
+    ),
+    // "Скопировано: …" over the bottom bar
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: palette.ink,
+      contentTextStyle: TextStyle(
+          fontFamily: AppText.sans,
+          color: palette.onInk,
+          fontSize: AppText.small,
+          fontWeight: FontWeight.w600),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(

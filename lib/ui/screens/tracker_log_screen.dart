@@ -75,12 +75,12 @@ void showMessage(BuildContext context, String text) {
     ..showSnackBar(SnackBar(content: Text(text)));
 }
 
-/// copies "53.902284, 27.561831" and says so
+/// copies "53.90228, 27.56183" and says so, with the copied text
 Future<void> copyCoordinates(
     BuildContext context, double latitude, double longitude) async {
-  await Clipboard.setData(
-      ClipboardData(text: formatCoordinates(latitude, longitude)));
-  if (context.mounted) showMessage(context, S.copied);
+  final text = formatCoordinates(latitude, longitude);
+  await Clipboard.setData(ClipboardData(text: text));
+  if (context.mounted) showMessage(context, S.copiedValue(text));
 }
 
 class _PointTile extends StatelessWidget {

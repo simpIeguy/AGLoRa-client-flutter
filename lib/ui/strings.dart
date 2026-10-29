@@ -25,6 +25,20 @@ abstract final class S {
   static const String stopScan = 'Остановить поиск';
   static const String startScan = 'Искать';
 
+  // main screen
+  static const String you = 'Вы';
+  static const String connectedByBluetooth = 'Подключён по Bluetooth';
+  static const String noBluetoothLink = 'Нет связи по Bluetooth';
+  static const String disconnectMe = 'Отключиться';
+  static const String connectMe = 'Подключиться';
+  static const String groupUavs = 'БЛА';
+  static const String groupPeople = 'Люди';
+  static const String groupOthers = 'Другие';
+  static const String settings = 'Настройки';
+  static String copiedValue(String value) => 'Скопировано: $value';
+  static String removeWaiting(String name) => 'Убрать $name из ожидания';
+  static String lostAge(String age) => '$age, последняя точка';
+
   // tracker list
   static const String noTrackersYet = 'Трекеров пока нет';
   static const String toTracker = 'на трекер';
@@ -46,7 +60,7 @@ abstract final class S {
   static const String statusConnected = 'Подключён к телефону';
   static const String statusActive = 'Связь есть';
   static const String statusFading = 'Связь пропадает';
-  static const String statusLost = 'Связь потеряна, последняя точка';
+  static const String statusLost = 'Связь потеряна';
   static const String statusWaiting = 'Ждём первый сигнал';
 
   // on air, but the tracker's GPS has no fix
@@ -125,6 +139,16 @@ abstract final class S {
   static const String compassModeOff = 'Обычный режим';
   static const String compassModeOn = 'По направлению телефона';
   static const String northUp = 'Север вверх';
+
+  // settings
+  static const String sectionLook = 'Вид';
+  static const String theme = 'Тема';
+  static const String themeAuto = 'Авто';
+  static const String themeLight = 'Светлая';
+  static const String themeDark = 'Тёмная';
+  static const String themeNight = 'Ночная';
+  static const String themeNightHint =
+      'Ночная: красные цвета на чёрном, не слепит и не сбивает ночное зрение.';
 
   // demo
   static const String demoMode = 'Демо-режим';

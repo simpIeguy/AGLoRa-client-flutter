@@ -24,7 +24,8 @@ void resetApp({
   app.location.start();
 }
 
-/// a screen inside the app's scope and theme
+/// a screen inside the app's scope and theme; the theme follows the
+/// settings, as in the app
 Widget inApp(
   Widget home, {
   GlobalKey<NavigatorState>? navigatorKey,
@@ -33,12 +34,20 @@ Widget inApp(
 }) =>
     AppScope(
         services: app,
-        child: MaterialApp(
-          theme: buildAppTheme(),
-          navigatorKey: navigatorKey,
-          scaffoldMessengerKey: messengerKey,
-          builder: builder,
-          home: home,
+        child: ListenableBuilder(
+          listenable: app.settings,
+          builder: (context, _) {
+            final themes = themesFor(app.settings.theme);
+            return MaterialApp(
+              theme: buildAppTheme(themes.light),
+              darkTheme: buildAppTheme(themes.dark),
+              themeMode: themes.mode,
+              navigatorKey: navigatorKey,
+              scaffoldMessengerKey: messengerKey,
+              builder: builder,
+              home: home,
+            );
+          },
         ));
 
 /// a "point" message exactly as the firmware sends it (aglora.cpp)

@@ -39,8 +39,6 @@ abstract final class S {
   static const String turnOn = 'Включить';
   static const String notNow = 'Не сейчас';
   static const String locationOff = 'Геолокация выключена';
-  static const String locationOffHint =
-      'Без неё нет расстояния и стрелки, а на части телефонов поиск трекеров по Bluetooth не находит устройства.';
   static const String details = 'Подробнее';
   static const String noBluetoothOnPhone = 'Bluetooth недоступен';
   static const String connectTracker = 'Подключить трекер';

@@ -105,7 +105,6 @@ class LinkBanner extends StatelessWidget {
               title: S.noBluetoothOnPhone, hint: S.bluetoothOffHint),
           LinkProblem.locationOff => _Banner(
               title: S.locationOff,
-              hint: S.locationOffHint,
               action: S.turnOn,
               onAction: () => Geolocator.openLocationSettings(),
             ),
@@ -116,11 +115,10 @@ class LinkBanner extends StatelessWidget {
 }
 
 class _Banner extends StatelessWidget {
-  const _Banner(
-      {required this.title, required this.hint, this.action, this.onAction});
+  const _Banner({required this.title, this.hint, this.action, this.onAction});
 
   final String title;
-  final String hint;
+  final String? hint;
   final String? action;
   final VoidCallback? onAction;
 
@@ -146,7 +144,9 @@ class _Banner extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title, style: textTheme.titleMedium),
-              Text(hint, style: textTheme.bodyMedium?.copyWith(color: p.muted)),
+              if (hint != null)
+                Text(hint!,
+                    style: textTheme.bodyMedium?.copyWith(color: p.muted)),
             ],
           ),
         ),

@@ -257,6 +257,7 @@ abstract final class S {
   static const String relayMeHint =
       'Отправка в эфир данных о вашем местоположении. Другие наземные '
       'трекеры повторят её, так вас услышат дальше';
+  static const String relayMeUavNote = 'На БЛА выключить нельзя';
   static const String sectionScreen = 'Экран';
   static const String keepScreenOn = 'Не гасить в полном экране';
   static const String keepScreenOnHint = 'Расходует батарею';

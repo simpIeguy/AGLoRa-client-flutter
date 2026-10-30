@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/tracker_status.dart';
+import '../../protocol/tracker_name.dart';
 import '../../services/app_services.dart';
 import '../format.dart';
 import '../strings.dart';
@@ -112,22 +113,31 @@ class SettingsScreen extends StatelessWidget {
                   _Hint(S.thresholdsHint, style: muted),
                   ValueListenableBuilder<bool?>(
                     valueListenable: services.link.relayMe,
-                    builder: (context, relay, _) => relay == null
-                        ? const SizedBox.shrink()
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const _Section(S.sectionRelay),
-                              _Group(children: [
-                                _Switch(
-                                  title: S.relayMe,
-                                  hint: S.relayMeHint,
-                                  value: relay,
-                                  onChanged: services.link.setRelayMe,
-                                ),
-                              ]),
-                            ],
-                          ),
+                    builder: (context, relay, _) {
+                      final connected = store.connectedTracker;
+                      final onUav = connected != null &&
+                          parseTrackerName(connected).role == TrackerRole.uav;
+                      return relay == null
+                          ? const SizedBox.shrink()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _Section(S.sectionRelay),
+                                _Group(children: [
+                                  _Switch(
+                                    title: S.relayMe,
+                                    hint: onUav
+                                        ? '${S.relayMeHint}. ${S.relayMeUavNote}'
+                                        : S.relayMeHint,
+                                    value: onUav || relay,
+                                    // a UAV always transmits, it cannot be off
+                                    onChanged:
+                                        onUav ? null : services.link.setRelayMe,
+                                  ),
+                                ]),
+                              ],
+                            );
+                    },
                   ),
                   const _Section(S.sectionScreen),
                   _Group(children: [
@@ -316,7 +326,9 @@ class _Switch extends StatelessWidget {
   final String title;
   final String hint;
   final bool value;
-  final ValueChanged<bool> onChanged;
+
+  /// null: the switch is shown but cannot be changed
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) => SwitchListTile(

@@ -28,6 +28,8 @@ void main() {
         expect(n.key, 'UAV1', reason: raw);
       }
       expect(parseTrackerName('ground2').key, 'GROUND2');
+      expect(parseTrackerName('GRD2').key, 'GROUND2');
+      expect(parseTrackerName('GRD2').role, TrackerRole.ground);
       expect(parseTrackerName('GROUND 2').role, TrackerRole.ground);
     });
 

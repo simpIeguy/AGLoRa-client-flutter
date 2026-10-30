@@ -253,10 +253,10 @@ abstract final class S {
   static const String thresholdsHint =
       'Время считается от последней принятой точки. Подберите под то, как часто трекеры шлют координаты.';
   static const String sectionRelay = 'Сеть';
-  static const String relayMe = 'Пересылать мою позицию';
+  static const String relayMe = 'Транслировать мою позицию';
   static const String relayMeHint =
-      'Другие наземные трекеры повторят ваши пакеты в своё время. '
-      'Нужно вдали от остальных, а в группе лучше выключить';
+      'Отправка в эфир данных о вашем местоположении. Другие наземные '
+      'трекеры повторят её, так вас услышат дальше';
   static const String sectionScreen = 'Экран';
   static const String keepScreenOn = 'Не гасить в полном экране';
   static const String keepScreenOnHint = 'Расходует батарею';

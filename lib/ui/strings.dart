@@ -37,6 +37,9 @@ abstract final class S {
   static const String bluetoothOffHint =
       'Телефон связывается с трекером по Bluetooth. Включите его, и список трекеров появится сам.';
   static const String turnOn = 'Включить';
+  static const String locationOff = 'Геолокация выключена';
+  static const String locationOffHint =
+      'Без неё нет расстояния и стрелки, а на части телефонов поиск трекеров по Bluetooth не находит устройства.';
   static const String details = 'Подробнее';
   static const String noBluetoothOnPhone = 'Bluetooth недоступен';
   static const String connectTracker = 'Подключить трекер';
@@ -69,6 +72,10 @@ abstract final class S {
   static const String groupOthers = 'Другие';
   static const String settings = 'Настройки';
   static String copiedValue(String value) => 'Скопировано: $value';
+  static String copiedSk42(String value) => 'Скопировано (СК-42): $value';
+  static const String copyAs = 'Копировать как';
+  static const String datumWgs84 = 'WGS 84';
+  static const String datumSk42 = 'СК-42';
   static String removeWaiting(String name) => 'Убрать $name из ожидания';
   static String lostAge(String age) => '$age, последняя точка';
 

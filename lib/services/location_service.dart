@@ -40,11 +40,20 @@ typedef PositionsOpener = Future<Stream<PhonePosition>?> Function(
 class LocationService extends ChangeNotifier {
   /// [positions] replaces the phone's GPS in tests, [open] replaces the way
   /// to it (permission included)
-  LocationService({Stream<PhonePosition>? positions, PositionsOpener? open})
+  LocationService(
+      {Stream<PhonePosition>? positions,
+      PositionsOpener? open,
+      Stream<bool>? serviceEnabled})
       : _open = open ??
-            (positions == null ? _phonePositions : (_) async => positions);
+            (positions == null ? _phonePositions : (_) async => positions),
+        // only the real phone tells when the user switches the location
+        // on or off in the notification shade
+        _serviceEnabled = serviceEnabled ??
+            (positions == null && open == null ? _phoneServiceStatus() : null);
 
   final PositionsOpener _open;
+  final Stream<bool>? _serviceEnabled;
+  StreamSubscription<bool>? _serviceSubscription;
   StreamSubscription<PhonePosition>? _subscription;
   bool _opening = false;
 
@@ -55,6 +64,7 @@ class LocationService extends ChangeNotifier {
   LocationProblem get problem => _problem;
 
   Future<void> start() async {
+    _serviceSubscription ??= _serviceEnabled?.listen(_onServiceChanged);
     if (_subscription != null || _opening) return;
     _opening = true;
     final positions = await _open(_setProblem);
@@ -73,11 +83,30 @@ class LocationService extends ChangeNotifier {
     }, onDone: _stop);
   }
 
+  /// The user switched the phone's location off or on. Off: the old position
+  /// is dropped, it would send the arrows the wrong way. On: open again.
+  void _onServiceChanged(bool enabled) {
+    if (!enabled) {
+      _stop();
+      _position = null;
+      _problem = LocationProblem.serviceOff;
+      notifyListeners();
+    } else if (_problem == LocationProblem.serviceOff) {
+      _problem = LocationProblem.starting;
+      notifyListeners();
+      start();
+    }
+  }
+
   /// Again after a failure: the user may have allowed the location or
   /// switched it on meanwhile. The app calls it when it comes back on screen.
   Future<void> retry() async {
     if (_subscription == null) await start();
   }
+
+  static Stream<bool> _phoneServiceStatus() =>
+      Geolocator.getServiceStatusStream()
+          .map((status) => status == ServiceStatus.enabled);
 
   void _stop() {
     _subscription?.cancel();
@@ -102,6 +131,10 @@ class LocationService extends ChangeNotifier {
         setProblem(LocationProblem.noPermission);
         return null;
       }
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        setProblem(LocationProblem.serviceOff);
+        return null;
+      }
       return Geolocator.getPositionStream().map(_fromGeolocator);
     } catch (e) {
       appLog('location: $e');
@@ -121,6 +154,7 @@ class LocationService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _serviceSubscription?.cancel();
     _stop();
     super.dispose();
   }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
@@ -46,6 +47,24 @@ void main() {
     expect(find.textContaining('87'), findsNothing,
         reason: 'no battery: the firmware always sends a made-up value');
     expect(find.text('Поделиться'), findsNothing);
+  });
+
+  testWidgets('a long press on the copy button offers WGS 84 or СК-42',
+      (tester) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform, (call) async => null);
+    feedPoints('UAV1', 1);
+    await show(tester, 'UAV1');
+
+    await tester.longPress(find.byTooltip('Копировать координаты').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Копировать как'), findsOneWidget);
+    expect(find.text('WGS 84'), findsOneWidget);
+
+    await tester.tap(find.text('СК-42'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.textContaining('Скопировано (СК-42):'), findsOneWidget);
   });
 
   testWidgets('the points can be exported as GPX or CSV', (tester) async {

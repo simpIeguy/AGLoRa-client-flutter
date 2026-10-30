@@ -11,6 +11,7 @@ import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
 import '../widgets/coordinates_text.dart';
+import '../widgets/copy_coordinates.dart';
 import '../widgets/direction_arrow.dart';
 import '../widgets/status_dot.dart';
 import '../widgets/tracker_card.dart';
@@ -291,14 +292,15 @@ class _Coordinates extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 onTap: () =>
                     copyCoordinates(context, point.latitude, point.longitude),
+                onLongPress: () =>
+                    showCopyFormats(context, point.latitude, point.longitude),
                 child: CoordinatesText(point.latitude, point.longitude),
               ),
             ),
-            IconButton(
+            CopyCoordinatesButton(
+              latitude: point.latitude,
+              longitude: point.longitude,
               tooltip: S.copyCoordinates,
-              icon: const Icon(Icons.copy_outlined),
-              onPressed: () =>
-                  copyCoordinates(context, point.latitude, point.longitude),
             ),
           ]),
         ],

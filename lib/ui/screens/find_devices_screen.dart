@@ -10,6 +10,7 @@ import '../../services/ble_data_source.dart';
 import '../../util/log.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/link_banner.dart';
 import '../widgets/status_dot.dart';
 import 'demo_screens.dart';
 
@@ -210,6 +211,12 @@ class ScanView<T> extends StatelessWidget {
               child: Text(
                   scanning ? S.scanning(seconds) : S.scanDone(found.length),
                   style: muted),
+            ),
+            // what keeps the search from finding anything: Bluetooth or the
+            // location off, no permission
+            const Padding(
+              padding: EdgeInsets.only(left: AppSizes.screenPadding),
+              child: LinkBanner(),
             ),
             Expanded(
               child: ListView(

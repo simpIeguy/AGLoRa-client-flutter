@@ -407,8 +407,9 @@ class _MapScreenState extends State<MapScreen> {
                       _followTracker ? S.followTrackerOff : S.followTracker,
                   pressed: _followTracker,
                   onTap: _toggleFollowTracker,
-                  child: Icon(
-                      _followTracker ? Icons.gps_fixed : Icons.gps_not_fixed),
+                  child: Icon(_followTracker
+                      ? Icons.center_focus_strong
+                      : Icons.center_focus_weak),
                 ),
                 const SizedBox(height: AppSizes.gap),
                 _MapButton(

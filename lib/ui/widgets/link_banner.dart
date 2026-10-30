@@ -13,7 +13,7 @@ import '../theme.dart';
 import 'status_dot.dart';
 
 /// what keeps the app from working, shown over the list
-enum LinkProblem { none, permissions, bluetoothOff, noBluetooth }
+enum LinkProblem { none, permissions, bluetoothOff, noBluetooth, locationOff }
 
 /// Permissions first: without them neither the search nor the arrow work.
 /// "Unknown" and "turning on" are not a problem, only a moment.
@@ -29,6 +29,9 @@ LinkProblem linkProblem(
     BluetoothAdapterState.turningOff =>
       LinkProblem.bluetoothOff,
     BluetoothAdapterState.unavailable => LinkProblem.noBluetooth,
+    // the location is off: no distance, no arrow, and on many phones Android
+    // gives no Bluetooth search results either
+    _ when location == LocationProblem.serviceOff => LinkProblem.locationOff,
     _ => LinkProblem.none,
   };
 }
@@ -100,6 +103,12 @@ class LinkBanner extends StatelessWidget {
             ),
           LinkProblem.noBluetooth => const _Banner(
               title: S.noBluetoothOnPhone, hint: S.bluetoothOffHint),
+          LinkProblem.locationOff => _Banner(
+              title: S.locationOff,
+              hint: S.locationOffHint,
+              action: S.turnOn,
+              onAction: () => Geolocator.openLocationSettings(),
+            ),
         };
       },
     );

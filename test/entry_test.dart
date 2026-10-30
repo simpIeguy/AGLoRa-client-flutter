@@ -32,6 +32,11 @@ void main() {
           LinkProblem.permissions);
       expect(problem(BluetoothAdapterState.unavailable, LocationProblem.none),
           LinkProblem.noBluetooth);
+      expect(problem(BluetoothAdapterState.on, LocationProblem.serviceOff),
+          LinkProblem.locationOff);
+      expect(problem(BluetoothAdapterState.off, LocationProblem.serviceOff),
+          LinkProblem.bluetoothOff,
+          reason: 'Bluetooth first');
     });
   });
 

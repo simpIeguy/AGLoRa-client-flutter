@@ -9,11 +9,13 @@ import '../../services/app_services.dart';
 import '../../services/map_link.dart';
 import '../../services/track_sharing.dart';
 import '../../util/geo.dart';
+import '../../util/sk42.dart';
 import '../format.dart';
 import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
 import '../widgets/coordinates_text.dart';
+import '../widgets/copy_coordinates.dart';
 import '../widgets/direction_arrow.dart';
 import '../widgets/status_dot.dart';
 import '../widgets/tracker_card.dart';
@@ -279,13 +281,18 @@ void showMessage(BuildContext context, String text) {
     ..showSnackBar(SnackBar(content: Text(text)));
 }
 
-/// copies "53.90228, 27.56183" and says so, with the copied text
+/// copies "53.90228, 27.56183" and says so, with the copied text; [sk42]: in
+/// the Ð¡Ð-42 datum instead of WGS 84
 Future<void> copyCoordinates(
-    BuildContext context, double latitude, double longitude) async {
-  final text = formatCoordinates(
-      latitude, longitude, AppScope.of(context).settings.coordinates);
+    BuildContext context, double latitude, double longitude,
+    {bool sk42 = false}) async {
+  final shown = sk42 ? wgs84ToSk42(latitude, longitude) : null;
+  final text = formatCoordinates(shown?.latitude ?? latitude,
+      shown?.longitude ?? longitude, AppScope.of(context).settings.coordinates);
   await Clipboard.setData(ClipboardData(text: text));
-  if (context.mounted) showMessage(context, S.copiedValue(text));
+  if (context.mounted) {
+    showMessage(context, sk42 ? S.copiedSk42(text) : S.copiedValue(text));
+  }
 }
 
 /// the big arrow (a tap: the full screen), the status, the distance and the
@@ -486,6 +493,7 @@ class _PointRow extends StatelessWidget {
     final p = AppPalette.of(context);
     final time = formatClock(point.time.toLocal());
     void copy() => copyCoordinates(context, point.latitude, point.longitude);
+    void formats() => showCopyFormats(context, point.latitude, point.longitude);
     return Container(
       constraints: const BoxConstraints(minHeight: height),
       padding: const EdgeInsets.only(left: 4),
@@ -497,6 +505,7 @@ class _PointRow extends StatelessWidget {
             // a tap copies, as on the cards
             behavior: HitTestBehavior.opaque,
             onTap: copy,
+            onLongPress: formats,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -510,10 +519,10 @@ class _PointRow extends StatelessWidget {
             ),
           ),
         ),
-        IconButton(
+        CopyCoordinatesButton(
+          latitude: point.latitude,
+          longitude: point.longitude,
           tooltip: S.copyCoordinatesAt(time),
-          icon: const Icon(Icons.copy_outlined),
-          onPressed: copy,
         ),
       ]),
     );

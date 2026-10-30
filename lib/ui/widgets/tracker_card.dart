@@ -13,6 +13,7 @@ import '../screens/tracker_screen.dart';
 import '../strings.dart';
 import '../theme.dart';
 import 'coordinates_text.dart';
+import 'copy_coordinates.dart';
 import 'direction_arrow.dart';
 import 'status_dot.dart';
 
@@ -238,6 +239,7 @@ class CoordinatesRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     void copy() => copyCoordinates(context, point.latitude, point.longitude);
+    void formats() => showCopyFormats(context, point.latitude, point.longitude);
     return Container(
       margin: const EdgeInsets.only(top: AppSizes.gap),
       decoration: BoxDecoration(border: Border(top: BorderSide(color: p.line))),
@@ -248,16 +250,17 @@ class CoordinatesRow extends StatelessWidget {
             // whole strip, not only the digits
             behavior: HitTestBehavior.opaque,
             onTap: copy,
+            onLongPress: formats,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.padding),
               child: CoordinatesText(point.latitude, point.longitude),
             ),
           ),
         ),
-        IconButton(
+        CopyCoordinatesButton(
+          latitude: point.latitude,
+          longitude: point.longitude,
           tooltip: S.copyCoordinates,
-          icon: const Icon(Icons.copy_outlined),
-          onPressed: copy,
         ),
       ]),
     );

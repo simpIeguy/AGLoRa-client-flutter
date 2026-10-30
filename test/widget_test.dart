@@ -19,6 +19,7 @@ import 'helpers.dart';
 void main() {
   setUp(resetApp);
   _reorderTests();
+  _locationOffTests();
 
   Future<void> showTrackers(WidgetTester tester) async {
     final now = DateTime.now().toUtc();
@@ -253,5 +254,38 @@ void _reorderTests() {
 
     expect(top('БЛА 2 UAV2'), lessThan(top('БЛА 1 UAV1')));
     expect(app.store.orderOf('UAV2'), lessThan(app.store.orderOf('UAV1')!));
+  });
+}
+
+void _locationOffTests() {
+  testWidgets('location off: a tap on "GPS нет позиции" offers the settings',
+      (tester) async {
+    final enabled = StreamController<bool>();
+    addTearDown(enabled.close);
+    final location = LocationService(
+        open: (_) async => const Stream<PhonePosition>.empty(),
+        serviceEnabled: enabled.stream);
+    resetApp(location: location);
+    await location.start();
+    enabled.add(false);
+    await tester.pumpWidget(inApp(const TrackersScreen(demoTitle: 'Демо')));
+    await tester.pump();
+
+    await tester.tap(find.text('GPS нет позиции'));
+    await tester.pumpAndSettle();
+    expect(find.text('Геолокация выключена'), findsOneWidget);
+    expect(find.text('Включить'), findsOneWidget);
+    await tester.tap(find.text('Не сейчас'));
+    await tester.pumpAndSettle();
+    expect(find.text('Геолокация выключена'), findsNothing);
+  });
+
+  testWidgets('location on but no fix: the lamp is not a button',
+      (tester) async {
+    await tester.pumpWidget(inApp(const TrackersScreen(demoTitle: 'Демо')));
+    await tester.pump();
+    await tester.tap(find.text('GPS нет позиции'));
+    await tester.pumpAndSettle();
+    expect(find.text('Включить'), findsNothing);
   });
 }

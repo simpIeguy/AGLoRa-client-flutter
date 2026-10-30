@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../data/sensor_lamps.dart';
 import '../../services/app_services.dart';
+import '../../services/location_service.dart';
 import '../strings.dart';
 import '../theme.dart';
+import 'ask_location.dart';
 
 /// "GPS ±6 м" and "Компас точный" with a colored lamp each
 class SensorLamps extends StatelessWidget {
@@ -49,7 +51,21 @@ class SensorLamps extends StatelessWidget {
                 spacing: AppSizes.padding * 2,
                 runSpacing: AppSizes.gap / 2,
                 children: [
-                  _Lamp(level: gps, text: gpsText),
+                  // location off: a tap offers Android's settings
+                  if (services.location.problem == LocationProblem.serviceOff)
+                    InkWell(
+                      onTap: () =>
+                          askToEnableLocation(context, services.location),
+                      child: ConstrainedBox(
+                        constraints:
+                            const BoxConstraints(minHeight: AppSizes.minTap),
+                        child: Align(
+                            widthFactor: 1,
+                            child: _Lamp(level: gps, text: gpsText)),
+                      ),
+                    )
+                  else
+                    _Lamp(level: gps, text: gpsText),
                   _Lamp(level: compass, text: compassText),
                 ],
               ),

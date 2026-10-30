@@ -12,6 +12,7 @@ import '../../util/geo.dart';
 import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/ask_location.dart';
 import '../widgets/status_dot.dart';
 import '../widgets/tracker_card.dart';
 import 'map/map_layers.dart';
@@ -152,7 +153,10 @@ class _MapScreenState extends State<MapScreen> {
   void _whereAmI(BuildContext context) {
     final phone = _services.location.position;
     if (phone == null) {
-      showMessage(context, S.noPhonePosition);
+      // location off: offer Android's settings, else just say there is no fix
+      askToEnableLocation(context, _services.location).then((asked) {
+        if (!asked && context.mounted) showMessage(context, S.noPhonePosition);
+      });
       return;
     }
     _mapController.move(

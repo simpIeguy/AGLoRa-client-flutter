@@ -55,8 +55,9 @@ class TrackerList {
 /// 3. UAVs waited for, no signal yet;
 /// 4. people, active ones above;
 /// 5. others (names not UAV…/GROUND…);
-/// and the archive apart. Inside a group the order is that of appearance,
-/// not of the freshest point: a card does not jump when its tracker sends.
+/// and the archive apart. Inside a group the cards stand as the user
+/// dragged them, the rest in the order of appearance, not of the freshest
+/// point: a card does not jump when its tracker sends.
 ///
 /// [includeHidden]: for the "who to show" list, with the unticked ones
 TrackerList buildTrackerList(TrackerStore store, DateTime now,
@@ -110,9 +111,15 @@ TrackerList buildTrackerList(TrackerStore store, DateTime now,
     return tb.compareTo(ta);
   }
 
-  int byGroup(TrackerEntry a, TrackerEntry b) => _group(a).compareTo(_group(b));
+  int placed(TrackerEntry e) => store.orderOf(e.key) ?? 1 << 30;
 
-  // a stable sort: entries of one group keep the order they appeared in
+  int byGroup(TrackerEntry a, TrackerEntry b) {
+    final c = _group(a).compareTo(_group(b));
+    return c != 0 ? c : placed(a).compareTo(placed(b));
+  }
+
+  // a stable sort: entries with no place of their own keep the order they
+  // appeared in
   return TrackerList(_stableSorted(shown, byGroup),
       _stableSorted(archived, byFreshness), hidden);
 }

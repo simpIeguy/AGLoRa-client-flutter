@@ -18,6 +18,7 @@ import 'helpers.dart';
 
 void main() {
   setUp(resetApp);
+  _reorderTests();
 
   Future<void> showTrackers(WidgetTester tester) async {
     final now = DateTime.now().toUtc();
@@ -227,3 +228,30 @@ List<ArrowStyle> arrowStyles() => [
       for (final e in find.byType(ArrowShape).evaluate())
         (e.widget as ArrowShape).style,
     ];
+
+void _reorderTests() {
+  testWidgets('a long press and a drag move a card inside its group',
+      (tester) async {
+    final now = DateTime.now().toUtc();
+    feed(pointMessage('UAV1', 53.91, 27.57, now, index: 0));
+    feed(pointMessage('UAV2', 53.92, 27.57, now, index: 0));
+    await tester.pumpWidget(inApp(const TrackersScreen(demoTitle: 'Демо')));
+    await tester.pump();
+
+    double top(String text) => tester.getTopLeft(find.text(text)).dy;
+    expect(top('БЛА 1 UAV1'), lessThan(top('БЛА 2 UAV2')));
+
+    final gesture =
+        await tester.startGesture(tester.getCenter(find.text('БЛА 1 UAV1')));
+    await tester.pump(const Duration(milliseconds: 600));
+    for (var i = 0; i < 12; i++) {
+      await gesture.moveBy(const Offset(0, 25));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(top('БЛА 2 UAV2'), lessThan(top('БЛА 1 UAV1')));
+    expect(app.store.orderOf('UAV2'), lessThan(app.store.orderOf('UAV1')!));
+  });
+}

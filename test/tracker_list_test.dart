@@ -90,6 +90,41 @@ void main() {
       expect(order(store), ['UAV1', 'UAV2', 'UAV3']);
     });
 
+    test('dragged cards keep their places, a new one comes last', () {
+      final store = TrackerStore()
+        ..addPoint(at('UAV1', const Duration(seconds: 30)))
+        ..addPoint(at('UAV2', const Duration(seconds: 20)))
+        ..addPoint(at('GROUND1', const Duration(seconds: 15)))
+        ..addPoint(at('GROUND2', const Duration(seconds: 10)));
+      store.setOrder(['UAV2', 'UAV1']);
+      store.setOrder(['GROUND2', 'GROUND1']);
+      expect(order(store), ['UAV2', 'UAV1', 'GROUND2', 'GROUND1']);
+
+      store.addPoint(at('UAV3', Duration.zero));
+      expect(order(store), ['UAV2', 'UAV1', 'UAV3', 'GROUND2', 'GROUND1']);
+    });
+
+    test('the groups stay: a dragged order never lifts people over UAVs', () {
+      final store = TrackerStore()
+        ..addPoint(at('UAV1', const Duration(seconds: 30)))
+        ..addPoint(at('GROUND1', const Duration(seconds: 15)));
+      store.setOrder(['GROUND1', 'UAV1']);
+      expect(order(store), ['UAV1', 'GROUND1']);
+    });
+
+    test('the order survives a restart and an old save without it', () {
+      final before = TrackerStore()
+        ..addPoint(at('UAV1', const Duration(seconds: 30)))
+        ..addPoint(at('UAV2', const Duration(seconds: 20)))
+        ..setOrder(['UAV2', 'UAV1']);
+      final after = TrackerStore();
+      expect(after.loadState(before.saveState()), isTrue);
+      expect(order(after), ['UAV2', 'UAV1']);
+
+      final old = before.saveState()..remove('order');
+      expect(TrackerStore().loadState(old), isTrue);
+    });
+
     test('the connected tracker counts as having a link', () {
       final store = TrackerStore()
         ..addPoint(at('GROUND3', const Duration(minutes: 10)))

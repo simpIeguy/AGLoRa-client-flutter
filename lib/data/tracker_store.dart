@@ -45,6 +45,10 @@ class TrackerStore extends ChangeNotifier {
   final Map<String, WaitingTracker> _waiting = {};
   final Set<String> _hidden = {};
 
+  /// keys in the order the user dragged the cards to; trackers not in it
+  /// come after, in the order of appearance
+  final List<String> _order = [];
+
   /// trackers that already had their "came on air" moment
   final Set<String> _onAir = {};
 
@@ -277,6 +281,27 @@ class TrackerStore extends ChangeNotifier {
     if (changed) notifyListeners();
   }
 
+  // the order of the cards
+
+  /// where a tracker stands in the user's order; null while never placed
+  int? orderOf(String identifier) {
+    final i = _order.indexOf(trackerKey(identifier));
+    return i < 0 ? null : i;
+  }
+
+  /// The user dragged cards: [keys] are the trackers in the new order. The
+  /// ones that were not on the screen (hidden, archived) keep their places
+  /// after them.
+  void setOrder(List<String> keys) {
+    final rest = _order.where((k) => !keys.contains(k));
+    final next = [...keys, ...rest];
+    if (next.join('|') == _order.join('|')) return;
+    _order
+      ..clear()
+      ..addAll(next);
+    notifyListeners();
+  }
+
   /// forget one tracker: its points, name and the rest; if it is still on
   /// air it comes back as a new one
   void removeTracker(String identifier) {
@@ -285,6 +310,7 @@ class TrackerStore extends ChangeNotifier {
     _aliases.remove(key);
     _waiting.remove(key);
     _hidden.remove(key);
+    _order.remove(key);
     _onAir.remove(key);
     _waitedFor.remove(key);
     _noFix.remove(key);
@@ -319,6 +345,7 @@ class TrackerStore extends ChangeNotifier {
             },
         ],
         'hidden': _hidden.toList(),
+        'order': List.of(_order),
         'noFix': {
           for (final e in _noFix.entries)
             e.key: {
@@ -368,6 +395,8 @@ class TrackerStore extends ChangeNotifier {
       _aliases.addAll((json['aliases'] as Map).cast<String, String>());
       _waiting.addAll(waiting);
       _hidden.addAll((json['hidden'] as List).cast<String>());
+      // absent in data saved before the cards could be dragged
+      _order.addAll(((json['order'] as List?) ?? const []).cast<String>());
       _noFix.addAll(noFix);
       // their "came on air" was told before the app closed
       _onAir.addAll(points.keys);
@@ -418,6 +447,7 @@ class TrackerStore extends ChangeNotifier {
     _aliases.clear();
     _waiting.clear();
     _hidden.clear();
+    _order.clear();
     _onAir.clear();
     _waitedFor.clear();
     _noFix.clear();

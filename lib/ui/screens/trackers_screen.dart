@@ -100,7 +100,18 @@ class TrackersScreen extends StatelessWidget {
                 .labelLarge
                 ?.copyWith(color: AppPalette.of(context).muted)),
       ),
-      for (final entry in entries) _card(entry),
+      // a long press picks a card up; it moves inside its own group only
+      ReorderableListView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        buildDefaultDragHandles: true,
+        onReorderItem: (from, to) {
+          final keys = [for (final e in entries) e.key];
+          keys.insert(to, keys.removeAt(from));
+          AppScope.of(context).store.setOrder(keys);
+        },
+        children: [for (final entry in entries) _card(entry)],
+      ),
     ];
   }
 

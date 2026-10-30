@@ -599,6 +599,8 @@ class _Panel extends StatelessWidget {
             child: ReorderableListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
+              // the picked chip is not lifted: no square background, no shadow
+              proxyDecorator: (child, index, animation) => child,
               onReorderItem: (from, to) {
                 final keys = [for (final e in entries) e.key];
                 keys.insert(to, keys.removeAt(from));
@@ -611,7 +613,7 @@ class _Panel extends StatelessWidget {
                     padding: const EdgeInsets.only(right: AppSizes.gap),
                     child: _Chip(
                         entry: e,
-                        chosen: e == chosen,
+                        chosen: e.key == chosen.key,
                         onTap: () => onChoose(e)),
                   ),
               ],

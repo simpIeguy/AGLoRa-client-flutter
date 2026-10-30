@@ -9,6 +9,17 @@ void main() {
 
   setUp(resetApp);
 
+  test('the relay switch comes from the memory message', () {
+    feed(
+        'AGLoRa-memory&ver=2.3&crc=ok&dev_name=GRD1&relay_me=1&memsize=50\r\n');
+    expect(app.link.relayMe.value, isTrue);
+    feed(
+        'AGLoRa-memory&ver=2.3&crc=ok&dev_name=GRD1&relay_me=0&memsize=50\r\n');
+    expect(app.link.relayMe.value, isFalse);
+    feed('AGLoRa-memory&ver=2.3&crc=ok&dev_name=Old1&memsize=50\r\n');
+    expect(app.link.relayMe.value, isNull);
+  });
+
   test('a point without a date (2000-00-00) gets the phone date', () {
     final at = DateTime.utc(2026, 10, 30, 23, 59, 50);
     final point = parsePoint(

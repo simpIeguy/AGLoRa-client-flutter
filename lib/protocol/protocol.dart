@@ -15,4 +15,7 @@ const String legacyTerminator = '|';
 const String requestAll = 'all';
 const String requestCrc = 'crc';
 const String requestClear = 'clear';
+
+/// the "relay my position" switch (only newer firmware knows it)
+String requestRelay(bool on) => on ? 'relay1' : 'relay0';
 String requestPoint(int index) => 'id$index';

@@ -23,9 +23,12 @@ class NoFixMessage extends TrackerMessage {
 
 /// the tracker's memory state; carries the connected tracker's name
 class MemoryMessage extends TrackerMessage {
-  const MemoryMessage({this.deviceName});
+  const MemoryMessage({this.deviceName, this.relayMe});
 
   final String? deviceName;
+
+  /// the "relay my position" switch; null on firmware without it
+  final bool? relayMe;
 }
 
 /// old firmware: the tracker's own id
@@ -47,7 +50,11 @@ TrackerMessage? parseMessage(String message, {DateTime? receivedAt}) {
       final noFix = _noFixName(fields);
       return noFix == null ? null : NoFixMessage(noFix);
     case 'memory':
-      return MemoryMessage(deviceName: _value(fields, 'dev_name'));
+      final relay = _value(fields, 'relay_me');
+      return MemoryMessage(
+        deviceName: _value(fields, 'dev_name'),
+        relayMe: relay == null ? null : relay == '1',
+      );
     case 'info':
       return InfoMessage(id: _value(fields, 'myId'));
   }

@@ -98,10 +98,12 @@ class DemoDataSource implements TrackerDataSource {
     }
   }
 
+  bool _relayMe = true;
+
   String _memoryMessage() {
     final count = _storedPoints.length;
     return '${messagePrefix}memory&ver=2.3&crc=ok'
-        '&dev_name=${scenario.connectedTracker}&dev_bat=100'
+        '&dev_name=${scenario.connectedTracker}&relay_me=${_relayMe ? 1 : 0}'
         '&memsize=100&index=$count&overwrite=0$messageTerminator';
   }
 
@@ -109,6 +111,9 @@ class DemoDataSource implements TrackerDataSource {
   Future<void> send(String request) async {
     final r = request.trim();
     if (r.startsWith('crc')) {
+      _emit(_memoryMessage());
+    } else if (r.startsWith('relay')) {
+      _relayMe = r.substring(5) == '1';
       _emit(_memoryMessage());
     } else if (r.startsWith('clear')) {
       _storedPoints.clear();

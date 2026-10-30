@@ -110,6 +110,25 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ]),
                   _Hint(S.thresholdsHint, style: muted),
+                  ValueListenableBuilder<bool?>(
+                    valueListenable: services.link.relayMe,
+                    builder: (context, relay, _) => relay == null
+                        ? const SizedBox.shrink()
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const _Section(S.sectionRelay),
+                              _Group(children: [
+                                _Switch(
+                                  title: S.relayMe,
+                                  hint: S.relayMeHint,
+                                  value: relay,
+                                  onChanged: services.link.setRelayMe,
+                                ),
+                              ]),
+                            ],
+                          ),
+                  ),
                   const _Section(S.sectionScreen),
                   _Group(children: [
                     _Switch(

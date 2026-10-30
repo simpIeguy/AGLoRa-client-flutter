@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import '../data/tracker_store.dart';
 import '../protocol/message_buffer.dart';
 import '../protocol/messages.dart';
@@ -19,7 +21,13 @@ class TrackerLink {
   StreamSubscription<List<int>>? _chunksSubscription;
   StreamSubscription<bool>? _readySubscription;
 
+  /// The tracker's "relay my position" switch; null: no link or old firmware.
+  final ValueNotifier<bool?> relayMe = ValueNotifier(null);
+
   TrackerDataSource? get source => _source;
+
+  /// asks the tracker to switch; the new state comes back in a memory message
+  Future<void> setRelayMe(bool on) async => _source?.send(requestRelay(on));
 
   void attach(TrackerDataSource source) {
     detach();
@@ -28,6 +36,7 @@ class TrackerLink {
     _readySubscription = source.ready.listen((isReady) async {
       if (!isReady) {
         store.setConnectedTracker(null);
+        relayMe.value = null;
         return;
       }
       appLog('link: request history');
@@ -45,6 +54,7 @@ class TrackerLink {
     _buffer.reset();
     // no link: no tracker is "connected" any more
     store.setConnectedTracker(null);
+    relayMe.value = null;
   }
 
   /// one BLE chunk
@@ -63,8 +73,9 @@ class TrackerLink {
       case NoFixMessage(:final identifier):
         store.heardWithoutFix(identifier);
         appLog('link: $identifier without GPS fix');
-      case MemoryMessage(:final deviceName):
+      case MemoryMessage(:final deviceName, relayMe: final relay):
         if (deviceName != null) store.setConnectedTracker(deviceName);
+        relayMe.value = relay;
       case InfoMessage():
         break;
       case null:

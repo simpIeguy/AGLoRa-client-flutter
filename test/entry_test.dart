@@ -68,7 +68,7 @@ void main() {
     testWidgets('the app opens on the trackers, connecting is a button',
         (tester) async {
       await tester.pumpWidget(inApp(const TrackersScreen()));
-      expect(find.text('Трекер не подключён'), findsOneWidget);
+      expect(find.text('Не подключён'), findsOneWidget);
       expect(find.byTooltip('Подключить трекер'), findsOneWidget);
       expect(find.text('Подключиться'), findsOneWidget);
     });

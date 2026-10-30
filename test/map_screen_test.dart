@@ -95,6 +95,39 @@ void main() {
     expect(find.byType(PolylineLayer), findsNothing);
   });
 
+  testWidgets(
+      '"Все" unticks every track at once, the card\'s switch the chosen',
+      (tester) async {
+    resetApp();
+    feed(pointMessage(
+        'UAV1', 53.900, 27.562, now.subtract(const Duration(seconds: 30)),
+        index: 10));
+    await show(tester);
+    expect(find.byType(PolylineLayer), findsOneWidget);
+
+    await tester.tap(find.byTooltip('След'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Все'));
+    await tester.pump();
+    for (final key in ['UAV1', 'UAV3', 'GROUND2']) {
+      expect(app.settings.isTrackShown(key), isFalse, reason: key);
+    }
+    expect(find.byType(PolylineLayer), findsNothing);
+
+    // tick all again, close the list
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Все'));
+    await tester.pump();
+    expect(app.settings.isTrackShown('UAV1'), isTrue);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    // the switch in the card of the chosen tracker (UAV1)
+    await tester.tap(find.byType(Switch));
+    await tester.pump();
+    expect(app.settings.isTrackShown('UAV1'), isFalse);
+    expect(app.settings.isTrackShown('GROUND2'), isTrue);
+  });
+
   testWidgets('chosen from the outside; "Где я" without GPS says so',
       (tester) async {
     resetApp();

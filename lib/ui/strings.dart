@@ -42,7 +42,7 @@ abstract final class S {
   static const String connectTracker = 'Подключить трекер';
   static const String trackerConnected = 'Трекер подключён';
   static const String connectingToOwn = 'Подключение…';
-  static const String noOwnTracker = 'Трекер не подключён';
+  static const String noOwnTracker = 'Не подключён';
   static String otherDevices(int n) => 'Другие устройства: $n';
   static const String permissionsNeeded = 'Нужны разрешения';
   static const String permissionsHint =
@@ -179,7 +179,10 @@ abstract final class S {
 
   // tracker screen
   static const String noPointsYet = 'Точек пока нет';
-  static const String openInMaps = 'Открыть в картах';
+  static const String openInMaps = 'Открыть в другом приложении';
+  static const String showOnMap = 'Показать на карте';
+  static const String tracksAll = 'Все';
+  static const String trackOfChosen = 'След';
   static const String cannotOpenMaps =
       'Не удалось открыть карты на этом телефоне';
   static const String copied = 'Скопировано';

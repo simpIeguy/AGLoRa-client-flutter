@@ -16,6 +16,7 @@ import '../widgets/direction_arrow.dart';
 import '../widgets/status_dot.dart';
 import '../widgets/tracker_card.dart';
 import 'full_screen_arrow.dart';
+import 'map_screen.dart';
 
 /// One tracker, as in the Tracker mockup: the arrow and the distance, "Открыть
 /// в картах", what the tracker sends (GPS, satellites, altitude, times) and
@@ -93,10 +94,24 @@ class _TrackerScreenState extends State<TrackerScreen> {
             _MainCard(identifier: _id, latest: latest),
             if (latest != null) ...[
               const SizedBox(height: AppSizes.screenPadding),
+              // our own map, with this tracker chosen
               FilledButton.icon(
                 style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(AppSizes.bigButton)),
                 icon: const Icon(Icons.map_outlined),
+                label: const Text(S.showOnMap),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => MapScreen(
+                        centerLatitude: latest.latitude,
+                        centerLongitude: latest.longitude,
+                        chosen: _id))),
+              ),
+              const SizedBox(height: AppSizes.gap),
+              // another map application on the phone
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(AppSizes.bigButton)),
+                icon: const Icon(Icons.open_in_new),
                 label: const Text(S.openInMaps),
                 onPressed: () => _openInMaps(context, latest),
               ),

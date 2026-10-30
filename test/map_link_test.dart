@@ -41,7 +41,7 @@ void main() {
     });
   });
 
-  group('"Открыть в картах" on the tracker screen', () {
+  group('"Открыть в другом приложении" on the tracker screen', () {
     final now = DateTime.now().toUtc();
 
     Future<void> showLog(WidgetTester tester, UrlOpener open) async {
@@ -62,7 +62,7 @@ void main() {
         return true;
       });
 
-      await tester.tap(find.text('Открыть в картах'));
+      await tester.tap(find.text('Открыть в другом приложении'));
       await tester.pump();
 
       expect(opened.toString(),
@@ -73,7 +73,7 @@ void main() {
     testWidgets('says so when nothing can open the link', (tester) async {
       await showLog(tester, (uri) async => false);
 
-      await tester.tap(find.text('Открыть в картах'));
+      await tester.tap(find.text('Открыть в другом приложении'));
       await tester.pump();
       await tester.pump();
 
@@ -84,7 +84,7 @@ void main() {
     testWidgets('no button without points', (tester) async {
       resetApp();
       await tester.pumpWidget(inApp(const TrackerScreen(identifier: 'Nobody')));
-      expect(find.text('Открыть в картах'), findsNothing);
+      expect(find.text('Открыть в другом приложении'), findsNothing);
       expect(find.text('Точек пока нет'), findsOneWidget);
     });
   });

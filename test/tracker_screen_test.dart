@@ -74,7 +74,7 @@ void main() {
 
     expect(find.text('Нет спутников, показана последняя верная точка'),
         findsOneWidget);
-    expect(find.textContaining('· Нет спутников'), findsOneWidget,
+    expect(find.textContaining(RegExp(r'назад\nНет спутников')), findsOneWidget,
         reason: 'under the status, as on the card');
     expect(find.text('Спутники'), findsNothing);
     expect(find.text('53.90000, 27.50000'), findsNWidgets(2));
@@ -87,7 +87,7 @@ void main() {
 
     expect(find.text('Трекер ищет спутники'), findsOneWidget);
     expect(find.text('—'), findsOneWidget);
-    expect(find.text('Открыть в картах'), findsNothing);
+    expect(find.text('Открыть в другом приложении'), findsNothing);
     expect(find.text('Точек пока нет'), findsOneWidget);
   });
 
@@ -126,6 +126,8 @@ void main() {
     // the screen, not the points' window inside it
     await tester.scrollUntilVisible(find.text('Удалить трекер из списка'), 100,
         scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(find.text('Удалить трекер из списка'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Удалить трекер из списка'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Удалить Человек 2 и все его точки?'),

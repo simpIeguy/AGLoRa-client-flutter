@@ -291,6 +291,19 @@ class _MapScreenState extends State<MapScreen> {
                   style: Theme.of(context).textTheme.titleMedium),
               subtitle: const Text(S.tracksHint),
             ),
+            // all at once: untick everyone, then tick the ones to draw
+            CheckboxListTile(
+              title: const Text(S.tracksAll),
+              tristate: true,
+              value: entries.every((e) => settings.isTrackShown(e.key))
+                  ? true
+                  : entries.any((e) => settings.isTrackShown(e.key))
+                      ? null
+                      : false,
+              onChanged: (_) => settings.setTracksShown(
+                  entries.map((e) => e.key),
+                  !entries.every((e) => settings.isTrackShown(e.key))),
+            ),
             for (final e in entries)
               CheckboxListTile(
                 title:
@@ -320,25 +333,7 @@ class _MapScreenState extends State<MapScreen> {
                 child: const Icon(Icons.arrow_back),
               ),
               const SizedBox(width: AppSizes.gap),
-              // the map's sources, up here: out of the way of the card
-              Expanded(
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        borderRadius: BorderRadius.circular(4)),
-                    child: Text(
-                      mapAttribution(_layerType),
-                      style: const TextStyle(
-                          fontSize: AppSizes.mapAttributionText,
-                          color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
+              const Spacer(),
               const SizedBox(width: AppSizes.gap),
               Column(children: [
                 _compassButton(),
@@ -364,7 +359,32 @@ class _MapScreenState extends State<MapScreen> {
           ),
           const Spacer(),
           if (chosen != null)
-            _Panel(entries: entries, chosen: chosen, onChoose: _choose),
+            _Panel(
+              entries: entries,
+              chosen: chosen,
+              onChoose: _choose,
+              trackShown: _services.settings.isTrackShown(chosen.key),
+              onTrack: (v) => _services.settings.setTrackShown(chosen.key, v),
+            ),
+          // the map's sources (the licences ask for them), smallest, at the
+          // very bottom under the card
+          const SizedBox(height: 2),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(3)),
+              child: Text(
+                mapAttribution(_layerType),
+                style: const TextStyle(
+                    fontSize: AppSizes.mapAttributionText,
+                    height: 1.2,
+                    color: Colors.white),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -474,12 +494,21 @@ class _NorthNeedlePainter extends CustomPainter {
 
 /// the trackers to choose from and the chosen one's card
 class _Panel extends StatelessWidget {
-  const _Panel(
-      {required this.entries, required this.chosen, required this.onChoose});
+  const _Panel({
+    required this.entries,
+    required this.chosen,
+    required this.onChoose,
+    required this.trackShown,
+    required this.onTrack,
+  });
 
   final List<TrackerEntry> entries;
   final TrackerEntry chosen;
   final void Function(TrackerEntry) onChoose;
+
+  /// the chosen tracker's track is drawn
+  final bool trackShown;
+  final void Function(bool) onTrack;
 
   @override
   Widget build(BuildContext context) {
@@ -505,6 +534,17 @@ class _Panel extends StatelessWidget {
             ]),
           ),
           TrackerCard(entry: chosen, framed: false),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
+            child: Row(children: [
+              const Icon(Icons.timeline),
+              const SizedBox(width: AppSizes.gap),
+              Expanded(
+                  child: Text(S.trackOfChosen,
+                      style: Theme.of(context).textTheme.bodyMedium)),
+              Switch(value: trackShown, onChanged: onTrack),
+            ]),
+          ),
         ],
       ),
     );

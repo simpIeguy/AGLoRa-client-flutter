@@ -106,7 +106,7 @@ class TrackerTitle extends StatelessWidget {
 }
 
 /// under the status: "12 с назад", "14 мин, последняя точка" or
-/// "12 с назад · Трекер ищет спутники"
+/// "12 с назад" and "Трекер ищет спутники" on the next line
 String heardLine(
     {required Duration? since,
     required bool lost,
@@ -115,7 +115,7 @@ String heardLine(
   if (since == null) return '';
   final age = formatAge(since);
   if (searching) {
-    return '$age · ${hasPoint ? S.noFixLastGoodPoint : S.searchingSatellites}';
+    return '$age\n${hasPoint ? S.noFixLastGoodPoint : S.searchingSatellites}';
   }
   // "14 мин, последняя точка", as in the mockup
   return lost ? S.lostAge(formatDuration(since)) : age;

@@ -28,7 +28,7 @@ abstract final class AppSizes {
   static const double outline = 1.5;
   static const double bigArrow = 300;
   static const double lamp = 12;
-  static const double mapAttributionText = 10;
+  static const double mapAttributionText = 8;
 }
 
 /// the theme the user picks in the settings; auto follows the phone

@@ -50,6 +50,15 @@ class AppSettings extends ChangeNotifier {
     if (changed) notifyListeners();
   }
 
+  /// "Все" in the list of tracks: all drawn or none
+  void setTracksShown(Iterable<String> keys, bool shown) {
+    var changed = false;
+    for (final key in keys) {
+      changed |= shown ? _hiddenTracks.remove(key) : _hiddenTracks.add(key);
+    }
+    if (changed) notifyListeners();
+  }
+
   /// the user's own tracker: the app connects to it again by itself after a
   /// launch; null after "Отключиться"
   ({String id, String name})? _lastTracker;

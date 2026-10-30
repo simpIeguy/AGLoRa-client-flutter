@@ -50,6 +50,8 @@ class SensorLamps extends StatelessWidget {
               Wrap(
                 spacing: AppSizes.padding * 2,
                 runSpacing: AppSizes.gap / 2,
+                // the tappable GPS lamp is 48 dp tall: centre the other one
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   // location off: a tap offers Android's settings
                   if (services.location.problem == LocationProblem.serviceOff)

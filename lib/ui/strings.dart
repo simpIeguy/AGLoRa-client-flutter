@@ -75,7 +75,7 @@ abstract final class S {
   static String copiedSk42(String value) => 'Скопировано (СК-42): $value';
   static const String copyAs = 'Копировать как';
   static const String datumWgs84 = 'WGS 84';
-  static const String datumSk42 = 'СК-42';
+  static const String datumSk42 = 'СК-42, прямоугольные (X, Y)';
   static String removeWaiting(String name) => 'Убрать $name из ожидания';
   static String lostAge(String age) => '$age, последняя точка';
 

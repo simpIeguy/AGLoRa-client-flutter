@@ -61,7 +61,7 @@ void main() {
     expect(find.text('Копировать как'), findsOneWidget);
     expect(find.text('WGS 84'), findsOneWidget);
 
-    await tester.tap(find.text('СК-42'));
+    await tester.tap(find.textContaining('СК-42, прямоугольные'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.textContaining('Скопировано (СК-42):'), findsOneWidget);

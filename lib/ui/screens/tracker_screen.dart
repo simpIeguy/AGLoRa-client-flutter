@@ -286,9 +286,10 @@ void showMessage(BuildContext context, String text) {
 Future<void> copyCoordinates(
     BuildContext context, double latitude, double longitude,
     {bool sk42 = false}) async {
-  final shown = sk42 ? wgs84ToSk42(latitude, longitude) : null;
-  final text = formatCoordinates(shown?.latitude ?? latitude,
-      shown?.longitude ?? longitude, AppScope.of(context).settings.coordinates);
+  final text = sk42
+      ? formatGaussKruger(wgs84ToGaussKruger(latitude, longitude))
+      : formatCoordinates(
+          latitude, longitude, AppScope.of(context).settings.coordinates);
   await Clipboard.setData(ClipboardData(text: text));
   if (context.mounted) {
     showMessage(context, sk42 ? S.copiedSk42(text) : S.copiedValue(text));

@@ -43,7 +43,7 @@ class CopyCoordinatesButton extends StatelessWidget {
 Future<void> showCopyFormats(
     BuildContext context, double latitude, double longitude) {
   final format = AppScope.of(context).settings.coordinates;
-  final sk = wgs84ToSk42(latitude, longitude);
+  final sk = wgs84ToGaussKruger(latitude, longitude);
   return showModalBottomSheet<void>(
     context: context,
     builder: (sheet) => SafeArea(
@@ -61,7 +61,7 @@ Future<void> showCopyFormats(
         ),
         ListTile(
           title: const Text(S.datumSk42),
-          subtitle: Text(formatCoordinates(sk.latitude, sk.longitude, format)),
+          subtitle: Text(formatGaussKruger(sk)),
           onTap: () {
             Navigator.of(sheet).pop();
             copyCoordinates(context, latitude, longitude, sk42: true);

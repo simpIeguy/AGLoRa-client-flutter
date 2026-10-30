@@ -48,3 +48,52 @@ Sk42Position wgs84ToSk42(double latitude, double longitude) {
   }
   return (latitude: phi * 180 / pi, longitude: atan2(yp, xp) * 180 / pi);
 }
+
+/// СК-42 rectangular coordinates (Gauss–Krüger, 6° zones), metres: [x] to the
+/// north, [y] with the zone number in front and 500 km added to the east.
+typedef GaussKrugerPosition = ({double x, double y, int zone});
+
+double _asinh(double v) => log(v + sqrt(v * v + 1));
+double _atanh(double v) => 0.5 * log((1 + v) / (1 - v));
+double _sinh(double v) => (exp(v) - exp(-v)) / 2;
+double _cosh(double v) => (exp(v) + exp(-v)) / 2;
+
+/// WGS 84 → СК-42 → Gauss–Krüger on the Krasovsky ellipsoid. The projection
+/// is exact (Krüger series); the error comes from the datum shift, a few
+/// metres. Not for surveying.
+GaussKrugerPosition wgs84ToGaussKruger(double latitude, double longitude) {
+  final sk = wgs84ToSk42(latitude, longitude);
+  // zone 1 is 0–6° E, the central meridian is 6 * zone - 3
+  final number = (sk.longitude / 6).floor() + 1;
+  final middle = (6 * number - 3) * pi / 180;
+  final phi = sk.latitude * pi / 180;
+  final dl = sk.longitude * pi / 180 - middle;
+
+  const n = _krasF / (2 - _krasF);
+  final a = _krasA / (1 + n) * (1 + n * n / 4 + pow(n, 4) / 64);
+  final alpha = [
+    n / 2 - 2 * n * n / 3 + 5 * pow(n, 3) / 16 + 41 * pow(n, 4) / 180,
+    13 * n * n / 48 - 3 * pow(n, 3) / 5 + 557 * pow(n, 4) / 1440,
+    61 * pow(n, 3) / 240 - 103 * pow(n, 4) / 140,
+    49561 * pow(n, 4) / 161280,
+  ];
+  final q = 2 * sqrt(n) / (1 + n);
+  final t = _sinh(_atanh(sin(phi)) - q * _atanh(q * sin(phi)));
+  final xi0 = atan2(t, cos(dl));
+  final eta0 = _asinh(sin(dl) / sqrt(1 + t * t));
+  var xi = xi0;
+  var eta = eta0;
+  for (var j = 1; j <= 4; j++) {
+    xi += alpha[j - 1] * sin(2 * j * xi0) * _cosh(2 * j * eta0);
+    eta += alpha[j - 1] * cos(2 * j * xi0) * _sinh(2 * j * eta0);
+  }
+  return (
+    x: a * xi,
+    y: number * 1e6 + 500000 + a * eta,
+    zone: number,
+  );
+}
+
+/// "X 6012345, Y 4512345": whole metres
+String formatGaussKruger(GaussKrugerPosition p) =>
+    'X ${p.x.round()}, Y ${p.y.round()}';

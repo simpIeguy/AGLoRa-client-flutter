@@ -13,6 +13,7 @@ import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
 import '../widgets/ask_location.dart';
+import '../widgets/drag_proxy.dart';
 import '../widgets/status_dot.dart';
 import '../widgets/tracker_card.dart';
 import 'map/map_layers.dart';
@@ -599,8 +600,7 @@ class _Panel extends StatelessWidget {
             child: ReorderableListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
-              // the picked chip is not lifted: no square background, no shadow
-              proxyDecorator: (child, index, animation) => child,
+              proxyDecorator: dragProxy(AppSizes.buttonRadius, color: p.card),
               onReorderItem: (from, to) {
                 final keys = [for (final e in entries) e.key];
                 keys.insert(to, keys.removeAt(from));

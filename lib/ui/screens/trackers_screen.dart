@@ -5,6 +5,7 @@ import '../../protocol/tracker_name.dart';
 import '../../services/app_services.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/drag_proxy.dart';
 import '../widgets/link_banner.dart';
 import '../widgets/sensor_lamps.dart';
 import '../widgets/tracker_card.dart';
@@ -105,6 +106,7 @@ class TrackersScreen extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         buildDefaultDragHandles: true,
+        proxyDecorator: dragProxy(AppSizes.cardRadius),
         onReorderItem: (from, to) {
           final keys = [for (final e in entries) e.key];
           keys.insert(to, keys.removeAt(from));

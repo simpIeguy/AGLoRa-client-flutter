@@ -363,12 +363,21 @@ class TrackerStore extends ChangeNotifier {
   bool loadState(Object? json) {
     try {
       if (json is! Map || json['version'] != savedVersion) return false;
-      final points = <String, List<TrackerPoint>>{};
+      // keys are saved as they were then: GRD1 of an older build is now
+      // GROUND1, and the two parts of one tracker are put together
+      final merged = <String, List<TrackerPoint>>{};
       for (final e in (json['points'] as Map).entries) {
-        final list = [
-          for (final p in e.value as List) _pointFromJson(p as Map),
-        ]..sort((a, b) => b.time.compareTo(a.time));
-        points[e.key as String] = list.take(pointsPerTrackerLimit).toList();
+        merged.putIfAbsent(trackerKey(e.key as String), () => []).addAll(
+            [for (final p in e.value as List) _pointFromJson(p as Map)]);
+      }
+      final points = <String, List<TrackerPoint>>{};
+      for (final e in merged.entries) {
+        final list = e.value..sort((a, b) => b.time.compareTo(a.time));
+        final unique = <TrackerPoint>[];
+        for (final p in list) {
+          if (!unique.any(p.isSameFixAs)) unique.add(p);
+        }
+        points[e.key] = unique.take(pointsPerTrackerLimit).toList();
       }
       final waiting = <String, WaitingTracker>{
         for (final w in json['waiting'] as List)
@@ -378,25 +387,34 @@ class TrackerStore extends ChangeNotifier {
                   isUtc: true),
               notify: w['notify'] as bool),
       };
-      final noFix = <String, ({String identifier, DateTime at})>{
-        for (final MapEntry(:key, :value) in (json['noFix'] as Map).entries)
-          if (value case {'identifier': String id, 'at': int at})
-            key as String: (
-              identifier: id,
-              at: DateTime.fromMillisecondsSinceEpoch(at, isUtc: true),
-            ),
-      };
+      final noFix = <String, ({String identifier, DateTime at})>{};
+      for (final MapEntry(:key, :value) in (json['noFix'] as Map).entries) {
+        if (value case {'identifier': String id, 'at': int at}) {
+          final heard = DateTime.fromMillisecondsSinceEpoch(at, isUtc: true);
+          final k = trackerKey(key as String);
+          final old = noFix[k];
+          if (old == null || heard.isAfter(old.at)) {
+            noFix[k] = (identifier: id, at: heard);
+          }
+        }
+      }
       final fading = Duration(seconds: json['fadingAfter'] as int);
       final lost = Duration(seconds: json['lostAfter'] as int);
       if (fading >= lost) return false;
 
       reset();
       _points.addAll(points);
-      _aliases.addAll((json['aliases'] as Map).cast<String, String>());
+      for (final e in (json['aliases'] as Map).entries) {
+        _aliases[trackerKey(e.key as String)] = e.value as String;
+      }
       _waiting.addAll(waiting);
-      _hidden.addAll((json['hidden'] as List).cast<String>());
+      _hidden.addAll(
+          [for (final k in json['hidden'] as List) trackerKey(k as String)]);
       // absent in data saved before the cards could be dragged
-      _order.addAll(((json['order'] as List?) ?? const []).cast<String>());
+      for (final k in (json['order'] as List?) ?? const []) {
+        final key = trackerKey(k as String);
+        if (!_order.contains(key)) _order.add(key);
+      }
       _noFix.addAll(noFix);
       // their "came on air" was told before the app closed
       _onAir.addAll(points.keys);

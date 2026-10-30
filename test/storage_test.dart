@@ -94,6 +94,26 @@ void main() {
       expect(store.pointsOf('UAV1').first.time, now, reason: 'the newest kept');
     });
 
+    test('GRD1 saved by an older build joins GROUND1 into one tracker', () {
+      final state = TrackerStore(now: () => now).saveState();
+      Map<String, Object?> point(String id, int seconds) => {
+            'id': id,
+            'lat': 53.9,
+            'lon': 27.5,
+            'time':
+                now.subtract(Duration(seconds: seconds)).millisecondsSinceEpoch,
+            'got': now.millisecondsSinceEpoch,
+            'sensors': <String, String>{},
+          };
+      state['points'] = {
+        'GRD1': [point('GRD1', 0), point('GRD1', 5)],
+        'GROUND1': [point('GROUND1', 5), point('GROUND1', 9)],
+      };
+      final store = TrackerStore(now: () => now)..loadState(throughText(state));
+      expect(store.latestPoints, hasLength(1));
+      expect(store.pointsOf('GRD1'), hasLength(3), reason: 'the same fix once');
+    });
+
     test('damaged or foreign data: an empty start, not a crash', () {
       final good = TrackerStore(now: () => now)
         ..addPoint(at('UAV1', Duration.zero));

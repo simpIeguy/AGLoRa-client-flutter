@@ -75,6 +75,30 @@ String? _noFixName(List<String> fields) {
   return zero || _value(fields, 'gpsValid') == '0' ? name : null;
 }
 
+const String _noDatePrefix = '2000-00-00T';
+
+/// A tracker without its own clock sends the time of day with the date
+/// 2000-00-00; the date then comes from the phone (UTC), moved by a day when
+/// the time of day is more than 12 hours away from the phone's clock.
+DateTime? _parseTime(String text, DateTime? receivedAt) {
+  if (!text.startsWith(_noDatePrefix)) return DateTime.tryParse(text);
+  final now = (receivedAt ?? DateTime.now()).toUtc();
+  final day = DateTime.tryParse(
+    '${now.year.toString().padLeft(4, '0')}-'
+    '${now.month.toString().padLeft(2, '0')}-'
+    '${now.day.toString().padLeft(2, '0')}T${text.substring(_noDatePrefix.length)}',
+  );
+  if (day == null) return null;
+  final diff = day.difference(now);
+  if (diff > const Duration(hours: 12)) {
+    return day.subtract(const Duration(days: 1));
+  }
+  if (diff < const Duration(hours: -12)) {
+    return day.add(const Duration(days: 1));
+  }
+  return day;
+}
+
 /// null when the name, coordinates or time are missing or broken, and with
 /// no GPS fix: (0, 0) or gpsValid=0, the tracker sends it that way
 TrackerPoint? parsePoint(List<String> fields, {DateTime? receivedAt}) {
@@ -94,7 +118,7 @@ TrackerPoint? parsePoint(List<String> fields, {DateTime? receivedAt}) {
   final name = values['name'];
   final latitude = double.tryParse(values['lat'] ?? '');
   final longitude = double.tryParse(values['lon'] ?? '');
-  final time = DateTime.tryParse(values['timestamp'] ?? '');
+  final time = _parseTime(values['timestamp'] ?? '', receivedAt);
   if (name == null ||
       name.isEmpty ||
       latitude == null ||

@@ -9,6 +9,17 @@ void main() {
 
   setUp(resetApp);
 
+  test('a point without a date (2000-00-00) gets the phone date', () {
+    final at = DateTime.utc(2026, 10, 30, 23, 59, 50);
+    final point = parsePoint(
+      'AGLoRa-point&name=UAV1&lat=53.9&lon=27.5&timestamp=2000-00-00T00:00:05Z'
+          .split('&'),
+      receivedAt: at,
+    );
+    expect(point, isNotNull);
+    expect(point!.time, DateTime.utc(2026, 10, 31, 0, 0, 5));
+  });
+
   test('a whole message in one chunk', () {
     app.link.receive(
         pointMessage('Tracker2', 53.902284, 27.561831, now, index: 0)

@@ -212,23 +212,35 @@ class _OwnTracker extends StatelessWidget {
                           style: const TextStyle(fontFamily: AppText.mono)),
                     ]),
                     style: textTheme.titleMedium,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(state,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: textTheme.bodyMedium?.copyWith(color: p.muted)),
                 ],
               ),
             ),
-            if (button != null) button,
+            if (button != null) ...[
+              const SizedBox(width: AppSizes.gap),
+              button,
+            ],
           ]),
         );
 
     String linked(String name) =>
         name.isNotEmpty && store.isSearchingSatellites(name)
-            ? '${S.connectedByBluetooth} · ${S.searchingSatellites}'
+            ? '${S.connectedByBluetooth}\n${S.searchingSatellites}'
             : S.connectedByBluetooth;
 
+    // narrow buttons, so that the name and the state fit in one line
+    const narrow = ButtonStyle(
+      padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12)),
+      minimumSize: WidgetStatePropertyAll(Size(0, 48)),
+    );
     final pick = FilledButton(
+      style: narrow,
       onPressed: () => openConnectScreen(context),
       child: const Text(S.connectMe),
     );
@@ -252,6 +264,7 @@ class _OwnTracker extends StatelessWidget {
             name: name,
             state: linked(name),
             button: OutlinedButton(
+              style: narrow,
               onPressed: connection.disconnect,
               child: const Text(S.disconnectMe),
             ),
@@ -262,6 +275,7 @@ class _OwnTracker extends StatelessWidget {
             name: name,
             state: S.connectingToOwn,
             button: OutlinedButton(
+              style: narrow,
               onPressed: connection.disconnect,
               child: const Text(S.cancel),
             ),

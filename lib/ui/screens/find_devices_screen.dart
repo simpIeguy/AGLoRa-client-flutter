@@ -92,7 +92,10 @@ class _FindDevicesScreenState extends State<FindDevicesScreen> {
                 connected: [
                   for (final d in connected.data!)
                     ConnectedDevice(
-                        name: d.platformName,
+                        // connected by itself at launch: no scan, no name yet
+                        name: d.platformName.isNotEmpty
+                            ? d.platformName
+                            : AppScope.of(context).connection?.name ?? '',
                         ready: d.isConnected,
                         onOpen: () => Navigator.of(context).pop()),
                 ],

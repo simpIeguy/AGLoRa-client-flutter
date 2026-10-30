@@ -21,6 +21,22 @@ void main() {
     expect(compass.reading!.accuracy, isNull);
   });
 
+  test('a turn under a degree is not worth a redraw', () async {
+    final compass = CompassService(
+        readings: Stream.fromIterable(const [
+      CompassReading(30, accuracy: 15),
+      CompassReading(30.4, accuracy: 15),
+      CompassReading(31.2, accuracy: 15),
+      CompassReading(359.5, accuracy: 15),
+      CompassReading(0.2, accuracy: 15),
+    ]))
+      ..start();
+    final headings = <double>[];
+    compass.addListener(() => headings.add(compass.reading!.heading));
+    await Future<void>.delayed(Duration.zero);
+    expect(headings, [30, 31.2, 359.5]);
+  });
+
   test('a distance that is not a number shows a dash', () {
     expect(distanceParts(double.nan), (value: '—', unit: 'м'));
     expect(formatDistance(double.infinity), '— м');

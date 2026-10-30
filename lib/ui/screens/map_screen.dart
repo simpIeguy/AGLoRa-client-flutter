@@ -64,12 +64,33 @@ class _MapScreenState extends State<MapScreen> {
 
   StreamSubscription<MapEvent>? _mapEventSubscription;
 
+  /// the map keeps the chosen tracker in the centre while its points come
+  bool _followTracker = false;
+
+  /// the point the map was last moved to while following
+  (String, DateTime)? _followedPoint;
+
+  /// the track layers are built again only when [_tracksSignature] changes:
+  /// not on every turn of the compass
+  String? _tracksSignature;
+  List<Widget> _tracksLayers = const [];
+
   late final AppServices _services = AppScope.of(context);
 
   @override
   void initState() {
     super.initState();
     _mapEventSubscription = _mapController.mapEventStream.listen((event) {
+      // a finger moved the map: it is no longer kept on the tracker
+      if (_followTracker &&
+          event is MapEventMove &&
+          const {
+            MapEventSource.dragStart,
+            MapEventSource.onDrag,
+            MapEventSource.flingAnimationController,
+          }.contains(event.source)) {
+        setState(() => _followTracker = false);
+      }
       if (event is! MapEventRotate) return;
       // a finger turned the map: leave the compass mode
       if (_followCompass && event.source != MapEventSource.mapController) {
@@ -146,6 +167,27 @@ class _MapScreenState extends State<MapScreen> {
         LatLng(point.latitude, point.longitude), _mapController.zoom);
   }
 
+  void _toggleFollowTracker() {
+    setState(() {
+      _followTracker = !_followTracker;
+      _followedPoint = null;
+    });
+  }
+
+  /// while following: to the chosen tracker's newest point, once per point
+  void _followChosen(TrackerEntry? chosen) {
+    final point = chosen?.latest;
+    if (!_followTracker || chosen == null || point == null) return;
+    final moved = (chosen.key, point.time);
+    if (moved == _followedPoint) return;
+    _followedPoint = moved;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_followTracker) return;
+      _mapController.move(
+          LatLng(point.latitude, point.longitude), _mapController.zoom);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,6 +211,7 @@ class _MapScreenState extends State<MapScreen> {
           ];
           final chosen = entries.where((e) => e.key == _chosen).firstOrNull ??
               entries.firstOrNull;
+          _followChosen(chosen);
           return Stack(children: [
             _map(context, entries, chosen, now),
             SafeArea(child: _controls(context, entries, chosen)),
@@ -244,6 +287,19 @@ class _MapScreenState extends State<MapScreen> {
   /// where each tracker went: its last points, dotted, a dot at each; the
   /// chosen one brighter, a lost one paler
   List<Widget> _tracks(List<TrackerEntry> entries, TrackerEntry? chosen) {
+    final signature = [
+      for (final e in entries)
+        if (_services.settings.isTrackShown(e.key))
+          '${e.key}:${e.status.name}:${e == chosen}:'
+              '${_services.store.pointsOf(e.key).length}:'
+              '${_services.store.pointsOf(e.key).firstOrNull?.time.millisecondsSinceEpoch}',
+    ].join('|');
+    if (signature == _tracksSignature) return _tracksLayers;
+    _tracksSignature = signature;
+    return _tracksLayers = _buildTracks(entries, chosen);
+  }
+
+  List<Widget> _buildTracks(List<TrackerEntry> entries, TrackerEntry? chosen) {
     final polylines = <Polyline>[];
     final circles = <CircleMarker>[];
     for (final e in entries) {
@@ -344,6 +400,15 @@ class _MapScreenState extends State<MapScreen> {
                   tooltip: S.whereAmI,
                   onTap: () => _whereAmI(context),
                   child: const Icon(Icons.my_location),
+                ),
+                const SizedBox(height: AppSizes.gap),
+                _MapButton(
+                  tooltip:
+                      _followTracker ? S.followTrackerOff : S.followTracker,
+                  pressed: _followTracker,
+                  onTap: _toggleFollowTracker,
+                  child: Icon(
+                      _followTracker ? Icons.gps_fixed : Icons.gps_not_fixed),
                 ),
                 const SizedBox(height: AppSizes.gap),
                 _MapButton(
@@ -523,15 +588,29 @@ class _Panel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
-            child: Row(children: [
-              for (final e in entries) ...[
-                _Chip(entry: e, chosen: e == chosen, onTap: () => onChoose(e)),
-                const SizedBox(width: AppSizes.gap),
+          // a long press picks a chip up, as on the main screen
+          SizedBox(
+            height: AppSizes.minTap,
+            child: ReorderableListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
+              onReorderItem: (from, to) {
+                final keys = [for (final e in entries) e.key];
+                keys.insert(to, keys.removeAt(from));
+                AppScope.of(context).store.setOrder(keys);
+              },
+              children: [
+                for (final e in entries)
+                  Padding(
+                    key: ValueKey(e.key),
+                    padding: const EdgeInsets.only(right: AppSizes.gap),
+                    child: _Chip(
+                        entry: e,
+                        chosen: e == chosen,
+                        onTap: () => onChoose(e)),
+                  ),
               ],
-            ]),
+            ),
           ),
           TrackerCard(entry: chosen, framed: false),
           Padding(

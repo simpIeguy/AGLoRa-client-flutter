@@ -195,6 +195,9 @@ abstract final class S {
   static const String receivedByPhone = 'Принято телефоном';
   static const String gpsTime = 'Время GPS';
   static String allPoints(int n) => 'Точки: $n';
+  static const String exportGpx = 'Экспорт GPX';
+  static const String exportCsv = 'Экспорт CSV';
+  static const String cannotExport = 'Не удалось отправить файл';
   static String copyCoordinatesAt(String time) => 'Копировать координаты $time';
   static String directionTo(String name) =>
       'Направление на $name, нажмите для полного экрана';
@@ -218,6 +221,8 @@ abstract final class S {
   static const String northUp = 'Север вверх';
   static const String whereAmI = 'Где я';
   static const String tracks = 'След';
+  static const String followTracker = 'Следить за выбранным';
+  static const String followTrackerOff = 'Не следить';
   static const String tracksTitle = 'Чьи следы показывать';
   static const String tracksHint = 'Последние 50 точек каждого трекера';
 

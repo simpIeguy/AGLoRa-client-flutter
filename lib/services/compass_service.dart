@@ -17,6 +17,9 @@ class CompassReading {
 
 /// The phone's compass. Without readings the arrows take the top of the
 /// phone for north (and say they are not to be trusted).
+/// degrees of turn below which a new reading is ignored
+const double compassMinStep = 1;
+
 class CompassService extends ChangeNotifier {
   /// [readings] replaces the phone's sensor in tests
   CompassService({Stream<CompassReading>? readings}) : _readings = readings;
@@ -46,6 +49,15 @@ class CompassService extends ChangeNotifier {
         final accuracy = reading.accuracy;
         if (accuracy != null && !accuracy.isFinite) {
           reading = CompassReading(reading.heading);
+        }
+        // the sensor speaks dozens of times a second; a change under a
+        // degree is not worth redrawing the map and the cards
+        final last = _last;
+        if (last != null &&
+            last.accuracy == reading.accuracy &&
+            ((reading.heading - last.heading + 540) % 360 - 180).abs() <
+                compassMinStep) {
+          return;
         }
         _last = reading;
         notifyListeners();

@@ -48,6 +48,13 @@ void main() {
     expect(find.text('Поделиться'), findsNothing);
   });
 
+  testWidgets('the points can be exported as GPX or CSV', (tester) async {
+    feedPoints('UAV1', 3);
+    await show(tester, 'UAV1');
+    expect(find.text('Экспорт GPX'), findsOneWidget);
+    expect(find.text('Экспорт CSV'), findsOneWidget);
+  });
+
   testWidgets('the points in a window of five that scrolls', (tester) async {
     feedPoints('UAV1', 8);
     await show(tester, 'UAV1');

@@ -50,6 +50,31 @@ void main() {
     expect(find.text('1,4 км'), findsNWidgets(2));
   });
 
+  testWidgets('"Следить": the map goes to the new point, a finger stops it',
+      (tester) async {
+    resetApp();
+    await show(tester, chosen: 'UAV1');
+    final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
+    final controller = map.mapController!;
+
+    await tester.tap(find.byTooltip('Следить за выбранным'));
+    await tester.pump();
+    await tester.pump();
+    expect(controller.center.latitude, closeTo(53.902, 0.0001));
+
+    feed(pointMessage('UAV1', 53.95, 27.6, now.add(const Duration(seconds: 30)),
+        index: 3));
+    await tester.pump();
+    await tester.pump();
+    expect(controller.center.latitude, closeTo(53.95, 0.0001),
+        reason: 'a new point: the map follows');
+
+    await tester.drag(find.byType(FlutterMap), const Offset(0, 80));
+    await tester.pump();
+    expect(find.byTooltip('Следить за выбранным'), findsOneWidget,
+        reason: 'a finger moved the map: not following any more');
+  });
+
   testWidgets('a chip chooses another tracker, its card opens its screen',
       (tester) async {
     resetApp();

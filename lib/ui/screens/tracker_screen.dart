@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../data/track_export.dart';
 import '../../data/tracker_status.dart';
 import '../../protocol/tracker_name.dart';
 import '../../protocol/tracker_point.dart';
 import '../../services/app_services.dart';
 import '../../services/map_link.dart';
+import '../../services/track_sharing.dart';
 import '../../util/geo.dart';
 import '../format.dart';
 import '../names.dart';
@@ -135,6 +137,29 @@ class _TrackerScreenState extends State<TrackerScreen> {
                   ),
                 ),
               ),
+              // the points as a file, for a map program or a spreadsheet
+              Padding(
+                padding: const EdgeInsets.only(top: AppSizes.gap),
+                child: Row(children: [
+                  for (final format in TrackFormat.values) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                            minimumSize:
+                                const Size.fromHeight(AppSizes.minTap)),
+                        icon: const Icon(Icons.ios_share),
+                        label: Text(format == TrackFormat.gpx
+                            ? S.exportGpx
+                            : S.exportCsv),
+                        onPressed: () =>
+                            _export(context, name, alias, points, format),
+                      ),
+                    ),
+                    if (format != TrackFormat.values.last)
+                      const SizedBox(width: AppSizes.gap),
+                  ],
+                ]),
+              ),
             ] else
               const Padding(
                 padding: EdgeInsets.all(AppSizes.screenPadding),
@@ -194,6 +219,18 @@ class _TrackerScreenState extends State<TrackerScreen> {
   }
 
   /// the newest point: where the tracker was last seen
+  Future<void> _export(BuildContext context, TrackerName name, String? alias,
+      List<TrackerPoint> points, TrackFormat format) async {
+    final label = displayName(name, alias: alias);
+    try {
+      await shareTrack(ExportTrack(label: label, points: points), format,
+          fileBase:
+              '${name.key}-${DateTime.now().toUtc().toIso8601String().substring(0, 10)}');
+    } catch (_) {
+      if (context.mounted) showMessage(context, S.cannotExport);
+    }
+  }
+
   Future<void> _openInMaps(BuildContext context, TrackerPoint point) async {
     final opened = await openPointInMaps(
         point.latitude, point.longitude, point.identifier,

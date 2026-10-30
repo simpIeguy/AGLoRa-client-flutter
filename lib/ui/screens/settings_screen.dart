@@ -126,9 +126,7 @@ class SettingsScreen extends StatelessWidget {
                                 _Group(children: [
                                   _Switch(
                                     title: S.relayMe,
-                                    hint: onUav
-                                        ? '${S.relayMeHint}. ${S.relayMeUavNote}'
-                                        : S.relayMeHint,
+                                    hint: onUav ? S.relayMeUavNote : null,
                                     value: onUav || relay,
                                     // a UAV always transmits, it cannot be off
                                     onChanged:
@@ -319,12 +317,12 @@ class _CoordinatesChoice extends StatelessWidget {
 class _Switch extends StatelessWidget {
   const _Switch(
       {required this.title,
-      required this.hint,
+      this.hint,
       required this.value,
       required this.onChanged});
 
   final String title;
-  final String hint;
+  final String? hint;
   final bool value;
 
   /// null: the switch is shown but cannot be changed
@@ -335,11 +333,13 @@ class _Switch extends StatelessWidget {
         contentPadding: const EdgeInsets.fromLTRB(
             AppSizes.screenPadding, AppSizes.gap, AppSizes.gap, AppSizes.gap),
         title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Text(hint,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: AppPalette.of(context).muted)),
+        subtitle: hint == null
+            ? null
+            : Text(hint!,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: AppPalette.of(context).muted)),
         value: value,
         onChanged: onChanged,
       );

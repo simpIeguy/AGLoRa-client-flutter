@@ -254,9 +254,6 @@ abstract final class S {
       'Время считается от последней принятой точки. Подберите под то, как часто трекеры шлют координаты.';
   static const String sectionRelay = 'Сеть';
   static const String relayMe = 'Транслировать мою позицию';
-  static const String relayMeHint =
-      'Отправка в эфир данных о вашем местоположении. Другие наземные '
-      'трекеры повторят её, так вас услышат дальше';
   static const String relayMeUavNote = 'На БЛА выключить нельзя';
   static const String sectionScreen = 'Экран';
   static const String keepScreenOn = 'Не гасить в полном экране';

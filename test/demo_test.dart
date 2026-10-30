@@ -111,13 +111,15 @@ void main() {
     expect(names, {'GROUND1', 'UAV1', 'UAV2', 'GROUND2', 'Tracker9'});
     expect(app.store.connectedTracker, 'GROUND1');
 
-    // UAVs first, the freshest on top: UAV2 went silent at 90 s
+    // the own tracker on top, then UAVs in the order of appearance (UAV2
+    // was on air first), then people
     final keys = buildTrackerList(app.store, DateTime.now().toUtc())
         .shown
         .map((e) => e.key)
         .toList();
-    expect(keys.indexOf('UAV1'), lessThan(keys.indexOf('UAV2')));
-    expect(keys.indexOf('UAV2'), lessThan(keys.indexOf('GROUND1')));
+    expect(keys.first, 'GROUND1');
+    expect(keys.indexOf('UAV2'), lessThan(keys.indexOf('UAV1')));
+    expect(keys.indexOf('UAV1'), lessThan(keys.indexOf('GROUND2')));
     expect(keys.last, 'Tracker9');
     expect(alerts, ['UAV2', 'UAV1'], reason: 'once each, in order of air');
   });

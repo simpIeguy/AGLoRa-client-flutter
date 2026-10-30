@@ -49,12 +49,14 @@ class TrackerList {
 }
 
 /// The order of the list, the most important first:
-/// 1. UAVs with a link (connected, green, yellow);
+/// 0. the user's own tracker, always on top;
+/// 1. UAVs with a link (green, yellow);
 /// 2. UAVs with the link lost (grey), marked so, still among the UAVs;
 /// 3. UAVs waited for, no signal yet;
 /// 4. people, active ones above;
 /// 5. others (names not UAV…/GROUND…);
-/// and the archive apart. Inside a group the freshest point goes first.
+/// and the archive apart. Inside a group the order is that of appearance,
+/// not of the freshest point: a card does not jump when its tracker sends.
 ///
 /// [includeHidden]: for the "who to show" list, with the unticked ones
 TrackerList buildTrackerList(TrackerStore store, DateTime now,
@@ -108,17 +110,15 @@ TrackerList buildTrackerList(TrackerStore store, DateTime now,
     return tb.compareTo(ta);
   }
 
-  int compare(TrackerEntry a, TrackerEntry b) {
-    final group = _group(a).compareTo(_group(b));
-    return group != 0 ? group : byFreshness(a, b);
-  }
+  int byGroup(TrackerEntry a, TrackerEntry b) => _group(a).compareTo(_group(b));
 
-  // a stable sort: entries of one group with equal times keep their order
-  return TrackerList(_stableSorted(shown, compare),
+  // a stable sort: entries of one group keep the order they appeared in
+  return TrackerList(_stableSorted(shown, byGroup),
       _stableSorted(archived, byFreshness), hidden);
 }
 
 int _group(TrackerEntry e) {
+  if (e.isMine) return -1;
   final linked = e.status == TrackerStatus.connected ||
       e.status == TrackerStatus.active ||
       e.status == TrackerStatus.fading;

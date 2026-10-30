@@ -60,7 +60,9 @@ void main() {
   });
 
   group('the order of the list (2.1)', () {
-    test('UAVs first, lost ones among them, then waited, people, others', () {
+    test(
+        'UAVs first, lost ones among them, then waited, people, others;'
+        ' inside a group the order of appearance', () {
       final store = TrackerStore()
         ..addPoint(at('Tracker9', Duration.zero))
         ..addPoint(at('GROUND2', const Duration(minutes: 10)))
@@ -70,12 +72,22 @@ void main() {
         ..addPoint(at('UAV4', const Duration(seconds: 10)))
         ..addWaiting(parseTrackerName('UAV3'));
       expect(order(store), [
-        'UAV4', 'UAV1', // a link, the freshest first
+        'UAV1', 'UAV4', // a link, as they appeared (UAV4 is fresher)
         'UAV2', // lost, still among the UAVs
         'UAV3', // waited
-        'GROUND1', 'GROUND2', // people, active above
+        'GROUND1', 'GROUND2', // people
         'Tracker9',
       ]);
+    });
+
+    test('a new point does not move the card', () {
+      final store = TrackerStore()
+        ..addPoint(at('UAV1', const Duration(seconds: 30)))
+        ..addPoint(at('UAV2', const Duration(seconds: 20)))
+        ..addPoint(at('UAV3', const Duration(seconds: 10)));
+      expect(order(store), ['UAV1', 'UAV2', 'UAV3']);
+      store.addPoint(at('UAV1', Duration.zero, lat: 54));
+      expect(order(store), ['UAV1', 'UAV2', 'UAV3']);
     });
 
     test('the connected tracker counts as having a link', () {
@@ -83,7 +95,7 @@ void main() {
         ..addPoint(at('GROUND3', const Duration(minutes: 10)))
         ..addPoint(at('GROUND1', const Duration(hours: 1)))
         ..setConnectedTracker('ground1');
-      // an hour old, but connected: above the lost one
+      // an hour old, but connected: on top of everything
       expect(buildTrackerList(store, now).shown.first.status,
           TrackerStatus.connected);
       expect(order(store), ['GROUND1', 'GROUND3']);
@@ -101,7 +113,7 @@ void main() {
         ..setHidden('GROUND1', true)
         ..setHidden('GROUND2', true);
       final list = buildTrackerList(store, now);
-      expect(list.shown.map((e) => e.key), ['UAV1', 'GROUND1']);
+      expect(list.shown.map((e) => e.key), ['GROUND1', 'UAV1']);
       expect(list.hiddenCount, 1);
       expect(buildTrackerList(store, now, includeHidden: true).shown,
           hasLength(3));

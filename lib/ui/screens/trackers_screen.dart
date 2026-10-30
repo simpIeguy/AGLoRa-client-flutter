@@ -8,6 +8,7 @@ import '../theme.dart';
 import '../widgets/drag_proxy.dart';
 import '../widgets/link_banner.dart';
 import '../widgets/sensor_lamps.dart';
+import '../widgets/steady_reorder_list.dart';
 import '../widgets/tracker_card.dart';
 import '../widgets/who_to_show_sheet.dart';
 import 'find_devices_screen.dart';
@@ -102,17 +103,14 @@ class TrackersScreen extends StatelessWidget {
                 ?.copyWith(color: AppPalette.of(context).muted)),
       ),
       // a long press picks a card up; it moves inside its own group only
-      ReorderableListView(
+      SteadyReorderList<TrackerEntry>(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        buildDefaultDragHandles: true,
         proxyDecorator: dragProxy(AppSizes.cardRadius),
-        onReorderItem: (from, to) {
-          final keys = [for (final e in entries) e.key];
-          keys.insert(to, keys.removeAt(from));
-          AppScope.of(context).store.setOrder(keys);
-        },
-        children: [for (final entry in entries) _card(entry)],
+        items: entries,
+        keyOf: (e) => e.key,
+        itemBuilder: _card,
+        onOrder: AppScope.of(context).store.setOrder,
       ),
     ];
   }

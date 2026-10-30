@@ -15,6 +15,7 @@ import '../theme.dart';
 import '../widgets/ask_location.dart';
 import '../widgets/drag_proxy.dart';
 import '../widgets/status_dot.dart';
+import '../widgets/steady_reorder_list.dart';
 import '../widgets/tracker_card.dart';
 import 'map/map_layers.dart';
 import 'map/map_markers.dart';
@@ -597,26 +598,21 @@ class _Panel extends StatelessWidget {
           // a long press picks a chip up, as on the main screen
           SizedBox(
             height: AppSizes.minTap,
-            child: ReorderableListView(
+            child: SteadyReorderList<TrackerEntry>(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
               proxyDecorator: dragProxy(AppSizes.buttonRadius, color: p.card),
-              onReorderItem: (from, to) {
-                final keys = [for (final e in entries) e.key];
-                keys.insert(to, keys.removeAt(from));
-                AppScope.of(context).store.setOrder(keys);
-              },
-              children: [
-                for (final e in entries)
-                  Padding(
-                    key: ValueKey(e.key),
-                    padding: const EdgeInsets.only(right: AppSizes.gap),
-                    child: _Chip(
-                        entry: e,
-                        chosen: e.key == chosen.key,
-                        onTap: () => onChoose(e)),
-                  ),
-              ],
+              items: entries,
+              keyOf: (e) => e.key,
+              onOrder: AppScope.of(context).store.setOrder,
+              itemBuilder: (e) => Padding(
+                key: ValueKey(e.key),
+                padding: const EdgeInsets.only(right: AppSizes.gap),
+                child: _Chip(
+                    entry: e,
+                    chosen: e.key == chosen.key,
+                    onTap: () => onChoose(e)),
+              ),
             ),
           ),
           TrackerCard(entry: chosen, framed: false),

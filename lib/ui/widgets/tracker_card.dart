@@ -147,61 +147,66 @@ class _TopRow extends StatelessWidget {
         final distance = direction?.distance;
         final parts = distance == null ? null : distanceParts(distance);
 
-        return Row(children: [
-          _Arrow(entry: entry, direction: direction),
-          const SizedBox(width: AppSizes.padding),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TrackerTitle(
-                    name: entry.name, alias: entry.alias, mine: entry.isMine),
-                Row(children: [
-                  StatusDot(status: entry.status),
+        return LayoutBuilder(
+            builder: (context, box) => Row(children: [
+                  _Arrow(entry: entry, direction: direction),
+                  const SizedBox(width: AppSizes.padding),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TrackerTitle(
+                            name: entry.name,
+                            alias: entry.alias,
+                            mine: entry.isMine),
+                        Row(children: [
+                          StatusDot(status: entry.status),
+                          const SizedBox(width: AppSizes.gap),
+                          Flexible(
+                              child: Text(statusLabel(entry.status),
+                                  style: textTheme.labelLarge)),
+                        ]),
+                        Padding(
+                          // under the status text, past the dot
+                          padding: const EdgeInsets.only(
+                              left: AppSizes.lamp + AppSizes.gap),
+                          child: Text(
+                              heardLine(
+                                  since: since,
+                                  lost: lost,
+                                  searching: entry.searchingSatellites,
+                                  hasPoint: point != null),
+                              style: textTheme.bodyMedium?.copyWith(
+                                  fontSize: AppText.age,
+                                  color: lost ? p.ink : p.muted)),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(width: AppSizes.gap),
-                  Flexible(
-                      child: Text(statusLabel(entry.status),
-                          style: textTheme.labelLarge)),
-                ]),
-                Padding(
-                  // under the status text, past the dot
-                  padding:
-                      const EdgeInsets.only(left: AppSizes.lamp + AppSizes.gap),
-                  child: Text(
-                      heardLine(
-                          since: since,
-                          lost: lost,
-                          searching: entry.searchingSatellites,
-                          hasPoint: point != null),
-                      style: textTheme.bodyMedium?.copyWith(
-                          fontSize: AppText.age,
-                          color: lost ? p.ink : p.muted)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSizes.gap),
-          // a large system font: the distance shrinks, the row never overflows
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(text: parts?.value ?? '—'),
-                  if (parts != null)
-                    TextSpan(
-                        text: ' ${parts.unit}',
-                        style: const TextStyle(
-                            fontSize: AppText.small,
-                            fontWeight: FontWeight.w600)),
-                ]),
-                style: textTheme.headlineMedium
-                    ?.copyWith(color: lost || parts == null ? p.muted : p.ink),
-              ),
-            ),
-          ),
-        ]);
+                  // a large system font: the distance shrinks (at most 40% of the row), the
+                  // row never overflows
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: box.maxWidth * 0.4),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text.rich(
+                        TextSpan(children: [
+                          TextSpan(text: parts?.value ?? '—'),
+                          if (parts != null)
+                            TextSpan(
+                                text: ' ${parts.unit}',
+                                style: const TextStyle(
+                                    fontSize: AppText.small,
+                                    fontWeight: FontWeight.w600)),
+                        ]),
+                        style: textTheme.headlineMedium?.copyWith(
+                            color: lost || parts == null ? p.muted : p.ink),
+                      ),
+                    ),
+                  ),
+                ]));
       },
     );
   }

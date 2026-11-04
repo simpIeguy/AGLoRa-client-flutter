@@ -279,6 +279,25 @@ void main() {
       expect(find.textContaining(RegExp(r'^7\d\d м$')), findsNothing);
     });
 
+    testWidgets('a hidden landmark is not drawn even when the line leads to it',
+        (tester) async {
+      resetApp(
+          positions: Stream.value(PhonePosition(
+              latitude: 53.8945,
+              longitude: 27.5440,
+              accuracy: 6,
+              time: DateTime.now())));
+      final l = app.settings.addLandmark('Сбор', 53.9, 27.55);
+      await show(tester, chosen: 'UAV1');
+      await tester.tap(find.text('Сбор'));
+      await tester.pump();
+      app.settings.setLandmarkVisible(l.id, false);
+      await tester.pump();
+      expect(find.text('Сбор'), findsNothing, reason: 'the flag is hidden');
+      expect(find.textContaining(RegExp(r'^7\d\d м$')), findsOneWidget,
+          reason: 'the line stays');
+    });
+
     testWidgets('one aim at a time: a tracker or a landmark', (tester) async {
       resetApp(
           positions: Stream.value(PhonePosition(

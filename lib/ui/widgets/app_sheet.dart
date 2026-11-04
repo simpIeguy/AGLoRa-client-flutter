@@ -11,8 +11,22 @@ Future<T?> showAppSheet<T>({
     showModalBottomSheet<T>(
       context: context,
       isScrollControlled: isScrollControlled,
-      showDragHandle: true,
-      builder: (sheet) => _PullDownToClose(child: builder(sheet)),
+      builder: (sheet) => _PullDownToClose(
+        // our own handle: the stock one leaves 48 px of empty space above
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Container(
+              width: 32,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: Theme.of(sheet).colorScheme.onSurfaceVariant,
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          Flexible(child: builder(sheet)),
+        ]),
+      ),
     );
 
 /// A list that ends at its top and is pulled further down closes the sheet.

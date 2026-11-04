@@ -376,7 +376,7 @@ class _MapScreenState extends State<MapScreen> {
           rotate: true,
           markers: [
             for (final l in landmarks)
-              if (l.visible || l.id == landmark?.id)
+              if (l.visible)
                 landmarkMarker(l,
                     chosen: l.id == landmark?.id, onTap: () => _tapLandmark(l)),
           ],

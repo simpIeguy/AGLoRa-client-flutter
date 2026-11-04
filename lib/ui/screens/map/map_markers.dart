@@ -203,8 +203,8 @@ Marker landmarkMarker(Landmark landmark,
     );
 
 /// "1,2 км" in the middle of the line from the phone to the chosen tracker
-Marker distanceMarker(LatLng at, double metres) => Marker(
-      width: 120,
+Marker distanceMarker(LatLng at, double metres, double bearing) => Marker(
+      width: 200,
       height: 28,
       point: at,
       builder: (_) => Center(
@@ -213,12 +213,19 @@ Marker distanceMarker(LatLng at, double metres) => Marker(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
               color: Colors.white, borderRadius: BorderRadius.circular(10)),
-          child: Text(formatDistance(metres),
-              style: TextStyle(
-                  fontFamily: AppText.sans,
-                  fontSize: AppText.small,
-                  fontWeight: FontWeight.w700,
-                  color: _onMap.ink)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(formatDistance(metres),
+                style: TextStyle(
+                    fontFamily: AppText.sans,
+                    fontSize: AppText.small,
+                    fontWeight: FontWeight.w700,
+                    color: _onMap.ink)),
+            Text(' · ${compassPoint(bearing)}',
+                style: TextStyle(
+                    fontFamily: AppText.sans,
+                    fontSize: AppText.small,
+                    color: _onMap.ink)),
+          ]),
         ),
       ),
     );

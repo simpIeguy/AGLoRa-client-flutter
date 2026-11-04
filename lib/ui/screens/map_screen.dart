@@ -211,7 +211,7 @@ class _MapScreenState extends State<MapScreen> {
         LatLng(landmark.latitude, landmark.longitude), _mapController.zoom);
   }
 
-  /// "Вести до метки" in the list: the line leads to it, or stops;
+  /// "Линия до метки" in the list: the line leads to it, or stops;
   /// true when it leads now
   bool _aimAtLandmark(Landmark landmark) {
     final on = _landmarkId != landmark.id;
@@ -360,6 +360,8 @@ class _MapScreenState extends State<MapScreen> {
                 // ours, as on the card: latlong2's Distance can give "not a
                 // number" and then fails on rounding (the red error screen)
                 distanceBetween(phoneAt.latitude, phoneAt.longitude,
+                    targetAt.latitude, targetAt.longitude),
+                bearingBetween(phoneAt.latitude, phoneAt.longitude,
                     targetAt.latitude, targetAt.longitude)),
           ]),
         ],
@@ -614,10 +616,13 @@ class _MapScreenState extends State<MapScreen> {
           const Spacer(),
           if (chosen == null && candidates.isNotEmpty)
             // all taken off the map: the way back must stay
-            _HiddenPanel(onFilter: () => _chooseOnMap(context, candidates)),
+            _HiddenPanel(
+                onFilter: () => _chooseOnMap(context, candidates),
+                hidden: candidates.length),
           if (chosen != null)
             _Panel(
               onFilter: () => _chooseOnMap(context, candidates),
+              hidden: candidates.length - entries.length,
               entries: entries,
               chosen: chosen,
               onChoose: _choose,
@@ -756,7 +761,9 @@ class _NorthNeedlePainter extends CustomPainter {
 
 /// the card when every tracker is taken off the map: only the way back
 class _HiddenPanel extends StatelessWidget {
-  const _HiddenPanel({required this.onFilter});
+  const _HiddenPanel({required this.onFilter, required this.hidden});
+
+  final int hidden;
 
   final VoidCallback onFilter;
 
@@ -772,7 +779,9 @@ class _HiddenPanel extends StatelessWidget {
       child: Row(children: [
         IconButton(
           tooltip: S.onMapTooltip,
-          icon: const Icon(Icons.visibility_outlined),
+          icon: Badge(
+              label: Text('$hidden'),
+              child: const Icon(Icons.visibility_off_outlined)),
           onPressed: onFilter,
         ),
         Expanded(
@@ -792,6 +801,7 @@ class _Panel extends StatelessWidget {
     required this.trackShown,
     required this.onTrack,
     required this.onFilter,
+    required this.hidden,
     required this.open,
     required this.onToggle,
     required this.aimed,
@@ -808,6 +818,9 @@ class _Panel extends StatelessWidget {
 
   /// opens the list of the trackers to show on the map
   final VoidCallback onFilter;
+
+  /// how many trackers are taken off the map
+  final int hidden;
 
   /// unfolded: the chips and the card; folded: a single line
   final bool open;
@@ -842,7 +855,10 @@ class _Panel extends StatelessWidget {
             const SizedBox(width: AppSizes.gap),
             _PanelButton(
               tooltip: S.onMapTooltip,
-              icon: Icons.visibility_outlined,
+              icon: hidden > 0
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              badge: hidden,
               onTap: onFilter,
             ),
             Expanded(
@@ -936,10 +952,16 @@ class _Panel extends StatelessWidget {
 /// a round-cornered square button of the panel, like the chips beside it
 class _PanelButton extends StatelessWidget {
   const _PanelButton(
-      {required this.tooltip, required this.icon, required this.onTap});
+      {required this.tooltip,
+      required this.icon,
+      required this.onTap,
+      this.badge = 0});
 
   final String tooltip;
   final IconData icon;
+
+  /// a number on the corner, when above zero
+  final int badge;
   final VoidCallback onTap;
 
   @override
@@ -958,7 +980,13 @@ class _PanelButton extends StatelessWidget {
           onTap: onTap,
           customBorder: shape,
           child: SizedBox.square(
-              dimension: AppSizes.minTap, child: Icon(icon, color: p.ink)),
+              dimension: AppSizes.minTap,
+              child: badge > 0
+                  ? Badge(
+                      label: Text('$badge'),
+                      alignment: AlignmentDirectional.topEnd,
+                      child: Center(child: Icon(icon, color: p.ink)))
+                  : Icon(icon, color: p.ink)),
         ),
       ),
     );

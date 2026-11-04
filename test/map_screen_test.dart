@@ -70,7 +70,7 @@ void main() {
     final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
     final controller = map.mapController!;
 
-    await tester.tap(find.byTooltip('Следить за выбранным'));
+    await tester.tap(find.byTooltip('Карта следует за трекером'));
     await tester.pump();
     await tester.pump();
     expect(controller.center.latitude, closeTo(53.902, 0.0001));
@@ -84,7 +84,7 @@ void main() {
 
     await tester.drag(find.byType(FlutterMap), const Offset(0, 80));
     await tester.pump();
-    expect(find.byTooltip('Следить за выбранным'), findsOneWidget,
+    expect(find.byTooltip('Карта следует за трекером'), findsOneWidget,
         reason: 'a finger moved the map: not following any more');
   });
 
@@ -92,15 +92,15 @@ void main() {
       (tester) async {
     resetApp();
     await show(tester, chosen: 'UAV1', followChosen: true);
-    expect(find.byTooltip('Не следить'), findsOneWidget);
-    expect(find.byTooltip('Следить за выбранным'), findsNothing);
+    expect(find.byTooltip('Карта не следует за трекером'), findsOneWidget);
+    expect(find.byTooltip('Карта следует за трекером'), findsNothing);
   });
 
   testWidgets('the map button of the main screen does not follow',
       (tester) async {
     resetApp();
     await show(tester, chosen: 'UAV1');
-    expect(find.byTooltip('Следить за выбранным'), findsOneWidget);
+    expect(find.byTooltip('Карта следует за трекером'), findsOneWidget);
   });
 
   group('landmarks', () {
@@ -168,6 +168,10 @@ void main() {
 
       await tester.drag(find.text('Сбор').last, const Offset(-700, 0));
       await tester.pumpAndSettle();
+      expect(find.text('Удалить метку?'), findsOneWidget);
+      expect(app.settings.landmarks, isNotEmpty, reason: 'asked first');
+      await tester.tap(find.text('Удалить'));
+      await tester.pumpAndSettle();
       expect(app.settings.landmarks, isEmpty);
       expect(find.text('Пока нет ни одной метки'), findsOneWidget);
 
@@ -192,9 +196,9 @@ void main() {
       expect(tester.getTopLeft(find.textContaining('Сбор  ·  ')).dy,
           lessThan(tester.getTopLeft(find.textContaining('Далеко  ·  ')).dy),
           reason: 'nearest first');
-      await tester.tap(find.byTooltip('Вести до метки').first);
+      await tester.tap(find.byTooltip('Линия до метки').first);
       await tester.pump();
-      expect(find.byTooltip('Не вести до метки'), findsOneWidget);
+      expect(find.byTooltip('Убрать линию до метки'), findsOneWidget);
     });
 
     testWidgets('a long press changes a landmark', (tester) async {
@@ -287,7 +291,7 @@ void main() {
       final aim = find.descendant(
           of: find
               .ancestor(
-                  of: find.text('Вести до трекера'), matching: find.byType(Row))
+                  of: find.text('Линия до трекера'), matching: find.byType(Row))
               .first,
           matching: find.byType(Switch));
       await tester.tap(aim);
@@ -414,7 +418,7 @@ void main() {
     await tester.pump();
     expect(find.text('БЛА 1 UAV1'), findsNothing);
     expect(find.text('БЛА 1'), findsOneWidget, reason: 'the folded line');
-    expect(find.text('Вести до трекера'), findsNothing);
+    expect(find.text('Линия до трекера'), findsNothing);
     await tester.tap(find.byTooltip('Развернуть панель'));
     await tester.pump();
     expect(find.text('БЛА 1 UAV1'), findsOneWidget);

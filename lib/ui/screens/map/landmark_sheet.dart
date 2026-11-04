@@ -269,6 +269,23 @@ class _LandmarkSheetState extends State<_LandmarkSheet> {
             semanticLabel: S.landmarkDelete,
             color: Theme.of(context).colorScheme.onErrorContainer),
       ),
+      confirmDismiss: (_) async =>
+          await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text(S.landmarkDeleteAsk),
+              content: Text(l.name),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text(S.landmarkCancel)),
+                FilledButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text(S.landmarkDeleteYes)),
+              ],
+            ),
+          ) ??
+          false,
       onDismissed: (_) => _remove(l, index),
       child: ListTile(
         contentPadding: EdgeInsets.zero,

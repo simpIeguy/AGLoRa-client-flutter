@@ -227,8 +227,8 @@ abstract final class S {
   static const String northUp = 'Север вверх';
   static const String whereAmI = 'Где я';
   static const String tracks = 'След';
-  static const String followTracker = 'Следить за выбранным';
-  static const String followTrackerOff = 'Не следить';
+  static const String followTracker = 'Карта следует за трекером';
+  static const String followTrackerOff = 'Карта не следует за трекером';
   static const String onMapTitle = 'Какие трекеры показывать на карте';
   static const String onMapTooltip = 'Какие трекеры показывать';
   static const String allOffMap = 'Все трекеры скрыты с карты';
@@ -236,7 +236,7 @@ abstract final class S {
   static const String panelUnfold = 'Развернуть панель';
   static const String zoomIn = 'Приблизить карту';
   static const String zoomOut = 'Отдалить карту';
-  static const String aimAtTracker = 'Вести до трекера';
+  static const String aimAtTracker = 'Линия до трекера';
   static const String showOnMapSwitch = 'Показывать на карте';
   static const String showMineOnMap = 'Показывать мой трекер на карте';
   // landmarks: points put on the map by coordinates
@@ -265,11 +265,13 @@ abstract final class S {
   static const String landmarkNameShort = 'Название';
   static const String landmarkNew = 'Добавить метку';
   static const String landmarkPaste = 'Вставить из буфера';
-  static const String landmarkAim = 'Вести до метки';
-  static const String landmarkAimOff = 'Не вести до метки';
+  static const String landmarkAim = 'Линия до метки';
+  static const String landmarkAimOff = 'Убрать линию до метки';
   static const String landmarkEdit = 'Изменить метку';
   static const String landmarkSave = 'Сохранить';
   static const String landmarkCancel = 'Отмена';
+  static const String landmarkDeleteAsk = 'Удалить метку?';
+  static const String landmarkDeleteYes = 'Удалить';
   static const String landmarkUndo = 'Отменить';
   static const String landmarkSwipeHint =
       'Нажмите на метку, чтобы перейти к ней. Смахните влево, чтобы удалить. '

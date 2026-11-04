@@ -103,6 +103,10 @@ void main() {
     expect(playInstantly('many'), hasLength(5));
   });
 
+  test('25 crowd trackers', () {
+    expect(playInstantly('crowd'), hasLength(25));
+  });
+
   test('6 search: roles, the order, one alert per new UAV', () async {
     final alerts = <String>[];
     app.store.firstSignals.listen((s) => alerts.add(s.point.identifier));

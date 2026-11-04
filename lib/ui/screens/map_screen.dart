@@ -93,6 +93,11 @@ class _MapScreenState extends State<MapScreen> {
   String? _tracksSignature;
   List<Widget> _tracksLayers = const [];
 
+  /// the same for the trackers' markers: their age ticks by itself, so they
+  /// are built again only when a tracker, its color or its point changes
+  String? _markersSignature;
+  Widget _markersLayer = const SizedBox.shrink();
+
   late final AppServices _services = AppScope.of(context);
 
   @override
@@ -385,19 +390,33 @@ class _MapScreenState extends State<MapScreen> {
                     chosen: l.id == landmark?.id, onTap: () => _tapLandmark(l)),
           ],
         ),
-        MarkerLayer(
-          rotate: true,
-          markers: [
-            // the chosen one on top of the others
-            for (final e in [
-              for (final e in entries)
-                if (e != chosen) e,
-              if (chosen != null) chosen,
-            ])
-              trackerMarker(e,
-                  now: now, chosen: e == chosen, onTap: () => _choose(e)),
-          ],
-        ),
+        _markers(entries, chosen),
+      ],
+    );
+  }
+
+  Widget _markers(List<TrackerEntry> entries, TrackerEntry? chosen) {
+    final signature = [
+      for (final e in entries)
+        '${e.key}:${e.status.name}:${e.key == chosen?.key}:'
+            '${e.alias}:${e.latest?.latitude}:${e.latest?.longitude}:'
+            '${e.lastHeard?.millisecondsSinceEpoch}',
+    ].join('|');
+    if (signature == _markersSignature) return _markersLayer;
+    _markersSignature = signature;
+    return _markersLayer = MarkerLayer(
+      rotate: true,
+      markers: [
+        // the chosen one on top of the others
+        for (final e in [
+          for (final e in entries)
+            if (e != chosen) e,
+          if (chosen != null) chosen,
+        ])
+          trackerMarker(e,
+              clock: _services.clock,
+              chosen: e == chosen,
+              onTap: () => _choose(e)),
       ],
     );
   }

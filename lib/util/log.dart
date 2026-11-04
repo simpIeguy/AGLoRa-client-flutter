@@ -144,6 +144,7 @@ class AppLog {
 
 /// the app's log: debug builds print too; every line goes to the journal
 void appLog(String message) {
-  if (kDebugMode) debugPrint(message);
+  // the profile build too: it is what the speed is measured with
+  if (kDebugMode || kProfileMode) debugPrint(message);
   AppLog.instance.add(message);
 }

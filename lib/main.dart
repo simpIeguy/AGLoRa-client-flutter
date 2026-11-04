@@ -15,6 +15,7 @@ import 'ui/theme.dart';
 import 'ui/widgets/broken_widget.dart';
 import 'ui/widgets/crash_notice.dart';
 import 'ui/widgets/first_signal_alerts.dart';
+import 'util/frame_stats.dart';
 import 'util/log.dart';
 
 Future<void> main() async {
@@ -30,6 +31,8 @@ Future<void> _start() async {
   await AppLog.instance.start(FileLogBackend(),
       header: '${S.appName} ${S.appVersion}, '
           '${Platform.operatingSystem} ${Platform.operatingSystemVersion}');
+  // the speed of drawing, a line in the journal every ten seconds
+  WidgetsBinding.instance.addTimingsCallback(FrameStats().onTimings);
   FlutterError.onError = (details) {
     AppLog.instance.error(details.exception, details.stack,
         where: details.library ?? 'flutter');

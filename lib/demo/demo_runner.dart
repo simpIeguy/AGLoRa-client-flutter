@@ -12,6 +12,7 @@ const Map<String, String> demoScenarios = {
   'link_loss': 'Потеря связи: Tracker2 замолкает',
   'ragged': 'Рваные, склеенные и битые данные',
   'many': 'Много трекеров: 5 сразу',
+  'crowd': 'Толпа: 25 трекеров сразу (проверка скорости)',
   'search': 'Поиск БЛА: UAV1 выходит на связь, UAV2 пропадает',
 };
 
@@ -23,7 +24,7 @@ const String demoSpeedFromLaunch =
     String.fromEnvironment('DEMO_SPEED', defaultValue: '1');
 
 /// the demo exists only in debug builds
-bool get isDemoAvailable => kDebugMode;
+bool get isDemoAvailable => kDebugMode || kProfileMode;
 
 bool get isDemoRequestedAtLaunch =>
     isDemoAvailable && demoScenarios.containsKey(demoScenarioFromLaunch);

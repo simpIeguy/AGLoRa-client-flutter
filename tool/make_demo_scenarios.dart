@@ -310,6 +310,25 @@ void main(List<String> args) {
           ],
           fullS));
 
+  // a stress test: 25 trackers at once, to see how the screens hold up
+  writeScenario(
+      args[1],
+      'crowd',
+      'twenty-five trackers at once',
+      track,
+      plannedEvents(
+          track,
+          [
+            tracker1,
+            for (var i = 2; i <= 25; i++)
+              TrackerPlan('Tracker$i',
+                  phaseS: fullS * i ~/ 25,
+                  offsetS: i % 14,
+                  dLat: (i % 5 - 2) * 0.0012,
+                  dLon: (i % 7 - 3) * 0.001),
+          ],
+          fullS));
+
   // the search of a fallen UAV: the phone is on a person's tracker GROUND1,
   // UAV1 comes on air after 40 s, UAV2 goes silent after 90 s, GROUND2 is
   // another person, Tracker9 has an old-style name

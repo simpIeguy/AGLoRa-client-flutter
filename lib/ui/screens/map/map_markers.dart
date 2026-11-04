@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart' hide Path;
 import '../../../data/landmark.dart';
 import '../../../data/tracker_list.dart';
 import '../../../data/tracker_status.dart';
+import '../../../services/clock.dart';
 import '../../format.dart';
 import '../../names.dart';
 import '../../theme.dart';
@@ -90,14 +91,10 @@ class PhonePainter extends CustomPainter {
 /// a dot colored by status and a label "БЛА 1 · 12 с" above it; the chosen
 /// one gets a ring
 Marker trackerMarker(TrackerEntry entry,
-    {required DateTime now,
-    required bool chosen,
-    required VoidCallback onTap}) {
+    {required Clock clock, required bool chosen, required VoidCallback onTap}) {
   final point = entry.latest!;
   final lost = entry.status == TrackerStatus.lost;
   final heard = entry.lastHeard;
-  final age =
-      heard == null ? '' : formatDuration(now.toUtc().difference(heard));
   final Color dot = switch (entry.status) {
     TrackerStatus.connected || TrackerStatus.active => _onMap.green,
     TrackerStatus.fading => _onMap.amber,
@@ -136,13 +133,23 @@ Marker trackerMarker(TrackerEntry entry,
             decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
-            child: Text(
-                '${displayName(entry.name, alias: entry.alias, mine: entry.isMine)} · $age',
-                style: TextStyle(
-                    fontFamily: AppText.sans,
-                    fontSize: AppText.small,
-                    fontWeight: FontWeight.w600,
-                    color: lost ? _onMap.muted : _onMap.ink)),
+            // the age ticks by itself: the marker stays as it is, and only
+            // this text is built again every second
+            child: ListenableBuilder(
+              listenable: clock,
+              builder: (_, __) {
+                final age = heard == null
+                    ? ''
+                    : formatDuration(clock.now.toUtc().difference(heard));
+                return Text(
+                    '${displayName(entry.name, alias: entry.alias, mine: entry.isMine)} · $age',
+                    style: TextStyle(
+                        fontFamily: AppText.sans,
+                        fontSize: AppText.small,
+                        fontWeight: FontWeight.w600,
+                        color: lost ? _onMap.muted : _onMap.ink));
+              },
+            ),
           ),
         ),
       ]),

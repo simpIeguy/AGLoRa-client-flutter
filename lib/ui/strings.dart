@@ -229,6 +229,8 @@ abstract final class S {
   static const String tracks = 'След';
   static const String followTracker = 'Следить за выбранным';
   static const String followTrackerOff = 'Не следить';
+  static const String zoomIn = 'Приблизить карту';
+  static const String zoomOut = 'Отдалить карту';
   static const String aimAtTracker = 'Вести до трекера';
   static const String showOnMapSwitch = 'Показывать на карте';
   static const String showMineOnMap = 'Показывать мой трекер на карте';

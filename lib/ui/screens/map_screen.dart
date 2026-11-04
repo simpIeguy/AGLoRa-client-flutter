@@ -222,6 +222,12 @@ class _MapScreenState extends State<MapScreen> {
     return (((lon % 360) + 360) % 360 / 6).floor() + 1;
   }
 
+  /// the + and − buttons: one step of zoom, within the limits of the map
+  void _zoomBy(double step) {
+    final zoom = (_mapController.zoom + step).clamp(mapMinZoom, mapMaxZoom);
+    _mapController.move(_mapController.center, zoom.toDouble());
+  }
+
   void _toggleFollowTracker() {
     setState(() {
       _followTracker = !_followTracker;
@@ -479,6 +485,18 @@ class _MapScreenState extends State<MapScreen> {
                   onTap: () => showLandmarkSheet(context,
                       zone: _mapZone(), onShow: _showLandmark),
                   child: const Icon(Icons.add_location_alt_outlined),
+                ),
+                const SizedBox(height: AppSizes.gap),
+                _MapButton(
+                  tooltip: S.zoomIn,
+                  onTap: () => _zoomBy(1),
+                  child: const Icon(Icons.add),
+                ),
+                const SizedBox(height: AppSizes.gap),
+                _MapButton(
+                  tooltip: S.zoomOut,
+                  onTap: () => _zoomBy(-1),
+                  child: const Icon(Icons.remove),
                 ),
               ]),
               const SizedBox(width: AppSizes.gap),

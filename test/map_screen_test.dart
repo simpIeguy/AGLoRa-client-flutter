@@ -255,6 +255,21 @@ void main() {
     });
   });
 
+  testWidgets('+ and − zoom the map by a step', (tester) async {
+    resetApp();
+    await show(tester);
+    final controller =
+        tester.widget<FlutterMap>(find.byType(FlutterMap)).mapController!;
+    final before = controller.zoom;
+    await tester.tap(find.byTooltip('Приблизить карту'));
+    await tester.pump();
+    expect(controller.zoom, before + 1);
+    await tester.tap(find.byTooltip('Отдалить карту'));
+    await tester.tap(find.byTooltip('Отдалить карту'));
+    await tester.pump();
+    expect(controller.zoom, before - 1);
+  });
+
   testWidgets('a chip chooses another tracker, its card opens its screen',
       (tester) async {
     resetApp();

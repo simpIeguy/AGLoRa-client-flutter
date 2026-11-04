@@ -81,6 +81,9 @@ class _MapScreenState extends State<MapScreen> {
   int? _landmarkId;
   String? _aimTracker;
 
+  /// the panel at the bottom is open; folded, only the chosen name is left
+  bool _panelOpen = true;
+
   /// the point the map was last moved to while following
   (String, DateTime)? _followedPoint;
 
@@ -286,7 +289,7 @@ class _MapScreenState extends State<MapScreen> {
           _followChosen(chosen);
           return Stack(children: [
             Semantics(label: S.map, child: _map(context, entries, chosen, now)),
-            SafeArea(child: _controls(context, entries, chosen)),
+            SafeArea(child: _controls(context, entries, chosen, shown)),
           ]);
         },
       ),
@@ -461,8 +464,51 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _controls(
-      BuildContext context, List<TrackerEntry> entries, TrackerEntry? chosen) {
+  /// "Какие трекеры показывать": which of them are on the map at all
+  Future<void> _chooseOnMap(BuildContext context, List<TrackerEntry> all) {
+    final settings = _services.settings;
+    bool on(TrackerEntry e) => settings.isOnMap(e.key, mine: e.isMine);
+    return showModalBottomSheet<void>(
+      context: context,
+      builder: (context) => ListenableBuilder(
+        listenable: settings,
+        builder: (context, _) => SafeArea(
+          child: ListView(shrinkWrap: true, children: [
+            ListTile(
+              title: Text(S.onMapTitle,
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+            CheckboxListTile(
+              title: const Text(S.tracksAll),
+              tristate: true,
+              value: all.every(on)
+                  ? true
+                  : all.any(on)
+                      ? null
+                      : false,
+              onChanged: (_) {
+                final target = !all.every(on);
+                for (final e in all) {
+                  settings.setOnMap(e.key, target, mine: e.isMine);
+                }
+              },
+            ),
+            for (final e in all)
+              CheckboxListTile(
+                title:
+                    Text(displayName(e.name, alias: e.alias, mine: e.isMine)),
+                value: on(e),
+                onChanged: (v) =>
+                    settings.setOnMap(e.key, v ?? true, mine: e.isMine),
+              ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Widget _controls(BuildContext context, List<TrackerEntry> entries,
+      TrackerEntry? chosen, List<TrackerEntry> candidates) {
     final settings = _services.settings;
     return Padding(
       padding: const EdgeInsets.all(AppSizes.gap),
@@ -535,13 +581,19 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
           const Spacer(),
+          if (chosen == null && candidates.isNotEmpty)
+            // all taken off the map: the way back must stay
+            _HiddenPanel(onFilter: () => _chooseOnMap(context, candidates)),
           if (chosen != null)
             _Panel(
+              onFilter: () => _chooseOnMap(context, candidates),
               entries: entries,
               chosen: chosen,
               onChoose: _choose,
               trackShown: _services.settings.isTrackShown(chosen.key),
               onTrack: (v) => _services.settings.setTrackShown(chosen.key, v),
+              open: _panelOpen,
+              onToggle: () => setState(() => _panelOpen = !_panelOpen),
               aimed: _aimTracker == chosen.key,
               onAim: (v) => _aimAt(chosen.key, v),
             ),
@@ -671,6 +723,35 @@ class _NorthNeedlePainter extends CustomPainter {
   bool shouldRepaint(_NorthNeedlePainter old) => false;
 }
 
+/// the card when every tracker is taken off the map: only the way back
+class _HiddenPanel extends StatelessWidget {
+  const _HiddenPanel({required this.onFilter});
+
+  final VoidCallback onFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: p.card,
+        border: Border.all(color: p.line),
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+      ),
+      child: Row(children: [
+        IconButton(
+          tooltip: S.onMapTooltip,
+          icon: const Icon(Icons.visibility_outlined),
+          onPressed: onFilter,
+        ),
+        Expanded(
+            child: Text(S.allOffMap,
+                style: Theme.of(context).textTheme.bodyMedium)),
+      ]),
+    );
+  }
+}
+
 /// the trackers to choose from and the chosen one's card
 class _Panel extends StatelessWidget {
   const _Panel({
@@ -679,6 +760,9 @@ class _Panel extends StatelessWidget {
     required this.onChoose,
     required this.trackShown,
     required this.onTrack,
+    required this.onFilter,
+    required this.open,
+    required this.onToggle,
     required this.aimed,
     required this.onAim,
   });
@@ -690,6 +774,13 @@ class _Panel extends StatelessWidget {
   /// the chosen tracker's track is drawn
   final bool trackShown;
   final void Function(bool) onTrack;
+
+  /// opens the list of the trackers to show on the map
+  final VoidCallback onFilter;
+
+  /// unfolded: the chips and the card; folded: a single line
+  final bool open;
+  final VoidCallback onToggle;
 
   /// the line on the map leads to the chosen tracker
   final bool aimed;
@@ -708,54 +799,80 @@ class _Panel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // a long press picks a chip up, as on the main screen
-          SizedBox(
-            height: AppSizes.minTap,
-            child: SteadyReorderList<TrackerEntry>(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
-              proxyDecorator: dragProxy(AppSizes.buttonRadius, color: p.card),
-              items: entries,
-              keyOf: (e) => e.key,
-              onOrder: AppScope.of(context).store.setOrder,
-              itemBuilder: (e) => Padding(
-                key: ValueKey(e.key),
-                padding: const EdgeInsets.only(right: AppSizes.gap),
-                child: _Chip(
-                    entry: e,
-                    chosen: e.key == chosen.key,
-                    onTap: () => onChoose(e)),
+          Row(children: [
+            IconButton(
+              tooltip: open ? S.panelFold : S.panelUnfold,
+              icon: Icon(open ? Icons.expand_more : Icons.expand_less),
+              onPressed: onToggle,
+            ),
+            IconButton(
+              tooltip: S.onMapTooltip,
+              icon: const Icon(Icons.visibility_outlined),
+              onPressed: onFilter,
+            ),
+            Expanded(
+              // a long press picks a chip up, as on the main screen
+              child: SizedBox(
+                height: AppSizes.minTap,
+                child: open
+                    ? SteadyReorderList<TrackerEntry>(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.padding),
+                        proxyDecorator:
+                            dragProxy(AppSizes.buttonRadius, color: p.card),
+                        items: entries,
+                        keyOf: (e) => e.key,
+                        onOrder: AppScope.of(context).store.setOrder,
+                        itemBuilder: (e) => Padding(
+                          key: ValueKey(e.key),
+                          padding: const EdgeInsets.only(right: AppSizes.gap),
+                          child: _Chip(
+                              entry: e,
+                              chosen: e.key == chosen.key,
+                              onTap: () => onChoose(e)),
+                        ),
+                      )
+                    : Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                            displayName(chosen.name,
+                                alias: chosen.alias, mine: chosen.isMine),
+                            style: Theme.of(context).textTheme.titleMedium),
+                      ),
               ),
             ),
-          ),
-          TrackerCard(entry: chosen, framed: false),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
-            child: MergeSemantics(
-              child: Row(children: [
-                const Icon(Icons.navigation_outlined),
-                const SizedBox(width: AppSizes.gap),
-                Expanded(
-                    child: Text(S.aimAtTracker,
-                        style: Theme.of(context).textTheme.bodyMedium)),
-                Switch(value: aimed, onChanged: onAim),
-              ]),
+          ]),
+          if (open) ...[
+            TrackerCard(entry: chosen, framed: false),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
+              child: MergeSemantics(
+                child: Row(children: [
+                  const Icon(Icons.navigation_outlined),
+                  const SizedBox(width: AppSizes.gap),
+                  Expanded(
+                      child: Text(S.aimAtTracker,
+                          style: Theme.of(context).textTheme.bodyMedium)),
+                  Switch(value: aimed, onChanged: onAim),
+                ]),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
-            // one node for the screen reader: "След, switch"
-            child: MergeSemantics(
-              child: Row(children: [
-                const Icon(Icons.timeline),
-                const SizedBox(width: AppSizes.gap),
-                Expanded(
-                    child: Text(S.trackOfChosen,
-                        style: Theme.of(context).textTheme.bodyMedium)),
-                Switch(value: trackShown, onChanged: onTrack),
-              ]),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
+              // one node for the screen reader: "След, switch"
+              child: MergeSemantics(
+                child: Row(children: [
+                  const Icon(Icons.timeline),
+                  const SizedBox(width: AppSizes.gap),
+                  Expanded(
+                      child: Text(S.trackOfChosen,
+                          style: Theme.of(context).textTheme.bodyMedium)),
+                  Switch(value: trackShown, onChanged: onTrack),
+                ]),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

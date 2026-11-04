@@ -117,7 +117,7 @@ void main() {
     expect(find.text('Точек пока нет'), findsOneWidget);
   });
 
-  testWidgets('the own tracker: a switch for the map, off by default',
+  testWidgets('the own tracker: a switch for the map, on by default',
       (tester) async {
     feedPoints('GROUND2', 2);
     feed(memoryMessage('GROUND2'));
@@ -125,10 +125,10 @@ void main() {
     final tile =
         find.widgetWithText(SwitchListTile, 'Показывать мой трекер на карте');
     expect(tile, findsOneWidget);
-    expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+    expect(tester.widget<SwitchListTile>(tile).value, isTrue);
     await tester.tap(tile);
     await tester.pump();
-    expect(app.settings.showMyTracker, isTrue);
+    expect(app.settings.showMyTracker, isFalse);
   });
 
   testWidgets('another tracker: on the map by default, can be taken off',

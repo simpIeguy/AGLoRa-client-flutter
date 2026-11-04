@@ -275,6 +275,9 @@ void main() {
     resetApp();
     await show(tester);
 
+    // the chips scroll: this one is past the edge now
+    await tester.ensureVisible(find.text('Человек 2'));
+    await tester.pump();
     await tester.tap(find.text('Человек 2'));
     await tester.pump();
     expect(find.text('Человек 2 GROUND2'), findsOneWidget);
@@ -285,14 +288,70 @@ void main() {
     expect(find.byType(TrackerScreen), findsOneWidget);
   });
 
-  testWidgets('the own tracker is off the map until asked', (tester) async {
+  testWidgets('the own tracker is on the map, and off when asked',
+      (tester) async {
     resetApp();
     feed(memoryMessage('GROUND2'));
     await show(tester, chosen: 'UAV1');
+    expect(find.textContaining(RegExp(r'^Вы · ')), findsOneWidget);
+    expect(find.text('Вы'), findsOneWidget, reason: 'the chip');
+    app.settings.showMyTracker = false;
+    await tester.pump();
     expect(find.textContaining(RegExp(r'^Вы · ')), findsNothing);
     expect(find.text('Вы'), findsNothing, reason: 'no chip either');
-    expect(find.byTooltip('Показать мой трекер на карте'), findsNothing,
-        reason: 'the switch is in the tracker card, not on the map');
+  });
+
+  testWidgets('one list takes trackers off the map, "Все" brings them back',
+      (tester) async {
+    resetApp();
+    await show(tester, chosen: 'UAV1');
+    await tester.tap(find.byTooltip('Какие трекеры показывать'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'БЛА 3'));
+    await tester.pump();
+    expect(app.settings.isOnMap('UAV3', mine: false), isFalse);
+    expect(app.settings.isOnMap('UAV1', mine: false), isTrue);
+
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Все'));
+    await tester.pump();
+    expect(app.settings.isOnMap('UAV3', mine: false), isTrue,
+        reason: 'one was off: "Все" brings it back');
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Все'));
+    await tester.pump();
+    expect(app.settings.isOnMap('UAV1', mine: false), isFalse,
+        reason: 'all were on: "Все" takes them all off');
+  });
+
+  testWidgets('every tracker off the map: the way back stays', (tester) async {
+    resetApp();
+    await show(tester);
+    await tester.tap(find.byTooltip('Какие трекеры показывать'));
+    await tester.pumpAndSettle();
+    final all = find.widgetWithText(CheckboxListTile, 'Все');
+    await tester.tap(all);
+    await tester.pump();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+    expect(find.text('Все трекеры скрыты с карты'), findsOneWidget);
+    await tester.tap(find.byTooltip('Какие трекеры показывать'));
+    await tester.pumpAndSettle();
+    await tester.tap(all);
+    await tester.pump();
+    expect(app.settings.isOnMap('UAV1', mine: false), isTrue);
+  });
+
+  testWidgets('the bottom panel folds to one line and unfolds', (tester) async {
+    resetApp();
+    await show(tester, chosen: 'UAV1');
+    expect(find.text('БЛА 1 UAV1'), findsOneWidget, reason: 'the card');
+    await tester.tap(find.byTooltip('Свернуть панель'));
+    await tester.pump();
+    expect(find.text('БЛА 1 UAV1'), findsNothing);
+    expect(find.text('БЛА 1'), findsOneWidget, reason: 'the folded line');
+    expect(find.text('Вести до трекера'), findsNothing);
+    await tester.tap(find.byTooltip('Развернуть панель'));
+    await tester.pump();
+    expect(find.text('БЛА 1 UAV1'), findsOneWidget);
   });
 
   testWidgets('the phone walking: the map shows without a fault',
@@ -334,7 +393,6 @@ void main() {
   testWidgets('the phone\'s own tracker is "Вы", not "Человек 2"',
       (tester) async {
     resetApp();
-    app.settings.showMyTracker = true;
     feed(memoryMessage('GROUND2'));
     await show(tester, chosen: 'GROUND2');
     expect(find.textContaining(RegExp(r'^Вы · \d+ с$')), findsOneWidget);

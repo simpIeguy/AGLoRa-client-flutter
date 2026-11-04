@@ -56,11 +56,11 @@ void main() {
       expect([-50, -65, -75, -95].map(signalBars), [4, 3, 2, 1]);
     });
 
-    test('the own tracker is off the map by default, the choice is kept', () {
-      expect(AppSettings().showMyTracker, isFalse);
-      final before = AppSettings()..showMyTracker = true;
-      expect(
-          (AppSettings()..loadState(before.saveState())).showMyTracker, isTrue);
+    test('the own tracker is on the map by default, the choice is kept', () {
+      expect(AppSettings().showMyTracker, isTrue);
+      final before = AppSettings()..showMyTracker = false;
+      expect((AppSettings()..loadState(before.saveState())).showMyTracker,
+          isFalse);
     });
 
     test('landmarks are kept between launches, a bad entry is dropped', () {

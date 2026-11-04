@@ -11,7 +11,8 @@ import 'helpers.dart';
 void main() {
   final now = DateTime.now().toUtc();
 
-  Future<void> show(WidgetTester tester, {String? chosen}) async {
+  Future<void> show(WidgetTester tester,
+      {String? chosen, bool followChosen = false}) async {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -24,6 +25,7 @@ void main() {
         centerLatitude: 53.9,
         centerLongitude: 27.55,
         chosen: chosen,
+        followChosen: followChosen,
         withTiles: false)));
     await tester.pump();
     await tester.pump();
@@ -73,6 +75,21 @@ void main() {
     await tester.pump();
     expect(find.byTooltip('Следить за выбранным'), findsOneWidget,
         reason: 'a finger moved the map: not following any more');
+  });
+
+  testWidgets('"Показать на карте" of a tracker follows it at once',
+      (tester) async {
+    resetApp();
+    await show(tester, chosen: 'UAV1', followChosen: true);
+    expect(find.byTooltip('Не следить'), findsOneWidget);
+    expect(find.byTooltip('Следить за выбранным'), findsNothing);
+  });
+
+  testWidgets('the map button of the main screen does not follow',
+      (tester) async {
+    resetApp();
+    await show(tester, chosen: 'UAV1');
+    expect(find.byTooltip('Следить за выбранным'), findsOneWidget);
   });
 
   testWidgets('a chip chooses another tracker, its card opens its screen',

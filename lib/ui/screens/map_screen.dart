@@ -36,6 +36,7 @@ class MapScreen extends StatefulWidget {
     required this.centerLatitude,
     required this.centerLongitude,
     this.chosen,
+    this.followChosen = false,
     this.withTiles = true,
   });
 
@@ -44,6 +45,9 @@ class MapScreen extends StatefulWidget {
 
   /// the tracker to show first; the most important one when null
   final String? chosen;
+
+  /// start with the map kept on [chosen] ("Показать на карте" of a tracker)
+  final bool followChosen;
 
   /// false in tests and screen pictures: no tiles from the internet
   final bool withTiles;
@@ -68,7 +72,7 @@ class _MapScreenState extends State<MapScreen> {
   StreamSubscription<MapEvent>? _mapEventSubscription;
 
   /// the map keeps the chosen tracker in the centre while its points come
-  bool _followTracker = false;
+  late bool _followTracker = widget.followChosen && widget.chosen != null;
 
   /// the point the map was last moved to while following
   (String, DateTime)? _followedPoint;

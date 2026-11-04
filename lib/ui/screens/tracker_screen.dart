@@ -108,7 +108,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
                     builder: (_) => MapScreen(
                         centerLatitude: latest.latitude,
                         centerLongitude: latest.longitude,
-                        chosen: _id))),
+                        chosen: _id,
+                        followChosen: true))),
               ),
               const SizedBox(height: AppSizes.gap),
               // another map application on the phone

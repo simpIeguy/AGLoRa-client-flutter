@@ -320,6 +320,16 @@ abstract final class S {
   static const String keepScreenOn = 'Не гасить в полном экране';
   static const String keepScreenOnHint = 'Расходует батарею';
   static const String sectionData = 'Данные';
+  static const String sectionLog = 'Журнал';
+  static const String saveLog = 'Сохранить журнал';
+  static const String saveLogHint =
+      'Если приложение работало неправильно, сохраните журнал и отправьте файл '
+      'разработчику. Координат в нём нет.';
+  static const String clearLog = 'Очистить журнал';
+  static const String logCleared = 'Журнал очищен';
+  static const String somethingWrong = 'Что-то пошло не так';
+  static const String crashNotice =
+      'В прошлый раз в приложении была ошибка. Журнал поможет её найти.';
   static const String clearMemory = 'Очистить память приложения';
   static const String clearMemoryQuestion = 'Удалить все трекеры и точки?';
   static const String clearMemoryHint =

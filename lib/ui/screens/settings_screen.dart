@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../data/tracker_status.dart';
 import '../../protocol/tracker_name.dart';
 import '../../services/app_services.dart';
+import '../../services/log_sharing.dart';
+import '../../util/log.dart';
 import '../format.dart';
 import '../strings.dart';
 import '../theme.dart';
@@ -163,6 +165,25 @@ class SettingsScreen extends StatelessWidget {
                     onPressed: () => _clear(context),
                     child: const Text(S.clearMemory),
                   ),
+                  const _Section(S.sectionLog),
+                  OutlinedButton(
+                    style: _bigButton,
+                    onPressed: () => shareLog().catchError((Object _) {}),
+                    child: const Text(S.saveLog),
+                  ),
+                  const SizedBox(height: AppSizes.gap),
+                  OutlinedButton(
+                    style: _bigButton,
+                    onPressed: () async {
+                      await AppLog.instance.clear();
+                      if (context.mounted) showMessage(context, S.logCleared);
+                    },
+                    child: const Text(S.clearLog),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                    child: Text(S.saveLogHint, style: muted),
+                  ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(4, 32, 4, 0),
                     child: Text(S.about, style: muted),
@@ -198,6 +219,13 @@ class SettingsScreen extends StatelessWidget {
     if (context.mounted) showMessage(context, S.memoryCleared);
   }
 }
+
+final ButtonStyle _bigButton = OutlinedButton.styleFrom(
+    minimumSize: const Size.fromHeight(AppSizes.bigButton),
+    textStyle: const TextStyle(
+        fontFamily: AppText.sans,
+        fontSize: AppText.main,
+        fontWeight: FontWeight.w600));
 
 class _Section extends StatelessWidget {
   const _Section(this.text, {this.first = false});

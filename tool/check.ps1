@@ -12,7 +12,8 @@ flutter analyze
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
 Write-Host '== test'
-flutter test
+# one test process at a time: in parallel the test runner sometimes dies on this PC
+flutter test --concurrency=1
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
 Write-Host 'All checks passed'

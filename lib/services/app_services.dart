@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import '../data/tracker_store.dart';
+import '../util/log.dart';
 import 'app_settings.dart';
 import 'app_storage.dart';
 import 'clock.dart';
@@ -71,9 +72,16 @@ class AppServices {
     _lifecycle = AppLifecycleListener(
       // back from a permission dialog or the phone's settings: the location
       // may be allowed or switched on now
-      onResume: location.retry,
+      onResume: () {
+        appLog('app: resume');
+        location.retry();
+      },
       // in the background Android may close the app without a word
-      onPause: () => storage?.save(),
+      onPause: () {
+        appLog('app: pause');
+        storage?.save();
+        unawaited(AppLog.instance.flush());
+      },
     );
   }
 

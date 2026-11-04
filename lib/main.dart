@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,12 +12,35 @@ import 'ui/screens/demo_screens.dart';
 import 'ui/screens/trackers_screen.dart';
 import 'ui/strings.dart';
 import 'ui/theme.dart';
+import 'ui/widgets/broken_widget.dart';
+import 'ui/widgets/crash_notice.dart';
 import 'ui/widgets/first_signal_alerts.dart';
+import 'util/log.dart';
 
 Future<void> main() async {
+  // every error nobody caught goes to the journal, where the user can save it
+  unawaited(runZonedGuarded(_start,
+      (error, stack) => AppLog.instance.error(error, stack, where: 'zone')));
+}
+
+Future<void> _start() async {
   // the compass and GPS talk to Android through the binding: without it they
   // fail silently and the app shows "no phone GPS" and no compass
   WidgetsFlutterBinding.ensureInitialized();
+  await AppLog.instance.start(FileLogBackend(),
+      header: '${S.appName} ${S.appVersion}, '
+          '${Platform.operatingSystem} ${Platform.operatingSystemVersion}');
+  FlutterError.onError = (details) {
+    AppLog.instance.error(details.exception, details.stack,
+        where: details.library ?? 'flutter');
+    if (kDebugMode) FlutterError.presentError(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    AppLog.instance.error(error, stack, where: 'platform');
+    return true;
+  };
+  // a widget that failed to build: a note and the journal, not a red screen
+  ErrorWidget.builder = (_) => const BrokenWidget();
   // upright only: the arrow and the compass are made for a phone held up,
   // and turning the screen in a pocket or a glove only gets in the way
   await SystemChrome.setPreferredOrientations(
@@ -54,10 +80,12 @@ class TrackerApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           navigatorKey: _navigatorKey,
           scaffoldMessengerKey: _messengerKey,
-          builder: (context, child) => FirstSignalAlerts(
-              navigatorKey: _navigatorKey,
+          builder: (context, child) => CrashNotice(
               messengerKey: _messengerKey,
-              child: child!),
+              child: FirstSignalAlerts(
+                  navigatorKey: _navigatorKey,
+                  messengerKey: _messengerKey,
+                  child: child!)),
           home: isDemoRequestedAtLaunch
               // debug builds only: --dart-define=DEMO_SCENARIO=<id> opens the demo
               ? DemoTrackersScreen(

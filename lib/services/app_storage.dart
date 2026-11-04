@@ -77,6 +77,7 @@ class AppStorage {
       }
       final saved = await _backend.read(settingsKey);
       if (saved != null) settings.loadState(jsonDecode(saved));
+      appLog('storage: loaded, ${store.pointCount} points');
     } catch (e) {
       // damaged text: the app starts empty instead of not starting
       appLog('storage: $e');

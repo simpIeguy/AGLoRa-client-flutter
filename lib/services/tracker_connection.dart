@@ -45,6 +45,7 @@ class TrackerConnection extends ChangeNotifier {
   /// follows Bluetooth; once it is on, the remembered tracker is connected
   void start() {
     _adapterSubscription ??= FlutterBluePlus.adapterState.listen((state) {
+      appLog('ble: bluetooth ${state.name}');
       _adapter = state;
       notifyListeners();
       if (state == BluetoothAdapterState.on && _device == null) {
@@ -85,6 +86,7 @@ class TrackerConnection extends ChangeNotifier {
   void _onState(BluetoothConnectionState state) {
     // the stream starts with "disconnected" before the first try: only a
     // drop after a real connection means "out of range"
+    appLog('ble: link ${state.name}');
     final dropped = _state == BluetoothConnectionState.connected &&
         state == BluetoothConnectionState.disconnected;
     _state = state;

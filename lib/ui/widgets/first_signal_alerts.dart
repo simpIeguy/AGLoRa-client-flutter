@@ -9,6 +9,7 @@ import '../../data/tracker_store.dart';
 import '../../protocol/tracker_name.dart';
 import '../../protocol/tracker_point.dart';
 import '../../services/app_services.dart';
+import '../../util/log.dart';
 import '../format.dart';
 import '../names.dart';
 import '../screens/tracker_screen.dart';
@@ -63,9 +64,13 @@ class _FirstSignalAlertsState extends State<FirstSignalAlerts> {
     if (services == null || !mounted) return;
     final list = buildTrackerList(services.store, services.clock.now);
     for (final e in [...list.shown, ...list.archived]) {
-      if (!e.isUav || e.isMine || e.status == TrackerStatus.waiting) continue;
+      if (e.isMine || e.status == TrackerStatus.waiting) continue;
       final before = _statuses[e.key];
       _statuses[e.key] = e.status;
+      if (before != null && before != e.status) {
+        appLog('status: ${e.key} ${before.name} -> ${e.status.name}');
+      }
+      if (!e.isUav) continue;
       final point = e.latest;
       if (before == null || point == null || !services.settings.lostAlert) {
         continue;

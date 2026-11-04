@@ -106,7 +106,8 @@ class TrackersScreen extends StatelessWidget {
       SteadyReorderList<TrackerEntry>(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        proxyDecorator: dragProxy(AppSizes.cardRadius),
+        proxyDecorator: dragProxy(AppSizes.cardRadius,
+            gap: const EdgeInsets.only(top: AppSizes.gap)),
         items: entries,
         keyOf: (e) => e.key,
         itemBuilder: _card,

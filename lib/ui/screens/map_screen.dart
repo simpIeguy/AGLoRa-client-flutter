@@ -886,8 +886,9 @@ class _Panel extends StatelessWidget {
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(
                               horizontal: AppSizes.padding),
-                          proxyDecorator:
-                              dragProxy(AppSizes.buttonRadius, color: p.card),
+                          proxyDecorator: dragProxy(AppSizes.buttonRadius,
+                              color: p.card,
+                              gap: const EdgeInsets.only(right: AppSizes.gap)),
                           items: entries,
                           keyOf: (e) => e.key,
                           onOrder: AppScope.of(context).store.setOrder,

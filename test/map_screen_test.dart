@@ -49,8 +49,8 @@ void main() {
     // the chips and the card of the chosen one
     expect(find.text('Человек 2'), findsOneWidget);
     expect(find.text('БЛА 1 UAV1'), findsOneWidget);
-    // the line's label and the card: the same distance
-    expect(find.text('1,4 км'), findsNWidgets(2));
+    // no line until asked: the distance only on the card
+    expect(find.text('1,4 км'), findsOneWidget);
   });
 
   testWidgets('"Следить": the map goes to the new point, a finger stops it',
@@ -210,15 +210,47 @@ void main() {
               time: DateTime.now())));
       app.settings.addLandmark('Сбор', 53.9, 27.55);
       await show(tester, chosen: 'UAV1');
-      // the line and the card of the tracker
-      expect(find.text('1,4 км'), findsNWidgets(2));
+      // no line yet: only the card of the tracker has the distance
+      expect(find.text('1,4 км'), findsOneWidget);
       await tester.tap(find.text('Сбор'));
       await tester.pump();
-      expect(find.text('1,4 км'), findsOneWidget, reason: 'only the card');
       expect(find.textContaining(RegExp(r'^7\d\d м$')), findsOneWidget,
           reason: 'the line to the landmark');
       await tester.tap(find.text('Сбор'));
       await tester.pump();
+      expect(find.textContaining(RegExp(r'^7\d\d м$')), findsNothing);
+    });
+
+    testWidgets('one aim at a time: a tracker or a landmark', (tester) async {
+      resetApp(
+          positions: Stream.value(PhonePosition(
+              latitude: 53.8945,
+              longitude: 27.5440,
+              accuracy: 6,
+              time: DateTime.now())));
+      app.settings.addLandmark('Сбор', 53.9, 27.55);
+      await show(tester, chosen: 'UAV1');
+      final aim = find.descendant(
+          of: find
+              .ancestor(
+                  of: find.text('Вести до трекера'), matching: find.byType(Row))
+              .first,
+          matching: find.byType(Switch));
+      await tester.tap(aim);
+      await tester.pump();
+      expect(find.text('1,4 км'), findsNWidgets(2),
+          reason: 'the line and the card');
+
+      await tester.tap(find.text('Сбор'));
+      await tester.pump();
+      expect(tester.widget<Switch>(aim).value, isFalse,
+          reason: 'the landmark took the aim');
+      expect(find.text('1,4 км'), findsOneWidget);
+
+      await tester.tap(aim);
+      await tester.pump();
+      expect(find.textContaining(RegExp(r'^7\d\d м$')), findsNothing,
+          reason: 'back to the tracker');
       expect(find.text('1,4 км'), findsNWidgets(2));
     });
   });
@@ -238,29 +270,14 @@ void main() {
     expect(find.byType(TrackerScreen), findsOneWidget);
   });
 
-  testWidgets('the own tracker is off the map until asked; the button toggles',
-      (tester) async {
+  testWidgets('the own tracker is off the map until asked', (tester) async {
     resetApp();
     feed(memoryMessage('GROUND2'));
     await show(tester, chosen: 'UAV1');
     expect(find.textContaining(RegExp(r'^Вы · ')), findsNothing);
     expect(find.text('Вы'), findsNothing, reason: 'no chip either');
-
-    await tester.tap(find.byTooltip('Показать мой трекер на карте'));
-    await tester.pump();
-    expect(find.textContaining(RegExp(r'^Вы · \d+ с$')), findsOneWidget);
-    expect(find.text('Вы'), findsOneWidget);
-
-    await tester.tap(find.byTooltip('Скрыть мой трекер с карты'));
-    await tester.pump();
-    expect(find.textContaining(RegExp(r'^Вы · ')), findsNothing);
-  });
-
-  testWidgets('no button for the own tracker when none is connected',
-      (tester) async {
-    resetApp();
-    await show(tester);
-    expect(find.byTooltip('Показать мой трекер на карте'), findsNothing);
+    expect(find.byTooltip('Показать мой трекер на карте'), findsNothing,
+        reason: 'the switch is in the tracker card, not on the map');
   });
 
   testWidgets('the phone walking: the map shows without a fault',

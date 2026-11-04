@@ -52,6 +52,23 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// other trackers the user took off the map (all are on it by default)
+  final Set<String> _hiddenOnMap = {};
+
+  /// is this tracker on the map; the user's own one is decided by
+  /// [showMyTracker], any other by the user's choice
+  bool isOnMap(String key, {required bool mine}) =>
+      mine ? _showMyTracker : !_hiddenOnMap.contains(key);
+
+  void setOnMap(String key, bool shown, {required bool mine}) {
+    if (mine) {
+      showMyTracker = shown;
+      return;
+    }
+    final changed = shown ? _hiddenOnMap.remove(key) : _hiddenOnMap.add(key);
+    if (changed) notifyListeners();
+  }
+
   /// trackers whose track the map does not draw (decision 10: all are
   /// drawn by default)
   final Set<String> _hiddenTracks = {};
@@ -129,6 +146,7 @@ class AppSettings extends ChangeNotifier {
         'keepScreenOn': _keepScreenOn,
         'showMyTracker': _showMyTracker,
         'hiddenTracks': _hiddenTracks.toList(),
+        'hiddenOnMap': _hiddenOnMap.toList(),
         'landmarks': [for (final l in _landmarks) l.toJson()],
         if (_lastTracker case final t?)
           'lastTracker': {'id': t.id, 'name': t.name},
@@ -151,6 +169,12 @@ class AppSettings extends ChangeNotifier {
       _hiddenTracks
         ..clear()
         ..addAll(hidden.whereType<String>());
+    }
+    final offMap = json['hiddenOnMap'];
+    if (offMap is List) {
+      _hiddenOnMap
+        ..clear()
+        ..addAll(offMap.whereType<String>());
     }
     final landmarks = json['landmarks'];
     if (landmarks is List) {

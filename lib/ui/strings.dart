@@ -229,8 +229,9 @@ abstract final class S {
   static const String tracks = 'След';
   static const String followTracker = 'Следить за выбранным';
   static const String followTrackerOff = 'Не следить';
-  static const String showMyTracker = 'Показать мой трекер на карте';
-  static const String hideMyTracker = 'Скрыть мой трекер с карты';
+  static const String aimAtTracker = 'Вести до трекера';
+  static const String showOnMapSwitch = 'Показывать на карте';
+  static const String showMineOnMap = 'Показывать мой трекер на карте';
   // landmarks: points put on the map by coordinates
   static const String landmarks = 'Метки';
   static const String landmarkCoordinates = 'Координаты';

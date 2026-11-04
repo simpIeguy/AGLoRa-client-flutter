@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../data/track_export.dart';
 import '../../data/tracker_status.dart';
+import '../../data/tracker_store.dart';
 import '../../protocol/tracker_name.dart';
 import '../../protocol/tracker_point.dart';
 import '../../services/app_services.dart';
@@ -52,6 +53,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
             services.location,
             services.compass,
             services.clock,
+            services.settings,
           ]),
           builder: (context, _) => _content(context, services),
         ),
@@ -65,6 +67,8 @@ class _TrackerScreenState extends State<TrackerScreen> {
     final alias = store.aliasOf(_id);
     final points = store.pointsOf(_id);
     final latest = points.firstOrNull;
+    final mine = store.isConnected(_id);
+    final key = TrackerStore.trackerKey(_id);
 
     return Column(children: [
       Padding(
@@ -77,9 +81,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
             onPressed: () => Navigator.of(context).pop(),
           ),
           const SizedBox(width: AppSizes.gap),
-          Expanded(
-              child: TrackerTitle(
-                  name: name, alias: alias, mine: store.isConnected(_id))),
+          Expanded(child: TrackerTitle(name: name, alias: alias, mine: mine)),
           IconButton(
             tooltip: S.rename,
             icon: const Icon(Icons.edit_outlined),
@@ -104,12 +106,16 @@ class _TrackerScreenState extends State<TrackerScreen> {
                     minimumSize: const Size.fromHeight(AppSizes.bigButton)),
                 icon: const Icon(Icons.map_outlined),
                 label: const Text(S.showOnMap),
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => MapScreen(
-                        centerLatitude: latest.latitude,
-                        centerLongitude: latest.longitude,
-                        chosen: _id,
-                        followChosen: true))),
+                onPressed: () {
+                  // asked to see it: no use to show a map without it
+                  services.settings.setOnMap(key, true, mine: mine);
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => MapScreen(
+                          centerLatitude: latest.latitude,
+                          centerLongitude: latest.longitude,
+                          chosen: _id,
+                          followChosen: true)));
+                },
               ),
               const SizedBox(height: AppSizes.gap),
               // another map application on the phone
@@ -119,6 +125,14 @@ class _TrackerScreenState extends State<TrackerScreen> {
                 icon: const Icon(Icons.open_in_new),
                 label: const Text(S.openInMaps),
                 onPressed: () => _openInMaps(context, latest),
+              ),
+              // ours is off the map until asked, the others are on it
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(mine ? S.showMineOnMap : S.showOnMapSwitch),
+                value: services.settings.isOnMap(key, mine: mine),
+                onChanged: (v) =>
+                    services.settings.setOnMap(key, v, mine: mine),
               ),
             ],
             const _SectionTitle(S.trackerState),

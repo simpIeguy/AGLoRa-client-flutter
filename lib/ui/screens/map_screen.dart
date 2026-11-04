@@ -76,8 +76,10 @@ class _MapScreenState extends State<MapScreen> {
   /// the map keeps the chosen tracker in the centre while its points come
   late bool _followTracker = widget.followChosen && widget.chosen != null;
 
-  /// the landmark the line leads to; none: the line goes to the chosen tracker
+  /// where the line leads: one landmark or one tracker, never both; none: no
+  /// line (a tracker looked at is not a tracker walked to)
   int? _landmarkId;
+  String? _aimTracker;
 
   /// the point the map was last moved to while following
   (String, DateTime)? _followedPoint;
@@ -178,7 +180,6 @@ class _MapScreenState extends State<MapScreen> {
   void _choose(TrackerEntry entry) {
     setState(() {
       _chosen = entry.key;
-      _landmarkId = null;
     });
     final point = entry.latest!;
     _mapController.move(
@@ -191,6 +192,7 @@ class _MapScreenState extends State<MapScreen> {
     _services.settings.setLandmarkVisible(landmark.id, true);
     setState(() {
       _landmarkId = landmark.id;
+      _aimTracker = null;
       _followTracker = false;
     });
     _mapController.move(
@@ -198,8 +200,16 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// a tap on a flag: the line leads to it, or back to the tracker
-  void _tapLandmark(Landmark landmark) => setState(
-      () => _landmarkId = _landmarkId == landmark.id ? null : landmark.id);
+  void _tapLandmark(Landmark landmark) => setState(() {
+        _landmarkId = _landmarkId == landmark.id ? null : landmark.id;
+        _aimTracker = null;
+      });
+
+  /// the switch in the card: lead to this tracker, or stop
+  void _aimAt(String key, bool on) => setState(() {
+        _aimTracker = on ? key : null;
+        _landmarkId = null;
+      });
 
   /// the 6° zone of the map's middle, for coordinates told without one
   int _mapZone() {
@@ -261,17 +271,16 @@ class _MapScreenState extends State<MapScreen> {
               if (e.latest != null) e
           ];
           // the user's own tracker sits where the phone is: hidden unless asked
-          final hasMine = shown.any((e) => e.isMine);
           final entries = [
             for (final e in shown)
-              if (!e.isMine || _services.settings.showMyTracker) e
+              if (_services.settings.isOnMap(e.key, mine: e.isMine)) e
           ];
           final chosen = entries.where((e) => e.key == _chosen).firstOrNull ??
               entries.firstOrNull;
           _followChosen(chosen);
           return Stack(children: [
-            _map(context, entries, chosen, now),
-            SafeArea(child: _controls(context, entries, chosen, hasMine)),
+            Semantics(label: S.map, child: _map(context, entries, chosen, now)),
+            SafeArea(child: _controls(context, entries, chosen)),
           ]);
         },
       ),
@@ -285,7 +294,8 @@ class _MapScreenState extends State<MapScreen> {
         phone == null ? null : LatLng(phone.latitude, phone.longitude);
     final landmarks = _services.settings.landmarks;
     final landmark = landmarks.where((l) => l.id == _landmarkId).firstOrNull;
-    final target = chosen?.latest;
+    final target =
+        entries.where((e) => e.key == _aimTracker).firstOrNull?.latest;
     final targetAt = landmark != null
         ? LatLng(landmark.latitude, landmark.longitude)
         : target == null
@@ -445,8 +455,8 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _controls(BuildContext context, List<TrackerEntry> entries,
-      TrackerEntry? chosen, bool hasMine) {
+  Widget _controls(
+      BuildContext context, List<TrackerEntry> entries, TrackerEntry? chosen) {
     final settings = _services.settings;
     return Padding(
       padding: const EdgeInsets.all(AppSizes.gap),
@@ -503,19 +513,6 @@ class _MapScreenState extends State<MapScreen> {
                   onTap: () => _chooseTracks(context, entries),
                   child: const Icon(Icons.timeline),
                 ),
-                // only with a tracker of ours connected
-                if (hasMine) ...[
-                  const SizedBox(height: AppSizes.gap),
-                  _MapButton(
-                    tooltip: settings.showMyTracker
-                        ? S.hideMyTracker
-                        : S.showMyTracker,
-                    pressed: settings.showMyTracker,
-                    onTap: () =>
-                        settings.showMyTracker = !settings.showMyTracker,
-                    child: const Icon(Icons.bluetooth_connected),
-                  ),
-                ],
               ]),
             ],
           ),
@@ -527,6 +524,8 @@ class _MapScreenState extends State<MapScreen> {
               onChoose: _choose,
               trackShown: _services.settings.isTrackShown(chosen.key),
               onTrack: (v) => _services.settings.setTrackShown(chosen.key, v),
+              aimed: _aimTracker == chosen.key,
+              onAim: (v) => _aimAt(chosen.key, v),
             ),
           // the map's sources (the licences ask for them), smallest, at the
           // very bottom under the card
@@ -662,6 +661,8 @@ class _Panel extends StatelessWidget {
     required this.onChoose,
     required this.trackShown,
     required this.onTrack,
+    required this.aimed,
+    required this.onAim,
   });
 
   final List<TrackerEntry> entries;
@@ -671,6 +672,10 @@ class _Panel extends StatelessWidget {
   /// the chosen tracker's track is drawn
   final bool trackShown;
   final void Function(bool) onTrack;
+
+  /// the line on the map leads to the chosen tracker
+  final bool aimed;
+  final void Function(bool) onAim;
 
   @override
   Widget build(BuildContext context) {
@@ -706,6 +711,19 @@ class _Panel extends StatelessWidget {
             ),
           ),
           TrackerCard(entry: chosen, framed: false),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
+            child: MergeSemantics(
+              child: Row(children: [
+                const Icon(Icons.navigation_outlined),
+                const SizedBox(width: AppSizes.gap),
+                Expanded(
+                    child: Text(S.aimAtTracker,
+                        style: Theme.of(context).textTheme.bodyMedium)),
+                Switch(value: aimed, onChanged: onAim),
+              ]),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
             // one node for the screen reader: "След, switch"

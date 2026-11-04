@@ -117,6 +117,31 @@ void main() {
     expect(find.text('Точек пока нет'), findsOneWidget);
   });
 
+  testWidgets('the own tracker: a switch for the map, off by default',
+      (tester) async {
+    feedPoints('GROUND2', 2);
+    feed(memoryMessage('GROUND2'));
+    await show(tester, 'GROUND2');
+    final tile =
+        find.widgetWithText(SwitchListTile, 'Показывать мой трекер на карте');
+    expect(tile, findsOneWidget);
+    expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+    await tester.tap(tile);
+    await tester.pump();
+    expect(app.settings.showMyTracker, isTrue);
+  });
+
+  testWidgets('another tracker: on the map by default, can be taken off',
+      (tester) async {
+    feedPoints('UAV1', 2);
+    await show(tester, 'UAV1');
+    final tile = find.widgetWithText(SwitchListTile, 'Показывать на карте');
+    expect(tester.widget<SwitchListTile>(tile).value, isTrue);
+    await tester.tap(tile);
+    await tester.pump();
+    expect(app.settings.isOnMap('UAV1', mine: false), isFalse);
+  });
+
   testWidgets('rename, and an empty name brings back the firmware one',
       (tester) async {
     feedPoints('UAV1', 1);

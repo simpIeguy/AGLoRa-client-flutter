@@ -91,6 +91,12 @@ class SettingsScreen extends StatelessWidget {
                       value: store.alertNewUavs,
                       onChanged: (v) => store.alertNewUavs = v,
                     ),
+                    _Switch(
+                      title: S.lostAlert,
+                      hint: S.lostAlertHint,
+                      value: settings.lostAlert,
+                      onChanged: (v) => settings.lostAlert = v,
+                    ),
                   ]),
                   const _Section(S.sectionLink),
                   _Group(children: [

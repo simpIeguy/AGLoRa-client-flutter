@@ -146,6 +146,12 @@ abstract final class S {
   static const String close = 'Закрыть';
 
   // the first signal
+  static String linkLost(String name) => '$name: связь потеряна';
+  static String linkBack(String name) => '$name снова на связи';
+  static const String lastPoint = 'Последняя точка';
+  static const String lostAlert = 'Сигнал при потере связи';
+  static const String lostAlertHint =
+      'Звук и вибрация, когда БЛА перестал отвечать';
   static String cameOnline(String name) => '$name вышел на связь';
   static const String copy = 'Копировать';
 
@@ -179,7 +185,6 @@ abstract final class S {
   // a no-break space: "±6 м" never splits over two lines
   static String gpsAccuracyLine(int metres) => 'точность GPS ±$metres м';
   static const String gpsAccuracyUnknown = 'точность GPS: нет данных';
-  static const String lastPoint = 'Последняя точка';
   static String lastPointOf(String name) => 'Последняя точка $name';
   static String arrowTo(String name) => 'Стрелка направления на $name';
 

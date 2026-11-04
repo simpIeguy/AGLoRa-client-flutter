@@ -222,6 +222,48 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('вышел на связь'), findsNothing);
   });
+  testWidgets(
+      'a UAV that stops answering raises an alert, and one that is back',
+      (tester) async {
+    final navigatorKey = GlobalKey<NavigatorState>();
+    final messengerKey = GlobalKey<ScaffoldMessengerState>();
+    app.store.setThresholds(
+        fadingAfter: const Duration(seconds: 1),
+        lostAfter: const Duration(seconds: 5));
+    await tester.pumpWidget(inApp(
+      const TrackersScreen(demoTitle: 'Демо'),
+      navigatorKey: navigatorKey,
+      messengerKey: messengerKey,
+      builder: (context, child) => FirstSignalAlerts(
+          navigatorKey: navigatorKey,
+          messengerKey: messengerKey,
+          child: child!),
+    ));
+
+    final now = DateTime.now().toUtc();
+    feed(pointMessage(
+        'UAV2', 53.9, 27.5, now.subtract(const Duration(seconds: 2)),
+        index: 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Закрыть'));
+    await tester.pumpAndSettle();
+    app.clock.tick();
+    await tester.pump();
+    expect(find.textContaining('связь потеряна'), findsNothing);
+
+    await tester
+        .runAsync(() => Future<void>.delayed(const Duration(seconds: 4)));
+    app.clock.tick();
+    await tester.pumpAndSettle();
+    expect(find.textContaining('БЛА 2: связь потеряна'), findsOneWidget);
+
+    await tester.tap(find.text('Закрыть'));
+    await tester.pumpAndSettle();
+    feed(pointMessage('UAV2', 53.91, 27.5, DateTime.now().toUtc(), index: 1));
+    app.clock.tick();
+    await tester.pumpAndSettle();
+    expect(find.textContaining('БЛА 2 снова на связи'), findsOneWidget);
+  });
 }
 
 /// how the arrows on the screen are drawn

@@ -40,6 +40,17 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _lostAlert = true;
+
+  /// a sound and a vibration when a UAV stops answering
+  bool get lostAlert => _lostAlert;
+
+  set lostAlert(bool value) {
+    if (_lostAlert == value) return;
+    _lostAlert = value;
+    notifyListeners();
+  }
+
   bool _showMyTracker = true;
 
   /// the user's own tracker on the map: on by default, it can be taken off in
@@ -164,6 +175,7 @@ class AppSettings extends ChangeNotifier {
         'theme': _theme.name,
         'coordinates': _coordinates.name,
         'keepScreenOn': _keepScreenOn,
+        'lostAlert': _lostAlert,
         // a new key: the old "false" was only the old default
         'showMineOnMap': _showMyTracker,
         'hiddenTracks': _hiddenTracks.toList(),
@@ -183,6 +195,8 @@ class AppSettings extends ChangeNotifier {
         pick(CoordinateFormat.values, json['coordinates']) ?? _coordinates;
     final keep = json['keepScreenOn'];
     if (keep is bool) _keepScreenOn = keep;
+    final lostAlert = json['lostAlert'];
+    if (lostAlert is bool) _lostAlert = lostAlert;
     final showMine = json['showMineOnMap'];
     if (showMine is bool) _showMyTracker = showMine;
     final hidden = json['hiddenTracks'];

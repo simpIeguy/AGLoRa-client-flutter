@@ -5,13 +5,13 @@ import '../../data/tracker_status.dart';
 import '../../services/app_services.dart';
 import '../names.dart';
 import '../strings.dart';
+import 'app_sheet.dart';
 import 'tracker_card.dart';
 
-Future<void> showWhoToShowSheet(BuildContext context) =>
-    showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => const _WhoToShowSheet());
+Future<void> showWhoToShowSheet(BuildContext context) => showAppSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => const _WhoToShowSheet());
 
 /// Ticks per tracker. UAVs are always on and can not be unticked, so a UAV
 /// is never hidden by mistake; the connected tracker is always shown too.
@@ -28,6 +28,7 @@ class _WhoToShowSheet extends StatelessWidget {
         final entries = _allEntries(services);
         return SafeArea(
           child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             shrinkWrap: true,
             children: [
               ListTile(

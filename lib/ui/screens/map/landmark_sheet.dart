@@ -6,6 +6,7 @@ import '../../../services/app_settings.dart';
 import '../../../util/coordinate_parser.dart';
 import '../../strings.dart';
 import '../../theme.dart';
+import '../../widgets/app_sheet.dart';
 import '../../widgets/coordinates_text.dart';
 
 /// The sheet "Метки": type or paste coordinates in any of the formats,
@@ -14,10 +15,9 @@ import '../../widgets/coordinates_text.dart';
 /// [onShow] is told of the landmark to go to.
 Future<void> showLandmarkSheet(BuildContext context,
     {required int zone, required void Function(Landmark) onShow}) {
-  return showModalBottomSheet<void>(
+  return showAppSheet<void>(
     context: context,
     isScrollControlled: true,
-    showDragHandle: true,
     builder: (_) => _LandmarkSheet(zone: zone, onShow: onShow),
   );
 }
@@ -100,6 +100,7 @@ class _LandmarkSheetState extends State<_LandmarkSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SafeArea(
         child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           shrinkWrap: true,
           padding: const EdgeInsets.fromLTRB(AppSizes.screenPadding, 0,
               AppSizes.screenPadding, AppSizes.screenPadding),

@@ -9,6 +9,15 @@ import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 
 import 'helpers.dart';
 
+/// the chips of the panel sit in a row that scrolls
+Future<void> scrollChipsTo(WidgetTester tester, String text) async {
+  await tester.scrollUntilVisible(find.text(text), 80,
+      scrollable: find.byWidgetPredicate(
+          (w) => w is Scrollable && w.axis == Axis.horizontal));
+  await tester.ensureVisible(find.text(text));
+  await tester.pump();
+}
+
 void main() {
   final now = DateTime.now().toUtc();
 
@@ -47,6 +56,7 @@ void main() {
     expect(find.text('БЛА 3 · 14 мин'), findsOneWidget);
     expect(find.textContaining(RegExp(r'^Человек 2 · \d+ с$')), findsOneWidget);
     // the chips and the card of the chosen one
+    await scrollChipsTo(tester, 'Человек 2');
     expect(find.text('Человек 2'), findsOneWidget);
     expect(find.text('БЛА 1 UAV1'), findsOneWidget);
     // no line until asked: the distance only on the card
@@ -276,8 +286,7 @@ void main() {
     await show(tester);
 
     // the chips scroll: this one is past the edge now
-    await tester.ensureVisible(find.text('Человек 2'));
-    await tester.pump();
+    await scrollChipsTo(tester, 'Человек 2');
     await tester.tap(find.text('Человек 2'));
     await tester.pump();
     expect(find.text('Человек 2 GROUND2'), findsOneWidget);
@@ -338,6 +347,19 @@ void main() {
     await tester.tap(all);
     await tester.pump();
     expect(app.settings.isOnMap('UAV1', mine: false), isTrue);
+  });
+
+  testWidgets('a sheet goes away with a swipe down, from the list too',
+      (tester) async {
+    resetApp();
+    await show(tester, chosen: 'UAV1');
+    await tester.tap(find.byTooltip('Какие трекеры показывать'));
+    await tester.pumpAndSettle();
+    expect(find.text('Какие трекеры показывать на карте'), findsOneWidget);
+    await tester.drag(
+        find.text('Какие трекеры показывать на карте'), const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Какие трекеры показывать на карте'), findsNothing);
   });
 
   testWidgets('the bottom panel folds to one line and unfolds', (tester) async {

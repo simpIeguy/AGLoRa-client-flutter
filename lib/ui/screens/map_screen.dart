@@ -13,6 +13,7 @@ import '../../util/geo.dart';
 import '../names.dart';
 import '../strings.dart';
 import '../theme.dart';
+import '../widgets/app_sheet.dart';
 import '../widgets/ask_location.dart';
 import '../widgets/drag_proxy.dart';
 import '../widgets/status_dot.dart';
@@ -427,38 +428,41 @@ class _MapScreenState extends State<MapScreen> {
   /// "След": which trackers' tracks are drawn
   Future<void> _chooseTracks(BuildContext context, List<TrackerEntry> entries) {
     final settings = _services.settings;
-    return showModalBottomSheet<void>(
+    return showAppSheet<void>(
       context: context,
       builder: (context) => ListenableBuilder(
         listenable: settings,
         builder: (context, _) => SafeArea(
-          child: ListView(shrinkWrap: true, children: [
-            ListTile(
-              title: Text(S.tracksTitle,
-                  style: Theme.of(context).textTheme.titleMedium),
-              subtitle: const Text(S.tracksHint),
-            ),
-            // all at once: untick everyone, then tick the ones to draw
-            CheckboxListTile(
-              title: const Text(S.tracksAll),
-              tristate: true,
-              value: entries.every((e) => settings.isTrackShown(e.key))
-                  ? true
-                  : entries.any((e) => settings.isTrackShown(e.key))
-                      ? null
-                      : false,
-              onChanged: (_) => settings.setTracksShown(
-                  entries.map((e) => e.key),
-                  !entries.every((e) => settings.isTrackShown(e.key))),
-            ),
-            for (final e in entries)
-              CheckboxListTile(
-                title:
-                    Text(displayName(e.name, alias: e.alias, mine: e.isMine)),
-                value: settings.isTrackShown(e.key),
-                onChanged: (v) => settings.setTrackShown(e.key, v ?? true),
-              ),
-          ]),
+          child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              shrinkWrap: true,
+              children: [
+                ListTile(
+                  title: Text(S.tracksTitle,
+                      style: Theme.of(context).textTheme.titleMedium),
+                  subtitle: const Text(S.tracksHint),
+                ),
+                // all at once: untick everyone, then tick the ones to draw
+                CheckboxListTile(
+                  title: const Text(S.tracksAll),
+                  tristate: true,
+                  value: entries.every((e) => settings.isTrackShown(e.key))
+                      ? true
+                      : entries.any((e) => settings.isTrackShown(e.key))
+                          ? null
+                          : false,
+                  onChanged: (_) => settings.setTracksShown(
+                      entries.map((e) => e.key),
+                      !entries.every((e) => settings.isTrackShown(e.key))),
+                ),
+                for (final e in entries)
+                  CheckboxListTile(
+                    title: Text(
+                        displayName(e.name, alias: e.alias, mine: e.isMine)),
+                    value: settings.isTrackShown(e.key),
+                    onChanged: (v) => settings.setTrackShown(e.key, v ?? true),
+                  ),
+              ]),
         ),
       ),
     );
@@ -468,40 +472,43 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _chooseOnMap(BuildContext context, List<TrackerEntry> all) {
     final settings = _services.settings;
     bool on(TrackerEntry e) => settings.isOnMap(e.key, mine: e.isMine);
-    return showModalBottomSheet<void>(
+    return showAppSheet<void>(
       context: context,
       builder: (context) => ListenableBuilder(
         listenable: settings,
         builder: (context, _) => SafeArea(
-          child: ListView(shrinkWrap: true, children: [
-            ListTile(
-              title: Text(S.onMapTitle,
-                  style: Theme.of(context).textTheme.titleMedium),
-            ),
-            CheckboxListTile(
-              title: const Text(S.tracksAll),
-              tristate: true,
-              value: all.every(on)
-                  ? true
-                  : all.any(on)
-                      ? null
-                      : false,
-              onChanged: (_) {
-                final target = !all.every(on);
-                for (final e in all) {
-                  settings.setOnMap(e.key, target, mine: e.isMine);
-                }
-              },
-            ),
-            for (final e in all)
-              CheckboxListTile(
-                title:
-                    Text(displayName(e.name, alias: e.alias, mine: e.isMine)),
-                value: on(e),
-                onChanged: (v) =>
-                    settings.setOnMap(e.key, v ?? true, mine: e.isMine),
-              ),
-          ]),
+          child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              shrinkWrap: true,
+              children: [
+                ListTile(
+                  title: Text(S.onMapTitle,
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+                CheckboxListTile(
+                  title: const Text(S.tracksAll),
+                  tristate: true,
+                  value: all.every(on)
+                      ? true
+                      : all.any(on)
+                          ? null
+                          : false,
+                  onChanged: (_) {
+                    final target = !all.every(on);
+                    for (final e in all) {
+                      settings.setOnMap(e.key, target, mine: e.isMine);
+                    }
+                  },
+                ),
+                for (final e in all)
+                  CheckboxListTile(
+                    title: Text(
+                        displayName(e.name, alias: e.alias, mine: e.isMine)),
+                    value: on(e),
+                    onChanged: (v) =>
+                        settings.setOnMap(e.key, v ?? true, mine: e.isMine),
+                  ),
+              ]),
         ),
       ),
     );
@@ -790,7 +797,9 @@ class _Panel extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     return Container(
-      padding: const EdgeInsets.only(top: AppSizes.padding),
+      // folded, the single line sits in the middle between top and bottom
+      padding: EdgeInsets.symmetric(vertical: open ? 0 : AppSizes.gap)
+          .copyWith(top: AppSizes.gap),
       decoration: BoxDecoration(
         color: p.card,
         border: Border.all(color: p.line),
@@ -800,45 +809,66 @@ class _Panel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            IconButton(
+            const SizedBox(width: AppSizes.gap),
+            _PanelButton(
               tooltip: open ? S.panelFold : S.panelUnfold,
-              icon: Icon(open ? Icons.expand_more : Icons.expand_less),
-              onPressed: onToggle,
+              icon: open ? Icons.expand_more : Icons.expand_less,
+              onTap: onToggle,
             ),
-            IconButton(
+            const SizedBox(width: AppSizes.gap),
+            _PanelButton(
               tooltip: S.onMapTooltip,
-              icon: const Icon(Icons.visibility_outlined),
-              onPressed: onFilter,
+              icon: Icons.visibility_outlined,
+              onTap: onFilter,
             ),
             Expanded(
-              // a long press picks a chip up, as on the main screen
               child: SizedBox(
                 height: AppSizes.minTap,
                 child: open
-                    ? SteadyReorderList<TrackerEntry>(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: AppSizes.padding),
-                        proxyDecorator:
-                            dragProxy(AppSizes.buttonRadius, color: p.card),
-                        items: entries,
-                        keyOf: (e) => e.key,
-                        onOrder: AppScope.of(context).store.setOrder,
-                        itemBuilder: (e) => Padding(
-                          key: ValueKey(e.key),
-                          padding: const EdgeInsets.only(right: AppSizes.gap),
-                          child: _Chip(
-                              entry: e,
-                              chosen: e.key == chosen.key,
-                              onTap: () => onChoose(e)),
+                    // a long press picks a chip up, as on the main screen;
+                    // the chips fade out at the edges instead of being cut
+                    ? ShaderMask(
+                        blendMode: BlendMode.dstIn,
+                        shaderCallback: (r) => const LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.black,
+                            Colors.black,
+                            Colors.transparent
+                          ],
+                          stops: [0, 0.04, 0.96, 1],
+                        ).createShader(r),
+                        child: SteadyReorderList<TrackerEntry>(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.padding),
+                          proxyDecorator:
+                              dragProxy(AppSizes.buttonRadius, color: p.card),
+                          items: entries,
+                          keyOf: (e) => e.key,
+                          onOrder: AppScope.of(context).store.setOrder,
+                          itemBuilder: (e) => Padding(
+                            key: ValueKey(e.key),
+                            padding: const EdgeInsets.only(right: AppSizes.gap),
+                            child: _Chip(
+                                entry: e,
+                                chosen: e.key == chosen.key,
+                                onTap: () => onChoose(e)),
+                          ),
                         ),
                       )
-                    : Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                            displayName(chosen.name,
-                                alias: chosen.alias, mine: chosen.isMine),
-                            style: Theme.of(context).textTheme.titleMedium),
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.padding),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                              displayName(chosen.name,
+                                  alias: chosen.alias, mine: chosen.isMine),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium),
+                        ),
                       ),
               ),
             ),
@@ -874,6 +904,38 @@ class _Panel extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// a round-cornered square button of the panel, like the chips beside it
+class _PanelButton extends StatelessWidget {
+  const _PanelButton(
+      {required this.tooltip, required this.icon, required this.onTap});
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AppPalette.of(context);
+    final shape = RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+        side: BorderSide(color: p.line));
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        shape: shape,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: shape,
+          child: SizedBox.square(
+              dimension: AppSizes.minTap, child: Icon(icon, color: p.ink)),
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import '../format.dart';
 import '../screens/tracker_screen.dart';
 import '../strings.dart';
 import '../theme.dart';
+import 'app_sheet.dart';
 
 /// The copy button: a tap copies in WGS 84, a long press offers WGS 84 or
 /// СК-42. Not an [IconButton]: that one shows its tooltip on a long press.
@@ -44,7 +45,7 @@ Future<void> showCopyFormats(
     BuildContext context, double latitude, double longitude) {
   final format = AppScope.of(context).settings.coordinates;
   final sk = wgs84ToGaussKruger(latitude, longitude);
-  return showModalBottomSheet<void>(
+  return showAppSheet<void>(
     context: context,
     builder: (sheet) => SafeArea(
       child: Column(mainAxisSize: MainAxisSize.min, children: [

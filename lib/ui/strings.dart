@@ -231,6 +231,29 @@ abstract final class S {
   static const String followTrackerOff = 'Не следить';
   static const String showMyTracker = 'Показать мой трекер на карте';
   static const String hideMyTracker = 'Скрыть мой трекер с карты';
+  // landmarks: points put on the map by coordinates
+  static const String landmarks = 'Ориентиры';
+  static const String landmarkCoordinates = 'Координаты';
+  static const String landmarkCoordinatesHint =
+      'Например 53.9023, 27.5618 или X 5975056 Y 5536935';
+  static const String landmarkName = 'Название (необязательно)';
+  static const String landmarkAdd = 'Добавить на карту';
+  static const String landmarkNotUnderstood =
+      'Не понял координаты. Допустимы: 53.9023, 27.5618; '
+      '53°54′08″N 27°33′42″E; X 5975056 Y 5536935 (СК-42)';
+  static const String landmarkZoneGuessed =
+      'Нет номера зоны перед Y: взята зона карты';
+  static const String landmarkListEmpty = 'Пока нет ни одного ориентира';
+  static const String landmarkDelete = 'Удалить ориентир';
+  static const String landmarkShow = 'Показать на карте';
+  static String landmarkDefaultName(int n) => 'Ориентир $n';
+  static String landmarkUnderstoodAs(String kind) => 'Понял как: $kind';
+  static const String kindDecimal = 'WGS 84, градусы';
+  static const String kindDegreesMinutes = 'WGS 84, градусы и минуты';
+  static const String kindDegreesMinutesSeconds =
+      'WGS 84, градусы, минуты, секунды';
+  static String kindGaussKruger(int zone) => 'СК-42, прямоугольные, зона $zone';
+
   static const String tracksTitle = 'Чьи следы показывать';
   static const String tracksHint = 'Последние 50 точек каждого трекера';
 

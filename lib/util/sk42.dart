@@ -80,7 +80,7 @@ GaussKrugerPosition wgs84ToGaussKruger(double latitude, double longitude) {
   final q = 2 * sqrt(n) / (1 + n);
   final t = _sinh(_atanh(sin(phi)) - q * _atanh(q * sin(phi)));
   final xi0 = atan2(t, cos(dl));
-  final eta0 = _asinh(sin(dl) / sqrt(1 + t * t));
+  final eta0 = _asinh(sin(dl) / sqrt(t * t + cos(dl) * cos(dl)));
   var xi = xi0;
   var eta = eta0;
   for (var j = 1; j <= 4; j++) {
@@ -97,3 +97,71 @@ GaussKrugerPosition wgs84ToGaussKruger(double latitude, double longitude) {
 /// "X 6012345, Y 4512345": whole metres
 String formatGaussKruger(GaussKrugerPosition p) =>
     'X ${p.x.round()}, Y ${p.y.round()}';
+
+/// СК-42 geographic degrees → WGS 84, ground level: the set of numbers above
+/// applied forward. The reverse of [wgs84ToSk42] to a fraction of a metre.
+Sk42Position sk42ToWgs84(double latitude, double longitude) {
+  final lat = latitude * pi / 180;
+  final lon = longitude * pi / 180;
+
+  // Krasovsky geographic → geocentric XYZ
+  const e2k = _krasF * (2 - _krasF);
+  final nk = _krasA / sqrt(1 - e2k * pow(sin(lat), 2));
+  final xp = nk * cos(lat) * cos(lon);
+  final yp = nk * cos(lat) * sin(lon);
+  final zp = nk * (1 - e2k) * sin(lat);
+
+  // the shift, the turn and the scale: Xw = T + (1 + s) * R * Xp
+  const k = 1 + _scale;
+  final x = _dx + k * (xp - _rz * yp + _ry * zp);
+  final y = _dy + k * (_rz * xp + yp);
+  final z = _dz + k * (-_ry * xp + zp);
+
+  // geocentric XYZ → geographic on the WGS 84 ellipsoid
+  const e2 = _wgsF * (2 - _wgsF);
+  final p = sqrt(x * x + y * y);
+  var phi = atan2(z, p * (1 - e2));
+  for (var i = 0; i < 6; i++) {
+    final n = _wgsA / sqrt(1 - e2 * pow(sin(phi), 2));
+    phi = atan2(z + e2 * n * sin(phi), p);
+  }
+  return (latitude: phi * 180 / pi, longitude: atan2(y, x) * 180 / pi);
+}
+
+/// Gauss–Krüger of СК-42 (northern hemisphere) → WGS 84 degrees. [y] has the
+/// zone number in front, as [wgs84ToGaussKruger] gives it. The Krüger series
+/// back; the same few metres of the datum shift as the way there.
+Sk42Position gaussKrugerToWgs84(double x, double y) {
+  final zone = (y / 1e6).floor();
+  final middle = (6 * zone - 3) * pi / 180;
+
+  const n = _krasF / (2 - _krasF);
+  final a = _krasA / (1 + n) * (1 + n * n / 4 + pow(n, 4) / 64);
+  final beta = [
+    n / 2 - 2 * n * n / 3 + 37 * pow(n, 3) / 96 - pow(n, 4) / 360,
+    n * n / 48 + pow(n, 3) / 15 - 437 * pow(n, 4) / 1440,
+    17 * pow(n, 3) / 480 - 37 * pow(n, 4) / 840,
+    4397 * pow(n, 4) / 161280,
+  ];
+  final delta = [
+    2 * n - 2 * n * n / 3 - 2 * pow(n, 3) + 116 * pow(n, 4) / 45,
+    7 * n * n / 3 - 8 * pow(n, 3) / 5 - 227 * pow(n, 4) / 45,
+    56 * pow(n, 3) / 15 - 136 * pow(n, 4) / 35,
+    4279 * pow(n, 4) / 630,
+  ];
+  final xi = x / a;
+  final eta = (y - zone * 1e6 - 500000) / a;
+  var xi1 = xi;
+  var eta1 = eta;
+  for (var j = 1; j <= 4; j++) {
+    xi1 -= beta[j - 1] * sin(2 * j * xi) * _cosh(2 * j * eta);
+    eta1 -= beta[j - 1] * cos(2 * j * xi) * _sinh(2 * j * eta);
+  }
+  final chi = asin(sin(xi1) / _cosh(eta1));
+  var phi = chi;
+  for (var j = 1; j <= 4; j++) {
+    phi += delta[j - 1] * sin(2 * j * chi);
+  }
+  final lambda = middle + atan2(_sinh(eta1), cos(xi1));
+  return sk42ToWgs84(phi * 180 / pi, lambda * 180 / pi);
+}

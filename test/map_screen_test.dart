@@ -93,6 +93,94 @@ void main() {
     expect(find.byTooltip('Следить за выбранным'), findsOneWidget);
   });
 
+  group('landmarks', () {
+    Future<void> openSheet(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('Ориентиры'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('typed coordinates become a flag on the map', (tester) async {
+      resetApp();
+      await show(tester, chosen: 'UAV1');
+      await openSheet(tester);
+      await tester.enterText(find.byType(TextField).first, '53.9100, 27.5700');
+      await tester.pump();
+      expect(find.text('Понял как: WGS 84, градусы'), findsOneWidget);
+
+      await tester.tap(find.text('Добавить на карту'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.text('Ориентир 1'), findsOneWidget);
+      expect(app.settings.landmarks.single.latitude, closeTo(53.91, 1e-9));
+    });
+
+    testWidgets('СК-42 text and a name of its own', (tester) async {
+      resetApp();
+      await show(tester, chosen: 'UAV1');
+      await openSheet(tester);
+      await tester.enterText(
+          find.byType(TextField).first, 'X 5975056 Y 5536935');
+      await tester.pump();
+      expect(
+          find.text('Понял как: СК-42, прямоугольные, зона 5'), findsOneWidget);
+      await tester.enterText(find.byType(TextField).last, 'Опушка');
+      await tester.tap(find.text('Добавить на карту'));
+      await tester.pumpAndSettle();
+      expect(find.text('Опушка'), findsOneWidget);
+      expect(app.settings.landmarks.single.latitude, closeTo(53.9, 2e-4));
+    });
+
+    testWidgets('not understood: said so, nothing to add', (tester) async {
+      resetApp();
+      await show(tester, chosen: 'UAV1');
+      await openSheet(tester);
+      await tester.enterText(find.byType(TextField).first, 'вон там');
+      await tester.pump();
+      expect(find.textContaining('Не понял координаты'), findsOneWidget);
+      final add = tester.widget<FilledButton>(find.ancestor(
+          of: find.text('Добавить на карту'),
+          matching: find.byType(FilledButton)));
+      expect(add.onPressed, isNull);
+    });
+
+    testWidgets('the list: go to a landmark, delete it', (tester) async {
+      resetApp();
+      app.settings.addLandmark('Сбор', 53.903, 27.553);
+      await show(tester, chosen: 'UAV1');
+      expect(find.text('Сбор'), findsOneWidget, reason: 'the flag');
+      await openSheet(tester);
+      expect(find.text('Сбор'), findsNWidgets(2),
+          reason: 'the flag and the row');
+
+      await tester.tap(find.byTooltip('Удалить ориентир'));
+      await tester.pumpAndSettle();
+      expect(app.settings.landmarks, isEmpty);
+      expect(find.text('Пока нет ни одного ориентира'), findsOneWidget);
+    });
+
+    testWidgets('a tap on a flag sends the line to it, and back',
+        (tester) async {
+      resetApp(
+          positions: Stream.value(PhonePosition(
+              latitude: 53.8945,
+              longitude: 27.5440,
+              accuracy: 6,
+              time: DateTime.now())));
+      app.settings.addLandmark('Сбор', 53.9, 27.55);
+      await show(tester, chosen: 'UAV1');
+      // the line and the card of the tracker
+      expect(find.text('1,4 км'), findsNWidgets(2));
+      await tester.tap(find.text('Сбор'));
+      await tester.pump();
+      expect(find.text('1,4 км'), findsOneWidget, reason: 'only the card');
+      expect(find.textContaining(RegExp(r'^7\d\d м$')), findsOneWidget,
+          reason: 'the line to the landmark');
+      await tester.tap(find.text('Сбор'));
+      await tester.pump();
+      expect(find.text('1,4 км'), findsNWidgets(2));
+    });
+  });
+
   testWidgets('a chip chooses another tracker, its card opens its screen',
       (tester) async {
     resetApp();

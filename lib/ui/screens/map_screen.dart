@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
+import '../../data/landmark.dart';
 import '../../data/tracker_list.dart';
 import '../../data/tracker_status.dart';
 import '../../data/tracker_store.dart';
@@ -17,6 +18,7 @@ import '../widgets/drag_proxy.dart';
 import '../widgets/status_dot.dart';
 import '../widgets/steady_reorder_list.dart';
 import '../widgets/tracker_card.dart';
+import 'map/landmark_sheet.dart';
 import 'map/map_layers.dart';
 import 'map/map_markers.dart';
 import 'tracker_screen.dart';
@@ -73,6 +75,9 @@ class _MapScreenState extends State<MapScreen> {
 
   /// the map keeps the chosen tracker in the centre while its points come
   late bool _followTracker = widget.followChosen && widget.chosen != null;
+
+  /// the landmark the line leads to; none: the line goes to the chosen tracker
+  int? _landmarkId;
 
   /// the point the map was last moved to while following
   (String, DateTime)? _followedPoint;
@@ -171,10 +176,39 @@ class _MapScreenState extends State<MapScreen> {
 
   /// a chip or a dot: this tracker now, the map goes to it
   void _choose(TrackerEntry entry) {
-    setState(() => _chosen = entry.key);
+    setState(() {
+      _chosen = entry.key;
+      _landmarkId = null;
+    });
     final point = entry.latest!;
     _mapController.move(
         LatLng(point.latitude, point.longitude), _mapController.zoom);
+  }
+
+  /// a landmark was added or picked in the list: the map goes to it, the line
+  /// leads to it
+  void _showLandmark(Landmark landmark) {
+    setState(() {
+      _landmarkId = landmark.id;
+      _followTracker = false;
+    });
+    _mapController.move(
+        LatLng(landmark.latitude, landmark.longitude), _mapController.zoom);
+  }
+
+  /// a tap on a flag: the line leads to it, or back to the tracker
+  void _tapLandmark(Landmark landmark) => setState(
+      () => _landmarkId = _landmarkId == landmark.id ? null : landmark.id);
+
+  /// the 6° zone of the map's middle, for coordinates told without one
+  int _mapZone() {
+    double lon;
+    try {
+      lon = _mapController.center.longitude;
+    } catch (_) {
+      lon = widget.centerLongitude;
+    }
+    return (((lon % 360) + 360) % 360 / 6).floor() + 1;
   }
 
   void _toggleFollowTracker() {
@@ -248,9 +282,14 @@ class _MapScreenState extends State<MapScreen> {
     final phone = _services.location.position;
     final phoneAt =
         phone == null ? null : LatLng(phone.latitude, phone.longitude);
+    final landmarks = _services.settings.landmarks;
+    final landmark = landmarks.where((l) => l.id == _landmarkId).firstOrNull;
     final target = chosen?.latest;
-    final targetAt =
-        target == null ? null : LatLng(target.latitude, target.longitude);
+    final targetAt = landmark != null
+        ? LatLng(landmark.latitude, landmark.longitude)
+        : target == null
+            ? null
+            : LatLng(target.latitude, target.longitude);
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
@@ -290,6 +329,14 @@ class _MapScreenState extends State<MapScreen> {
                 heading: _services.compass.reading?.heading,
                 course: phone?.movingCourse),
           ]),
+        MarkerLayer(
+          rotate: true,
+          markers: [
+            for (final l in landmarks)
+              landmarkMarker(l,
+                  chosen: l.id == landmark?.id, onTap: () => _tapLandmark(l)),
+          ],
+        ),
         MarkerLayer(
           rotate: true,
           markers: [
@@ -407,11 +454,21 @@ class _MapScreenState extends State<MapScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _MapButton(
-                tooltip: S.back,
-                onTap: () => Navigator.of(context).pop(),
-                child: const Icon(Icons.arrow_back),
-              ),
+              Column(children: [
+                _MapButton(
+                  tooltip: S.back,
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const Icon(Icons.arrow_back),
+                ),
+                const SizedBox(height: AppSizes.gap),
+                _MapButton(
+                  tooltip: S.landmarks,
+                  pressed: settings.landmarks.isNotEmpty,
+                  onTap: () => showLandmarkSheet(context,
+                      zone: _mapZone(), onShow: _showLandmark),
+                  child: const Icon(Icons.add_location_alt_outlined),
+                ),
+              ]),
               const SizedBox(width: AppSizes.gap),
               const Spacer(),
               const SizedBox(width: AppSizes.gap),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/landmark.dart';
 import '../ui/format.dart';
 import '../ui/theme.dart';
 
@@ -71,6 +72,26 @@ class AppSettings extends ChangeNotifier {
     if (changed) notifyListeners();
   }
 
+  final List<Landmark> _landmarks = [];
+
+  /// the points put on the map by coordinates, in the order added
+  List<Landmark> get landmarks => List.unmodifiable(_landmarks);
+
+  Landmark addLandmark(String name, double latitude, double longitude) {
+    final id = _landmarks.fold<int>(0, (m, l) => l.id > m ? l.id : m) + 1;
+    final landmark = Landmark(
+        id: id, name: name.trim(), latitude: latitude, longitude: longitude);
+    _landmarks.add(landmark);
+    notifyListeners();
+    return landmark;
+  }
+
+  void removeLandmark(int id) {
+    final before = _landmarks.length;
+    _landmarks.removeWhere((l) => l.id == id);
+    if (_landmarks.length != before) notifyListeners();
+  }
+
   /// the user's own tracker: the app connects to it again by itself after a
   /// launch; null after "Отключиться"
   ({String id, String name})? _lastTracker;
@@ -92,6 +113,7 @@ class AppSettings extends ChangeNotifier {
         'keepScreenOn': _keepScreenOn,
         'showMyTracker': _showMyTracker,
         'hiddenTracks': _hiddenTracks.toList(),
+        'landmarks': [for (final l in _landmarks) l.toJson()],
         if (_lastTracker case final t?)
           'lastTracker': {'id': t.id, 'name': t.name},
       };
@@ -113,6 +135,12 @@ class AppSettings extends ChangeNotifier {
       _hiddenTracks
         ..clear()
         ..addAll(hidden.whereType<String>());
+    }
+    final landmarks = json['landmarks'];
+    if (landmarks is List) {
+      _landmarks
+        ..clear()
+        ..addAll(landmarks.map(Landmark.fromJson).whereType<Landmark>());
     }
     if (json['lastTracker'] case {'id': String id, 'name': String name}) {
       _lastTracker = (id: id, name: name);

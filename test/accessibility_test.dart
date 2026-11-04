@@ -72,6 +72,48 @@ void main() {
     }
   }
 
+  // the sheet of landmarks, opened over the map, with a landmark in it and
+  // coordinates typed
+  for (final theme
+      in AppThemeChoice.values.where((t) => t != AppThemeChoice.auto)) {
+    testWidgets('landmark sheet, ${theme.name}: tap size, labels, contrast',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      _setUp(tester, theme);
+      app.settings.addLandmark('Сбор', 53.903, 27.553);
+      await tester.pumpWidget(inApp(_screens['map']!()));
+      await tester.pump();
+      await tester.tap(find.byTooltip('Ориентиры'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '53.91, 27.57');
+      await tester.pump();
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      handle.dispose();
+    });
+  }
+
+  testWidgets('landmark sheet: system font x2, no overflow', (tester) async {
+    _setUp(tester, AppThemeChoice.light);
+    app.settings.addLandmark('Сбор', 53.903, 27.553);
+    await tester.pumpWidget(inApp(_screens['map']!(),
+        builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!)));
+    await tester.pump();
+    await tester.tap(find.byTooltip('Ориентиры'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'X 5975056 Y 5536935');
+    await tester.pump();
+    final overflow = tester.takeException();
+    expect(overflow, isNull,
+        reason: overflow is FlutterError
+            ? overflow.diagnostics.map((d) => d.toStringDeep()).join()
+            : '$overflow');
+  });
+
   // the system font set to the largest size: the text may shrink or wrap,
   // but nothing may overflow (an overflow is an exception in a test)
   for (final scale in [1.5, 2.0]) {

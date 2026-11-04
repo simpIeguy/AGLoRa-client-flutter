@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
+import '../../../data/landmark.dart';
 import '../../../data/tracker_list.dart';
 import '../../../data/tracker_status.dart';
 import '../../format.dart';
@@ -148,6 +149,58 @@ Marker trackerMarker(TrackerEntry entry,
     ),
   );
 }
+
+/// a landmark put on the map by coordinates: a diamond, not a round dot, and
+/// its name above; the chosen one gets a ring
+Marker landmarkMarker(Landmark landmark,
+        {required bool chosen, required VoidCallback onTap}) =>
+    Marker(
+      width: 200,
+      height: 100,
+      point: LatLng(landmark.latitude, landmark.longitude),
+      builder: (_) => GestureDetector(
+        onTap: onTap,
+        child: Stack(alignment: Alignment.center, children: [
+          if (chosen)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2)),
+            ),
+          Transform.rotate(
+            angle: pi / 4,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                  color: _onMap.ink,
+                  border: Border.all(color: Colors.white, width: 3)),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),
+              child: Text(landmark.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontFamily: AppText.sans,
+                      fontSize: AppText.small,
+                      fontWeight: FontWeight.w600,
+                      color: _onMap.ink)),
+            ),
+          ),
+        ]),
+      ),
+    );
 
 /// "1,2 км" in the middle of the line from the phone to the chosen tracker
 Marker distanceMarker(LatLng at, double metres) => Marker(

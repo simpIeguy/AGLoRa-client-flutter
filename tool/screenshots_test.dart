@@ -4,6 +4,8 @@
 // writes build/screenshots/<screen>_<theme>.png.
 import 'dart:io';
 
+import 'package:flutter/material.dart' show TextField;
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -174,6 +176,53 @@ void main() {
       await expectLater(find.byType(MapScreen),
           matchesGoldenFile('../build/screenshots/map_${theme.name}.png'));
     });
+
+    // walking (the arrow of the walk) with a landmark and the sheet to add one
+    for (final sheet in [false, true]) {
+      testWidgets('map landmarks${sheet ? ' sheet' : ''}, ${theme.name}',
+          (tester) async {
+        tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+        tester.view.devicePixelRatio = 3;
+        addTearDown(tester.view.reset);
+
+        resetApp(
+            positions: Stream.value(PhonePosition(
+                latitude: 53.8945,
+                longitude: 27.5440,
+                accuracy: 6,
+                speed: 1.4,
+                course: 60,
+                time: DateTime.now())),
+            compass: Stream.value(const CompassReading(30, accuracy: 15)));
+        app.settings.theme = theme;
+        final now = DateTime.now().toUtc();
+        feed(pointMessage('UAV1', 53.90228, 27.56183,
+            now.subtract(const Duration(seconds: 12)),
+            index: 0));
+        final landmark = app.settings.addLandmark('Опушка', 53.8990, 27.5530);
+        await tester.pumpWidget(inApp(const MapScreen(
+            centerLatitude: 53.898,
+            centerLongitude: 27.552,
+            withTiles: false)));
+        await tester.pump();
+        await tester.pump();
+        if (sheet) {
+          await tester.tap(find.byTooltip('Ориентиры'));
+          await tester.pumpAndSettle();
+          await tester.enterText(
+              find.byType(TextField).first, 'X 5975056 Y 5536935');
+          await tester.pump();
+        } else {
+          await tester.tap(find.text(landmark.name));
+          await tester.pump();
+        }
+        await expectLater(
+            // the sheet lies over the screen, in the navigator
+            find.byType(Navigator),
+            matchesGoldenFile('../build/screenshots/'
+                'map_landmarks${sheet ? '_sheet' : ''}_${theme.name}.png'));
+      });
+    }
 
     testWidgets('wait screen, ${theme.name}', (tester) async {
       tester.view.physicalSize = const Size(390 * 3, 844 * 3);

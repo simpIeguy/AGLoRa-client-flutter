@@ -63,6 +63,22 @@ void main() {
           (AppSettings()..loadState(before.saveState())).showMyTracker, isTrue);
     });
 
+    test('landmarks are kept between launches, a bad entry is dropped', () {
+      final before = AppSettings()
+        ..addLandmark('Сбор', 53.95, 27.6)
+        ..addLandmark(' Опушка ', 53.9, 27.5);
+      final state = before.saveState();
+      (state['landmarks']! as List).add({'id': 9, 'name': 'без широты'});
+      final after = AppSettings()..loadState(state);
+      expect(after.landmarks.map((l) => l.name), ['Сбор', 'Опушка']);
+      expect(after.landmarks.last.longitude, 27.5);
+      after.removeLandmark(after.landmarks.first.id);
+      expect(after.landmarks.single.name, 'Опушка');
+      // a new one does not take the id of one still there
+      expect(
+          after.addLandmark('Новый', 1, 2).id, isNot(after.landmarks.first.id));
+    });
+
     test('the own tracker is remembered between launches', () {
       final before = AppSettings()
         ..lastTracker = (id: 'AA:BB:CC:DD:EE:FF', name: 'GROUND1');

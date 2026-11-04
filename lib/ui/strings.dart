@@ -262,6 +262,19 @@ abstract final class S {
   static const String landmarkUnhide = 'Показать метку на карте';
   static const String landmarkHideAll = 'Скрыть все';
   static const String landmarkShowAll = 'Показать все';
+  static const String landmarkNameShort = 'Название';
+  static const String landmarkNew = 'Добавить метку';
+  static const String landmarkPaste = 'Вставить из буфера';
+  static const String landmarkAim = 'Вести до метки';
+  static const String landmarkAimOff = 'Не вести до метки';
+  static const String landmarkEdit = 'Изменить метку';
+  static const String landmarkSave = 'Сохранить';
+  static const String landmarkCancel = 'Отмена';
+  static const String landmarkUndo = 'Отменить';
+  static const String landmarkSwipeHint =
+      'Нажмите на метку, чтобы перейти к ней. Смахните влево, чтобы удалить. '
+      'Долгое нажатие — изменить.';
+  static String landmarkRemoved(String name) => 'Удалено: $name';
   static String landmarkDefaultName(int n) => 'Метка $n';
   static String landmarkUnderstoodAs(String kind) => 'Понял как: $kind';
   static const String kindDecimal = 'WGS 84, градусы';

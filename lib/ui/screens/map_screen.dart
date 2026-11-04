@@ -203,6 +203,26 @@ class _MapScreenState extends State<MapScreen> {
         LatLng(landmark.latitude, landmark.longitude), _mapController.zoom);
   }
 
+  /// a landmark picked in the list: the map goes to it, the line stays
+  void _goToLandmark(Landmark landmark) {
+    _services.settings.setLandmarkVisible(landmark.id, true);
+    setState(() => _followTracker = false);
+    _mapController.move(
+        LatLng(landmark.latitude, landmark.longitude), _mapController.zoom);
+  }
+
+  /// "Вести до метки" in the list: the line leads to it, or stops;
+  /// true when it leads now
+  bool _aimAtLandmark(Landmark landmark) {
+    final on = _landmarkId != landmark.id;
+    if (on) _services.settings.setLandmarkVisible(landmark.id, true);
+    setState(() {
+      _landmarkId = on ? landmark.id : null;
+      _aimTracker = null;
+    });
+    return on;
+  }
+
   /// a tap on a flag: the line leads to it, or back to the tracker
   void _tapLandmark(Landmark landmark) => setState(() {
         _landmarkId = _landmarkId == landmark.id ? null : landmark.id;
@@ -536,7 +556,11 @@ class _MapScreenState extends State<MapScreen> {
                   tooltip: S.landmarks,
                   pressed: settings.landmarks.isNotEmpty,
                   onTap: () => showLandmarkSheet(context,
-                      zone: _mapZone(), onShow: _showLandmark),
+                      zone: _mapZone(),
+                      onShow: _showLandmark,
+                      onGo: _goToLandmark,
+                      onAim: _aimAtLandmark,
+                      aimedId: _landmarkId),
                   child: const Icon(Icons.add_location_alt_outlined),
                 ),
                 const SizedBox(height: AppSizes.gap),

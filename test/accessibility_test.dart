@@ -85,8 +85,10 @@ void main() {
       await tester.pump();
       await tester.tap(find.byTooltip('Метки'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Добавить метку'));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, '53.91, 27.57');
-      await tester.pump();
+      await tester.pumpAndSettle();
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       await expectLater(tester, meetsGuideline(textContrastGuideline));
@@ -104,6 +106,8 @@ void main() {
             child: child!)));
     await tester.pump();
     await tester.tap(find.byTooltip('Метки'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Добавить метку'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'X 5975056 Y 5536935');
     await tester.pump();

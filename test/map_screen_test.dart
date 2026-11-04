@@ -104,15 +104,19 @@ void main() {
   });
 
   group('landmarks', () {
-    Future<void> openSheet(WidgetTester tester) async {
+    Future<void> openSheet(WidgetTester tester, {bool add = false}) async {
       await tester.tap(find.byTooltip('Метки'));
       await tester.pumpAndSettle();
+      if (add) {
+        await tester.tap(find.text('Добавить метку'));
+        await tester.pumpAndSettle();
+      }
     }
 
     testWidgets('typed coordinates become a flag on the map', (tester) async {
       resetApp();
       await show(tester, chosen: 'UAV1');
-      await openSheet(tester);
+      await openSheet(tester, add: true);
       await tester.enterText(find.byType(TextField).first, '53.9100, 27.5700');
       await tester.pump();
       expect(find.text('Понял как: WGS 84, градусы'), findsOneWidget);
@@ -127,7 +131,7 @@ void main() {
     testWidgets('СК-42 text and a name of its own', (tester) async {
       resetApp();
       await show(tester, chosen: 'UAV1');
-      await openSheet(tester);
+      await openSheet(tester, add: true);
       await tester.enterText(
           find.byType(TextField).first, 'X 5975056 Y 5536935');
       await tester.pump();
@@ -143,7 +147,7 @@ void main() {
     testWidgets('not understood: said so, nothing to add', (tester) async {
       resetApp();
       await show(tester, chosen: 'UAV1');
-      await openSheet(tester);
+      await openSheet(tester, add: true);
       await tester.enterText(find.byType(TextField).first, 'вон там');
       await tester.pump();
       expect(find.textContaining('Не понял координаты'), findsOneWidget);
@@ -162,10 +166,50 @@ void main() {
       expect(find.text('Сбор'), findsNWidgets(2),
           reason: 'the flag and the row');
 
-      await tester.tap(find.byTooltip('Удалить метку'));
+      await tester.drag(find.text('Сбор').last, const Offset(-700, 0));
       await tester.pumpAndSettle();
       expect(app.settings.landmarks, isEmpty);
       expect(find.text('Пока нет ни одной метки'), findsOneWidget);
+
+      await tester.tap(find.text('Отменить'));
+      await tester.pumpAndSettle();
+      expect(app.settings.landmarks.single.name, 'Сбор');
+    });
+
+    testWidgets('the list shows the distance, the button leads the line',
+        (tester) async {
+      resetApp(
+          positions: Stream.value(PhonePosition(
+              latitude: 53.8945,
+              longitude: 27.5440,
+              accuracy: 6,
+              time: DateTime.now())));
+      app.settings.addLandmark('Далеко', 53.95, 27.6);
+      app.settings.addLandmark('Сбор', 53.9, 27.55);
+      await show(tester, chosen: 'UAV1');
+      await openSheet(tester);
+      expect(find.textContaining('Сбор  ·  '), findsOneWidget);
+      expect(tester.getTopLeft(find.textContaining('Сбор  ·  ')).dy,
+          lessThan(tester.getTopLeft(find.textContaining('Далеко  ·  ')).dy),
+          reason: 'nearest first');
+      await tester.tap(find.byTooltip('Вести до метки').first);
+      await tester.pump();
+      expect(find.byTooltip('Не вести до метки'), findsOneWidget);
+    });
+
+    testWidgets('a long press changes a landmark', (tester) async {
+      resetApp();
+      app.settings.addLandmark('Сбор', 53.903, 27.553);
+      await show(tester, chosen: 'UAV1');
+      await openSheet(tester);
+      await tester.longPress(find.text('Сбор').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Опушка');
+      await tester.pump();
+      await tester.tap(find.text('Сохранить'));
+      await tester.pumpAndSettle();
+      expect(app.settings.landmarks.single.name, 'Опушка');
+      expect(app.settings.landmarks.single.latitude, closeTo(53.903, 1e-6));
     });
 
     testWidgets('the same place or the same name is not added twice',
@@ -173,7 +217,7 @@ void main() {
       resetApp();
       app.settings.addLandmark('Сбор', 53.9, 27.55);
       await show(tester, chosen: 'UAV1');
-      await openSheet(tester);
+      await openSheet(tester, add: true);
       await tester.enterText(find.byType(TextField).first, '53.9, 27.55');
       await tester.pump();
       expect(find.text('Здесь уже есть метка «Сбор»'), findsOneWidget);

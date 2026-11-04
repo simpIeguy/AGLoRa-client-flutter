@@ -109,6 +109,26 @@ class AppSettings extends ChangeNotifier {
     if (_landmarks.length != before) notifyListeners();
   }
 
+  /// put a removed landmark back where it was ("Отменить")
+  void restoreLandmark(Landmark landmark, int index) {
+    if (_landmarks.any((l) => l.id == landmark.id)) return;
+    _landmarks.insert(index.clamp(0, _landmarks.length), landmark);
+    notifyListeners();
+  }
+
+  /// change the name and the place of a landmark
+  void updateLandmark(int id, String name, double latitude, double longitude) {
+    final i = _landmarks.indexWhere((l) => l.id == id);
+    if (i < 0) return;
+    _landmarks[i] = Landmark(
+        id: id,
+        name: name.trim(),
+        latitude: latitude,
+        longitude: longitude,
+        visible: _landmarks[i].visible);
+    notifyListeners();
+  }
+
   /// show or hide one landmark on the map
   void setLandmarkVisible(int id, bool visible) {
     final i = _landmarks.indexWhere((l) => l.id == id);

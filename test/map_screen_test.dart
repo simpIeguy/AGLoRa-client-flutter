@@ -53,6 +53,16 @@ void main() {
     expect(find.text('1,4 км'), findsNWidgets(2));
   });
 
+  /// the switch "Следить за трекером" in the card
+  final followSwitch = find.descendant(
+      of: find
+          .ancestor(
+              of: find.text('Следить за трекером'), matching: find.byType(Row))
+          .first,
+      matching: find.byType(Switch));
+  bool following(WidgetTester tester) =>
+      tester.widget<Switch>(followSwitch).value;
+
   testWidgets('"Следить": the map goes to the new point, a finger stops it',
       (tester) async {
     resetApp();
@@ -60,7 +70,7 @@ void main() {
     final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
     final controller = map.mapController!;
 
-    await tester.tap(find.byTooltip('Следить за выбранным'));
+    await tester.tap(followSwitch);
     await tester.pump();
     await tester.pump();
     expect(controller.center.latitude, closeTo(53.902, 0.0001));
@@ -74,7 +84,7 @@ void main() {
 
     await tester.drag(find.byType(FlutterMap), const Offset(0, 80));
     await tester.pump();
-    expect(find.byTooltip('Следить за выбранным'), findsOneWidget,
+    expect(following(tester), isFalse,
         reason: 'a finger moved the map: not following any more');
   });
 
@@ -82,15 +92,14 @@ void main() {
       (tester) async {
     resetApp();
     await show(tester, chosen: 'UAV1', followChosen: true);
-    expect(find.byTooltip('Не следить'), findsOneWidget);
-    expect(find.byTooltip('Следить за выбранным'), findsNothing);
+    expect(following(tester), isTrue);
   });
 
   testWidgets('the map button of the main screen does not follow',
       (tester) async {
     resetApp();
     await show(tester, chosen: 'UAV1');
-    expect(find.byTooltip('Следить за выбранным'), findsOneWidget);
+    expect(following(tester), isFalse);
   });
 
   group('landmarks', () {
@@ -156,6 +165,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(app.settings.landmarks, isEmpty);
       expect(find.text('Пока нет ни одной метки'), findsOneWidget);
+    });
+
+    testWidgets('the same place or the same name is not added twice',
+        (tester) async {
+      resetApp();
+      app.settings.addLandmark('Сбор', 53.9, 27.55);
+      await show(tester, chosen: 'UAV1');
+      await openSheet(tester);
+      await tester.enterText(find.byType(TextField).first, '53.9, 27.55');
+      await tester.pump();
+      expect(find.text('Здесь уже есть метка «Сбор»'), findsOneWidget);
+      FilledButton add() => tester.widget<FilledButton>(find.ancestor(
+          of: find.text('Добавить на карту'),
+          matching: find.byType(FilledButton)));
+      expect(add().onPressed, isNull);
+
+      await tester.enterText(find.byType(TextField).first, '53.95, 27.6');
+      await tester.enterText(find.byType(TextField).last, ' сбор ');
+      await tester.pump();
+      expect(find.text('Метка с таким названием уже есть'), findsOneWidget);
+      expect(add().onPressed, isNull);
+
+      await tester.enterText(find.byType(TextField).last, 'Опушка');
+      await tester.pump();
+      expect(add().onPressed, isNotNull);
     });
 
     testWidgets('the eye hides a landmark from the map, not from the list',
@@ -332,7 +366,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // the switch in the card of the chosen tracker (UAV1)
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.byType(Switch).last);
     await tester.pump();
     expect(app.settings.isTrackShown('UAV1'), isFalse);
     expect(app.settings.isTrackShown('GROUND2'), isTrue);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../data/landmark.dart';
 import '../../../services/app_services.dart';
+import '../../../services/app_settings.dart';
 import '../../../util/coordinate_parser.dart';
 import '../../strings.dart';
 import '../../theme.dart';
@@ -52,15 +53,36 @@ class _LandmarkSheetState extends State<_LandmarkSheet> {
         CoordinateKind.gaussKruger => S.kindGaussKruger(p.zone ?? widget.zone),
       };
 
+  /// "Метка N" with the first N nobody uses yet
+  String _freeName(AppSettings settings) {
+    final taken = settings.landmarks.map((l) => l.name.toLowerCase()).toSet();
+    var n = settings.landmarks.length + 1;
+    while (taken.contains(S.landmarkDefaultName(n).toLowerCase())) {
+      n++;
+    }
+    return S.landmarkDefaultName(n);
+  }
+
+  /// why this one cannot be added: the same place or the same name is there
+  String? _duplicate(AppSettings settings, ParsedCoordinates p) {
+    final name = _name.text.trim().toLowerCase();
+    for (final l in settings.landmarks) {
+      if ((l.latitude - p.latitude).abs() < 1e-6 &&
+          (l.longitude - p.longitude).abs() < 1e-6) {
+        return S.landmarkSamePlace(l.name);
+      }
+      if (name.isNotEmpty && l.name.toLowerCase() == name) {
+        return S.landmarkSameName;
+      }
+    }
+    return null;
+  }
+
   void _add(ParsedCoordinates p) {
     final settings = AppScope.of(context).settings;
     final name = _name.text.trim();
     final landmark = settings.addLandmark(
-        name.isEmpty
-            ? S.landmarkDefaultName(settings.landmarks.length + 1)
-            : name,
-        p.latitude,
-        p.longitude);
+        name.isEmpty ? _freeName(settings) : name, p.latitude, p.longitude);
     Navigator.of(context).pop();
     widget.onShow(landmark);
   }
@@ -72,6 +94,7 @@ class _LandmarkSheetState extends State<_LandmarkSheet> {
     final textTheme = Theme.of(context).textTheme;
     final parsed = _parsed;
     final typed = _text.text.trim().isNotEmpty;
+    final duplicate = parsed == null ? null : _duplicate(settings, parsed);
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -116,17 +139,26 @@ class _LandmarkSheetState extends State<_LandmarkSheet> {
             const SizedBox(height: AppSizes.padding),
             TextField(
               controller: _name,
+              onChanged: (_) => setState(() {}),
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
                 labelText: S.landmarkName,
                 border: OutlineInputBorder(),
               ),
             ),
+            if (duplicate != null) ...[
+              const SizedBox(height: AppSizes.gap),
+              Text(duplicate,
+                  style: textTheme.bodyMedium
+                      ?.copyWith(color: Theme.of(context).colorScheme.error)),
+            ],
             const SizedBox(height: AppSizes.padding),
             FilledButton(
               style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(AppSizes.bigButton)),
-              onPressed: parsed == null ? null : () => _add(parsed),
+              onPressed: parsed == null || duplicate != null
+                  ? null
+                  : () => _add(parsed),
               child: const Text(S.landmarkAdd),
             ),
             const SizedBox(height: AppSizes.screenPadding),

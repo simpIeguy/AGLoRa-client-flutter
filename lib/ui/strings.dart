@@ -227,8 +227,7 @@ abstract final class S {
   static const String northUp = 'Север вверх';
   static const String whereAmI = 'Где я';
   static const String tracks = 'След';
-  static const String followTracker = 'Следить за выбранным';
-  static const String followTrackerOff = 'Не следить';
+  static const String followTracker = 'Следить за трекером';
   static const String showMyTracker = 'Показать мой трекер на карте';
   static const String hideMyTracker = 'Скрыть мой трекер с карты';
   // landmarks: points put on the map by coordinates
@@ -246,6 +245,9 @@ abstract final class S {
   static const String landmarkListEmpty = 'Пока нет ни одной метки';
   static const String landmarkListHint =
       'Нажмите на метку: на карте появится линия и расстояние до неё';
+  static String landmarkSamePlace(String name) =>
+      'Здесь уже есть метка «$name»';
+  static const String landmarkSameName = 'Метка с таким названием уже есть';
   static const String landmarkDelete = 'Удалить метку';
   static const String landmarkHide = 'Скрыть метку с карты';
   static const String landmarkUnhide = 'Показать метку на карте';

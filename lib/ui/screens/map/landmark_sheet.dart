@@ -254,7 +254,7 @@ class _LandmarkSheetState extends State<_LandmarkSheet> {
       ({Landmark landmark, double? distance, double? bearing}) row, int index) {
     final p = AppPalette.of(context);
     final l = row.landmark;
-    final aimed = _aimed == l.id;
+    final aimed = _aimed == l.id && l.visible;
     final far = row.distance == null
         ? null
         : '${formatDistance(row.distance!)} · ${compassPoint(row.bearing!)}';

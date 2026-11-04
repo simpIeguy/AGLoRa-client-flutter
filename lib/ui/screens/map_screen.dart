@@ -214,7 +214,9 @@ class _MapScreenState extends State<MapScreen> {
   /// "Линия до метки" in the list: the line leads to it, or stops;
   /// true when it leads now
   bool _aimAtLandmark(Landmark landmark) {
-    final on = _landmarkId != landmark.id;
+    final shown = _services.settings.landmarks
+        .any((l) => l.id == landmark.id && l.visible);
+    final on = !(shown && _landmarkId == landmark.id);
     if (on) _services.settings.setLandmarkVisible(landmark.id, true);
     setState(() {
       _landmarkId = on ? landmark.id : null;
@@ -323,7 +325,9 @@ class _MapScreenState extends State<MapScreen> {
     final phoneAt =
         phone == null ? null : LatLng(phone.latitude, phone.longitude);
     final landmarks = _services.settings.landmarks;
-    final landmark = landmarks.where((l) => l.id == _landmarkId).firstOrNull;
+    // the line leads to a landmark only while it is shown
+    final landmark =
+        landmarks.where((l) => l.id == _landmarkId && l.visible).firstOrNull;
     final target =
         entries.where((e) => e.key == _aimTracker).firstOrNull?.latest;
     final targetAt = landmark != null

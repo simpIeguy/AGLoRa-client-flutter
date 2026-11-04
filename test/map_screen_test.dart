@@ -279,7 +279,8 @@ void main() {
       expect(find.textContaining(RegExp(r'^7\d\d м$')), findsNothing);
     });
 
-    testWidgets('a hidden landmark is not drawn even when the line leads to it',
+    testWidgets(
+        'a hidden landmark has no flag and no line, both come back together',
         (tester) async {
       resetApp(
           positions: Stream.value(PhonePosition(
@@ -294,8 +295,13 @@ void main() {
       app.settings.setLandmarkVisible(l.id, false);
       await tester.pump();
       expect(find.text('Сбор'), findsNothing, reason: 'the flag is hidden');
+      expect(find.textContaining(RegExp(r'^7\d\d м$')), findsNothing,
+          reason: 'the line goes with the flag');
+      app.settings.setLandmarkVisible(l.id, true);
+      await tester.pump();
+      expect(find.text('Сбор'), findsOneWidget);
       expect(find.textContaining(RegExp(r'^7\d\d м$')), findsOneWidget,
-          reason: 'the line stays');
+          reason: 'and comes back with it');
     });
 
     testWidgets('one aim at a time: a tracker or a landmark', (tester) async {

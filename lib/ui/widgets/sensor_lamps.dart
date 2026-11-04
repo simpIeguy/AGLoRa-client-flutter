@@ -102,9 +102,13 @@ class _Lamp extends StatelessWidget {
       Container(
           width: AppSizes.lamp, height: AppSizes.lamp, decoration: decoration),
       const SizedBox(width: AppSizes.gap),
-      Text(text,
-          style:
-              Theme.of(context).textTheme.bodyMedium?.copyWith(color: p.muted)),
+      Flexible(
+        child: Text(text,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: p.muted)),
+      ),
     ]);
   }
 }

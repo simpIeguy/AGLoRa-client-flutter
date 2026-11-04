@@ -84,9 +84,11 @@ class _WaitTrackerScreenState extends State<WaitTrackerScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               const SizedBox(width: AppSizes.gap),
-              Text(S.waitTracker,
-                  style: textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700)),
+              Expanded(
+                child: Text(S.waitTracker,
+                    style: textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+              ),
             ]),
           ),
           Expanded(

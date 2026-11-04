@@ -196,6 +196,12 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // the buttons and labels sit on the map: a huge system font would cover it
+    return MediaQuery.withClampedTextScaling(
+        maxScaleFactor: 1.3, child: _scaffold(context));
+  }
+
+  Widget _scaffold(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.mapBackground,
       body: ListenableBuilder(
@@ -446,7 +452,7 @@ class _MapScreenState extends State<MapScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.45),
+                  color: Colors.black.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(3)),
               child: Text(
                 mapAttribution(_layerType),
@@ -618,14 +624,17 @@ class _Panel extends StatelessWidget {
           TrackerCard(entry: chosen, framed: false),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
-            child: Row(children: [
-              const Icon(Icons.timeline),
-              const SizedBox(width: AppSizes.gap),
-              Expanded(
-                  child: Text(S.trackOfChosen,
-                      style: Theme.of(context).textTheme.bodyMedium)),
-              Switch(value: trackShown, onChanged: onTrack),
-            ]),
+            // one node for the screen reader: "След, switch"
+            child: MergeSemantics(
+              child: Row(children: [
+                const Icon(Icons.timeline),
+                const SizedBox(width: AppSizes.gap),
+                Expanded(
+                    child: Text(S.trackOfChosen,
+                        style: Theme.of(context).textTheme.bodyMedium)),
+                Switch(value: trackShown, onChanged: onTrack),
+              ]),
+            ),
           ),
         ],
       ),

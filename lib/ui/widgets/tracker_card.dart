@@ -181,17 +181,25 @@ class _TopRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSizes.gap),
-          Text.rich(
-            TextSpan(children: [
-              TextSpan(text: parts?.value ?? '—'),
-              if (parts != null)
-                TextSpan(
-                    text: ' ${parts.unit}',
-                    style: const TextStyle(
-                        fontSize: AppText.small, fontWeight: FontWeight.w600)),
-            ]),
-            style: textTheme.headlineMedium
-                ?.copyWith(color: lost || parts == null ? p.muted : p.ink),
+          // a large system font: the distance shrinks, the row never overflows
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text.rich(
+                TextSpan(children: [
+                  TextSpan(text: parts?.value ?? '—'),
+                  if (parts != null)
+                    TextSpan(
+                        text: ' ${parts.unit}',
+                        style: const TextStyle(
+                            fontSize: AppText.small,
+                            fontWeight: FontWeight.w600)),
+                ]),
+                style: textTheme.headlineMedium
+                    ?.copyWith(color: lost || parts == null ? p.muted : p.ink),
+              ),
+            ),
           ),
         ]);
       },

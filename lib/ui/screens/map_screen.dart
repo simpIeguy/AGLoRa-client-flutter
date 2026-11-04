@@ -221,16 +221,22 @@ class _MapScreenState extends State<MapScreen> {
         builder: (context, _) {
           final now = _services.clock.now;
           // as on the main screen: the hidden ones are not on the map either
-          final entries = [
+          final shown = [
             for (final e in buildTrackerList(_services.store, now).shown)
               if (e.latest != null) e
+          ];
+          // the user's own tracker sits where the phone is: hidden unless asked
+          final hasMine = shown.any((e) => e.isMine);
+          final entries = [
+            for (final e in shown)
+              if (!e.isMine || _services.settings.showMyTracker) e
           ];
           final chosen = entries.where((e) => e.key == _chosen).firstOrNull ??
               entries.firstOrNull;
           _followChosen(chosen);
           return Stack(children: [
             _map(context, entries, chosen, now),
-            SafeArea(child: _controls(context, entries, chosen)),
+            SafeArea(child: _controls(context, entries, chosen, hasMine)),
           ]);
         },
       ),
@@ -281,7 +287,8 @@ class _MapScreenState extends State<MapScreen> {
           // turns with the map: the cone keeps pointing at the true heading
           MarkerLayer(markers: [
             phoneMarker(phoneAt.latitude, phoneAt.longitude,
-                heading: _services.compass.reading?.heading),
+                heading: _services.compass.reading?.heading,
+                course: phone?.movingCourse),
           ]),
         MarkerLayer(
           rotate: true,
@@ -389,8 +396,9 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _controls(
-      BuildContext context, List<TrackerEntry> entries, TrackerEntry? chosen) {
+  Widget _controls(BuildContext context, List<TrackerEntry> entries,
+      TrackerEntry? chosen, bool hasMine) {
+    final settings = _services.settings;
     return Padding(
       padding: const EdgeInsets.all(AppSizes.gap),
       child: Column(
@@ -436,6 +444,19 @@ class _MapScreenState extends State<MapScreen> {
                   onTap: () => _chooseTracks(context, entries),
                   child: const Icon(Icons.timeline),
                 ),
+                // only with a tracker of ours connected
+                if (hasMine) ...[
+                  const SizedBox(height: AppSizes.gap),
+                  _MapButton(
+                    tooltip: settings.showMyTracker
+                        ? S.hideMyTracker
+                        : S.showMyTracker,
+                    pressed: settings.showMyTracker,
+                    onTap: () =>
+                        settings.showMyTracker = !settings.showMyTracker,
+                    child: const Icon(Icons.bluetooth_connected),
+                  ),
+                ],
               ]),
             ],
           ),

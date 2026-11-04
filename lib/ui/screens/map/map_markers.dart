@@ -1,3 +1,5 @@
+import 'dart:math' show cos, sin;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
@@ -13,20 +15,25 @@ import '../../theme.dart';
 const AppPalette _onMap = AppPalette.light;
 
 /// the phone: a white dot with a dark rim and, with a compass, a pale cone
-/// where the phone points
-Marker phoneMarker(double latitude, double longitude, {double? heading}) =>
+/// where the phone points; walking, also an arrow where the walk leads
+Marker phoneMarker(double latitude, double longitude,
+        {double? heading, double? course}) =>
     Marker(
       width: 140,
       height: 140,
       point: LatLng(latitude, longitude),
-      builder: (_) => CustomPaint(painter: _PhonePainter(heading)),
+      builder: (_) => CustomPaint(painter: PhonePainter(heading, course)),
     );
 
-class _PhonePainter extends CustomPainter {
-  _PhonePainter(this.heading);
+@visibleForTesting
+class PhonePainter extends CustomPainter {
+  PhonePainter(this.heading, [this.course]);
 
   /// degrees from north; the marker turns with the map, so north is up here
   final double? heading;
+
+  /// degrees from north the phone walks to; null when standing
+  final double? course;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -51,10 +58,32 @@ class _PhonePainter extends CustomPainter {
           ..color = _onMap.ink
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3);
+    final k = course;
+    if (k != null) {
+      // a solid arrow beyond the dot: the way the walk goes, not the phone
+      final a = (k - 90) * pi / 180;
+      Offset at(double r, double da) =>
+          c + Offset(cos(a + da), sin(a + da)) * r;
+      final arrow = Path()
+        ..moveTo(at(40, 0).dx, at(40, 0).dy)
+        ..lineTo(at(20, 0.5).dx, at(20, 0.5).dy)
+        ..lineTo(at(26, 0).dx, at(26, 0).dy)
+        ..lineTo(at(20, -0.5).dx, at(20, -0.5).dy)
+        ..close();
+      canvas.drawPath(arrow, Paint()..color = Colors.white);
+      canvas.drawPath(
+          arrow,
+          Paint()
+            ..color = _onMap.ink
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.5
+            ..strokeJoin = StrokeJoin.round);
+    }
   }
 
   @override
-  bool shouldRepaint(_PhonePainter old) => old.heading != heading;
+  bool shouldRepaint(PhonePainter old) =>
+      old.heading != heading || old.course != course;
 }
 
 /// a dot colored by status and a label "БЛА 1 · 12 с" above it; the chosen

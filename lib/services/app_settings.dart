@@ -39,6 +39,18 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _showMyTracker = false;
+
+  /// the user's own tracker on the map: off by default, it lies where the
+  /// phone is (Bluetooth range), so it only covers the "you" dot
+  bool get showMyTracker => _showMyTracker;
+
+  set showMyTracker(bool value) {
+    if (_showMyTracker == value) return;
+    _showMyTracker = value;
+    notifyListeners();
+  }
+
   /// trackers whose track the map does not draw (decision 10: all are
   /// drawn by default)
   final Set<String> _hiddenTracks = {};
@@ -78,6 +90,7 @@ class AppSettings extends ChangeNotifier {
         'theme': _theme.name,
         'coordinates': _coordinates.name,
         'keepScreenOn': _keepScreenOn,
+        'showMyTracker': _showMyTracker,
         'hiddenTracks': _hiddenTracks.toList(),
         if (_lastTracker case final t?)
           'lastTracker': {'id': t.id, 'name': t.name},
@@ -93,6 +106,8 @@ class AppSettings extends ChangeNotifier {
         pick(CoordinateFormat.values, json['coordinates']) ?? _coordinates;
     final keep = json['keepScreenOn'];
     if (keep is bool) _keepScreenOn = keep;
+    final showMine = json['showMyTracker'];
+    if (showMine is bool) _showMyTracker = showMine;
     final hidden = json['hiddenTracks'];
     if (hidden is List) {
       _hiddenTracks

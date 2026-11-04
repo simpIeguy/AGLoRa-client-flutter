@@ -90,4 +90,15 @@ void _serviceTests() {
     expect(location.problem, LocationProblem.none);
     expect(location.position?.latitude, 53.91);
   });
+
+  test('the course of the walk only when moving, not when standing', () {
+    const walking =
+        PhonePosition(latitude: 53.9, longitude: 27.5, speed: 1.4, course: 405);
+    const standing =
+        PhonePosition(latitude: 53.9, longitude: 27.5, speed: 0.3, course: 90);
+    const unknown = PhonePosition(latitude: 53.9, longitude: 27.5);
+    expect(walking.movingCourse, 45);
+    expect(standing.movingCourse, isNull);
+    expect(unknown.movingCourse, isNull);
+  });
 }

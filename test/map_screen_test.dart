@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsp_tracker/services/compass_service.dart';
 import 'package:tsp_tracker/services/location_service.dart';
+import 'package:tsp_tracker/ui/screens/map/map_markers.dart';
 import 'package:tsp_tracker/ui/screens/map_screen.dart';
 import 'package:tsp_tracker/ui/screens/tracker_screen.dart';
 
@@ -107,9 +108,71 @@ void main() {
     expect(find.byType(TrackerScreen), findsOneWidget);
   });
 
+  testWidgets('the own tracker is off the map until asked; the button toggles',
+      (tester) async {
+    resetApp();
+    feed(memoryMessage('GROUND2'));
+    await show(tester, chosen: 'UAV1');
+    expect(find.textContaining(RegExp(r'^Вы · ')), findsNothing);
+    expect(find.text('Вы'), findsNothing, reason: 'no chip either');
+
+    await tester.tap(find.byTooltip('Показать мой трекер на карте'));
+    await tester.pump();
+    expect(find.textContaining(RegExp(r'^Вы · \d+ с$')), findsOneWidget);
+    expect(find.text('Вы'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Скрыть мой трекер с карты'));
+    await tester.pump();
+    expect(find.textContaining(RegExp(r'^Вы · ')), findsNothing);
+  });
+
+  testWidgets('no button for the own tracker when none is connected',
+      (tester) async {
+    resetApp();
+    await show(tester);
+    expect(find.byTooltip('Показать мой трекер на карте'), findsNothing);
+  });
+
+  testWidgets('the phone walking: the map shows without a fault',
+      (tester) async {
+    resetApp(
+        positions: Stream.value(PhonePosition(
+            latitude: 53.8945,
+            longitude: 27.5440,
+            accuracy: 6,
+            speed: 1.4,
+            course: 45,
+            time: DateTime.now())));
+    await show(tester);
+    expect(tester.takeException(), isNull);
+    final painters = tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .map((w) => w.painter)
+        .whereType<PhonePainter>();
+    expect(painters.single.course, 45);
+  });
+
+  testWidgets('the phone standing: no walking arrow', (tester) async {
+    resetApp(
+        positions: Stream.value(PhonePosition(
+            latitude: 53.8945,
+            longitude: 27.5440,
+            accuracy: 6,
+            speed: 0.3,
+            course: 45,
+            time: DateTime.now())));
+    await show(tester);
+    final painters = tester
+        .widgetList<CustomPaint>(find.byType(CustomPaint))
+        .map((w) => w.painter)
+        .whereType<PhonePainter>();
+    expect(painters.single.course, isNull);
+  });
+
   testWidgets('the phone\'s own tracker is "Вы", not "Человек 2"',
       (tester) async {
     resetApp();
+    app.settings.showMyTracker = true;
     feed(memoryMessage('GROUND2'));
     await show(tester, chosen: 'GROUND2');
     expect(find.textContaining(RegExp(r'^Вы · \d+ с$')), findsOneWidget);

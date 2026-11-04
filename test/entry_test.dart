@@ -56,6 +56,13 @@ void main() {
       expect([-50, -65, -75, -95].map(signalBars), [4, 3, 2, 1]);
     });
 
+    test('the own tracker is off the map by default, the choice is kept', () {
+      expect(AppSettings().showMyTracker, isFalse);
+      final before = AppSettings()..showMyTracker = true;
+      expect(
+          (AppSettings()..loadState(before.saveState())).showMyTracker, isTrue);
+    });
+
     test('the own tracker is remembered between launches', () {
       final before = AppSettings()
         ..lastTracker = (id: 'AA:BB:CC:DD:EE:FF', name: 'GROUND1');

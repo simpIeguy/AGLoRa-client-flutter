@@ -12,6 +12,8 @@ class PhonePosition {
     this.accuracy,
     DateTime? time,
     this.satellites,
+    this.speed,
+    this.course,
   }) : _time = time;
 
   final double latitude;
@@ -27,6 +29,22 @@ class PhonePosition {
 
   /// satellites in view, null when the phone does not report them
   final int? satellites;
+
+  /// metres per second, null when the phone did not say
+  final double? speed;
+
+  /// degrees from north the phone moves to, null when the phone did not say
+  final double? course;
+
+  /// Slower than this the GPS course is noise: standing still it jumps around.
+  static const double walkingSpeed = 1.0;
+
+  /// The course of the walk, or null when standing (or without a course).
+  double? get movingCourse {
+    final v = speed, c = course;
+    if (v == null || c == null || !v.isFinite || !c.isFinite) return null;
+    return v >= walkingSpeed ? c % 360 : null;
+  }
 }
 
 /// why there is no phone position
@@ -150,6 +168,9 @@ class LocationService extends ChangeNotifier {
         longitude: p.longitude,
         accuracy: p.accuracy > 0 ? p.accuracy : null,
         time: p.timestamp,
+        // geolocator reports 0 when it has no speed or course
+        speed: p.speed > 0 ? p.speed : null,
+        course: p.speed > 0 && p.heading >= 0 ? p.heading : null,
       );
 
   @override

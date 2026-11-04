@@ -229,6 +229,8 @@ abstract final class S {
   static const String tracks = 'След';
   static const String followTracker = 'Следить за выбранным';
   static const String followTrackerOff = 'Не следить';
+  static const String showMyTracker = 'Показать мой трекер на карте';
+  static const String hideMyTracker = 'Скрыть мой трекер с карты';
   static const String tracksTitle = 'Чьи следы показывать';
   static const String tracksHint = 'Последние 50 точек каждого трекера';
 

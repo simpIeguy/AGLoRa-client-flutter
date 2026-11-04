@@ -256,7 +256,7 @@ ThemeData buildAppTheme([AppPalette palette = AppPalette.light]) {
         side: BorderSide(color: palette.ink, width: AppSizes.outline),
         textStyle: const TextStyle(
             fontFamily: AppText.sans,
-            fontSize: AppText.small,
+            fontSize: AppText.main,
             fontWeight: FontWeight.w600),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.buttonRadius)),

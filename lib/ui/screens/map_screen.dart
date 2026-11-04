@@ -486,6 +486,16 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 const SizedBox(height: AppSizes.gap),
                 _MapButton(
+                  tooltip:
+                      _followTracker ? S.followTrackerOff : S.followTracker,
+                  pressed: _followTracker,
+                  onTap: _toggleFollowTracker,
+                  child: Icon(_followTracker
+                      ? Icons.center_focus_strong
+                      : Icons.center_focus_weak),
+                ),
+                const SizedBox(height: AppSizes.gap),
+                _MapButton(
                   tooltip: S.tracks,
                   // dark while some track is drawn, as in the mockup
                   pressed: entries
@@ -517,8 +527,6 @@ class _MapScreenState extends State<MapScreen> {
               onChoose: _choose,
               trackShown: _services.settings.isTrackShown(chosen.key),
               onTrack: (v) => _services.settings.setTrackShown(chosen.key, v),
-              following: _followTracker,
-              onFollow: (_) => _toggleFollowTracker(),
             ),
           // the map's sources (the licences ask for them), smallest, at the
           // very bottom under the card
@@ -654,8 +662,6 @@ class _Panel extends StatelessWidget {
     required this.onChoose,
     required this.trackShown,
     required this.onTrack,
-    required this.following,
-    required this.onFollow,
   });
 
   final List<TrackerEntry> entries;
@@ -665,10 +671,6 @@ class _Panel extends StatelessWidget {
   /// the chosen tracker's track is drawn
   final bool trackShown;
   final void Function(bool) onTrack;
-
-  /// the map keeps the chosen tracker in the middle
-  final bool following;
-  final void Function(bool) onFollow;
 
   @override
   Widget build(BuildContext context) {
@@ -704,19 +706,6 @@ class _Panel extends StatelessWidget {
             ),
           ),
           TrackerCard(entry: chosen, framed: false),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
-            child: MergeSemantics(
-              child: Row(children: [
-                const Icon(Icons.center_focus_strong),
-                const SizedBox(width: AppSizes.gap),
-                Expanded(
-                    child: Text(S.followTracker,
-                        style: Theme.of(context).textTheme.bodyMedium)),
-                Switch(value: following, onChanged: onFollow),
-              ]),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.padding),
             // one node for the screen reader: "След, switch"

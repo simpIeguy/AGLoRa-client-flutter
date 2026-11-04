@@ -53,16 +53,6 @@ void main() {
     expect(find.text('1,4 км'), findsNWidgets(2));
   });
 
-  /// the switch "Следить за трекером" in the card
-  final followSwitch = find.descendant(
-      of: find
-          .ancestor(
-              of: find.text('Следить за трекером'), matching: find.byType(Row))
-          .first,
-      matching: find.byType(Switch));
-  bool following(WidgetTester tester) =>
-      tester.widget<Switch>(followSwitch).value;
-
   testWidgets('"Следить": the map goes to the new point, a finger stops it',
       (tester) async {
     resetApp();
@@ -70,7 +60,7 @@ void main() {
     final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
     final controller = map.mapController!;
 
-    await tester.tap(followSwitch);
+    await tester.tap(find.byTooltip('Следить за выбранным'));
     await tester.pump();
     await tester.pump();
     expect(controller.center.latitude, closeTo(53.902, 0.0001));
@@ -84,7 +74,7 @@ void main() {
 
     await tester.drag(find.byType(FlutterMap), const Offset(0, 80));
     await tester.pump();
-    expect(following(tester), isFalse,
+    expect(find.byTooltip('Следить за выбранным'), findsOneWidget,
         reason: 'a finger moved the map: not following any more');
   });
 
@@ -92,14 +82,15 @@ void main() {
       (tester) async {
     resetApp();
     await show(tester, chosen: 'UAV1', followChosen: true);
-    expect(following(tester), isTrue);
+    expect(find.byTooltip('Не следить'), findsOneWidget);
+    expect(find.byTooltip('Следить за выбранным'), findsNothing);
   });
 
   testWidgets('the map button of the main screen does not follow',
       (tester) async {
     resetApp();
     await show(tester, chosen: 'UAV1');
-    expect(following(tester), isFalse);
+    expect(find.byTooltip('Следить за выбранным'), findsOneWidget);
   });
 
   group('landmarks', () {

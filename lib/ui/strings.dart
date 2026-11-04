@@ -227,7 +227,8 @@ abstract final class S {
   static const String northUp = 'Север вверх';
   static const String whereAmI = 'Где я';
   static const String tracks = 'След';
-  static const String followTracker = 'Следить за трекером';
+  static const String followTracker = 'Следить за выбранным';
+  static const String followTrackerOff = 'Не следить';
   static const String showMyTracker = 'Показать мой трекер на карте';
   static const String hideMyTracker = 'Скрыть мой трекер с карты';
   // landmarks: points put on the map by coordinates

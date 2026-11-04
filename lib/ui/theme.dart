@@ -76,11 +76,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
     brightness: Brightness.light,
     background: Color(0xFFF4F4F2),
     card: Color(0xFFFFFFFF),
-    line: Color(0xFFD9DBD7),
+    line: Color(0xFF8E938E),
     ink: Color(0xFF14181B),
     muted: Color(0xFF4F575D),
     green: Color(0xFF1A8040),
-    amber: Color(0xFFB87400),
+    amber: Color(0xFF9A6000),
     onInk: Color(0xFFFFFFFF),
   );
 
@@ -88,7 +88,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     brightness: Brightness.dark,
     background: Color(0xFF0E1012),
     card: Color(0xFF181B1E),
-    line: Color(0xFF2C3135),
+    line: Color(0xFF5E666D),
     ink: Color(0xFFF1F3F4),
     muted: Color(0xFFA9B0B6),
     green: Color(0xFF4ADE80),
@@ -102,9 +102,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
     brightness: Brightness.dark,
     background: Color(0xFF0A0000),
     card: Color(0xFF160404),
-    line: Color(0xFF3A1212),
+    line: Color(0xFF8A2F28),
     ink: Color(0xFFFF5A4D),
-    muted: Color(0xFFD04A40),
+    muted: Color(0xFFE05448),
     green: Color(0xFFFF5A4D),
     amber: Color(0xFFFF5A4D),
     onInk: Color(0xFF0A0000),
@@ -116,7 +116,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     brightness: Brightness.dark,
     background: Color(0xFF000000),
     card: Color(0xFF181B1E),
-    line: Color(0xFF2C3135),
+    line: Color(0xFF5E666D),
     ink: Color(0xFFFFFFFF),
     muted: Color(0xFFAEB5BB),
     green: Color(0xFF4ADE80),
@@ -174,6 +174,9 @@ abstract final class AppText {
   static const double large = 32;
   static const double main = 17;
   static const double small = 14;
+
+  /// "Связь потеряна" at the top of the full screen
+  static const double statusLost = 22;
 }
 
 ThemeData buildAppTheme([AppPalette palette = AppPalette.light]) {

@@ -107,8 +107,18 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
         StatusDot(status: status),
         const SizedBox(width: AppSizes.gap),
         Flexible(
-            child: Text([statusLabel(status), if (age != null) age].join(' · '),
-                style: textTheme.bodyMedium)),
+            // one line: on a narrow screen the text shrinks, it does not wrap
+            child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                    [statusLabel(status), if (age != null) age].join(' · '),
+                    // lost: the loudest line at the top, readable at arm's length
+                    style: lost
+                        ? textTheme.titleMedium?.copyWith(
+                            fontSize: AppText.statusLost,
+                            fontWeight: FontWeight.w800)
+                        : textTheme.titleMedium))),
       ]),
       if (lost || searching)
         Padding(

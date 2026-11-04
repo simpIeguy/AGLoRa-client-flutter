@@ -28,7 +28,7 @@ abstract final class AppSizes {
   static const double outline = 1.5;
   static const double bigArrow = 300;
   static const double lamp = 12;
-  static const double mapAttributionText = 8;
+  static const double mapAttributionText = 10;
 }
 
 /// the theme the user picks in the settings; auto follows the phone
@@ -174,6 +174,9 @@ abstract final class AppText {
   static const double large = 32;
   static const double main = 17;
   static const double small = 14;
+
+  /// how long ago the tracker was heard: what tells a stale point
+  static const double age = 16;
 
   /// "Связь потеряна" at the top of the full screen
   static const double statusLost = 22;

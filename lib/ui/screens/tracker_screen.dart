@@ -384,7 +384,9 @@ class _MainCard extends StatelessWidget {
                             lost: lost,
                             searching: store.isSearchingSatellites(identifier),
                             hasPoint: point != null),
-                        style: textTheme.bodyMedium?.copyWith(color: p.muted)),
+                        style: textTheme.bodyMedium?.copyWith(
+                            fontSize: AppText.age,
+                            color: lost ? p.ink : p.muted)),
                   ),
                   const SizedBox(height: 4),
                   Text.rich(

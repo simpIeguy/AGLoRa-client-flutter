@@ -173,7 +173,9 @@ class _TopRow extends StatelessWidget {
                           lost: lost,
                           searching: entry.searchingSatellites,
                           hasPoint: point != null),
-                      style: textTheme.bodyMedium?.copyWith(color: p.muted)),
+                      style: textTheme.bodyMedium?.copyWith(
+                          fontSize: AppText.age,
+                          color: lost ? p.ink : p.muted)),
                 ),
               ],
             ),

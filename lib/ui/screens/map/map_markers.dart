@@ -71,7 +71,7 @@ Marker trackerMarker(TrackerEntry entry,
   final Color dot = switch (entry.status) {
     TrackerStatus.connected || TrackerStatus.active => _onMap.green,
     TrackerStatus.fading => _onMap.amber,
-    _ => Colors.black.withValues(alpha: 0.4),
+    _ => Colors.white,
   };
   return Marker(
     width: 200,
@@ -94,7 +94,8 @@ Marker trackerMarker(TrackerEntry entry,
           decoration: BoxDecoration(
               color: dot,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3)),
+              border: Border.all(
+                  color: lost ? _onMap.muted : Colors.white, width: 3)),
         ),
         Positioned(
           top: 0,

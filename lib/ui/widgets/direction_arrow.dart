@@ -113,7 +113,7 @@ class _ArrowPainter extends CustomPainter {
       ..lineTo(5 * k, 20.5 * k)
       ..close();
     // a thin line looks the same on a small and a large arrow
-    final stroke = (size.width <= 100 ? 1.6 : 0.55) * k;
+    final stroke = (size.width <= 100 ? 2.2 : 0.7) * k;
     final paint = Paint()
       ..color = color
       ..strokeJoin = StrokeJoin.round

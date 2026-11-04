@@ -188,6 +188,7 @@ class _MapScreenState extends State<MapScreen> {
   /// a landmark was added or picked in the list: the map goes to it, the line
   /// leads to it
   void _showLandmark(Landmark landmark) {
+    _services.settings.setLandmarkVisible(landmark.id, true);
     setState(() {
       _landmarkId = landmark.id;
       _followTracker = false;
@@ -333,8 +334,9 @@ class _MapScreenState extends State<MapScreen> {
           rotate: true,
           markers: [
             for (final l in landmarks)
-              landmarkMarker(l,
-                  chosen: l.id == landmark?.id, onTap: () => _tapLandmark(l)),
+              if (l.visible || l.id == landmark?.id)
+                landmarkMarker(l,
+                    chosen: l.id == landmark?.id, onTap: () => _tapLandmark(l)),
           ],
         ),
         MarkerLayer(

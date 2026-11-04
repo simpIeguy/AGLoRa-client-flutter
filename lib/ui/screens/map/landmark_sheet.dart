@@ -7,7 +7,7 @@ import '../../strings.dart';
 import '../../theme.dart';
 import '../../widgets/coordinates_text.dart';
 
-/// The sheet "Ориентиры": type or paste coordinates in any of the formats,
+/// The sheet "Метки": type or paste coordinates in any of the formats,
 /// see how they were understood, add them to the map; below, the landmarks
 /// already there. [zone] is the 6° zone of the map, for a Y without one.
 /// [onShow] is told of the landmark to go to.
@@ -138,25 +138,51 @@ class _LandmarkSheetState extends State<_LandmarkSheet> {
                   return Text(S.landmarkListEmpty,
                       style: textTheme.bodyMedium?.copyWith(color: p.muted));
                 }
-                return Column(children: [
-                  for (final l in landmarks)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      minVerticalPadding: AppSizes.gap,
-                      title: Text(l.name),
-                      subtitle: CoordinatesText(l.latitude, l.longitude,
-                          style: const TextStyle(fontSize: AppText.small)),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        widget.onShow(l);
-                      },
-                      trailing: IconButton(
-                        tooltip: S.landmarkDelete,
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () => settings.removeLandmark(l.id),
-                      ),
-                    ),
-                ]);
+                final allShown = landmarks.every((l) => l.visible);
+                return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Expanded(
+                            child: Text(S.landmarkListHint,
+                                style: textTheme.bodyMedium
+                                    ?.copyWith(color: p.muted))),
+                        TextButton(
+                          onPressed: () =>
+                              settings.setAllLandmarksVisible(!allShown),
+                          child: Text(
+                              allShown ? S.landmarkHideAll : S.landmarkShowAll),
+                        ),
+                      ]),
+                      for (final l in landmarks)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          minVerticalPadding: AppSizes.gap,
+                          leading: IconButton(
+                            tooltip:
+                                l.visible ? S.landmarkHide : S.landmarkUnhide,
+                            icon: Icon(l.visible
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined),
+                            onPressed: () =>
+                                settings.setLandmarkVisible(l.id, !l.visible),
+                          ),
+                          title: Text(l.name,
+                              style:
+                                  l.visible ? null : TextStyle(color: p.muted)),
+                          subtitle: CoordinatesText(l.latitude, l.longitude,
+                              style: const TextStyle(fontSize: AppText.small)),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            widget.onShow(l);
+                          },
+                          trailing: IconButton(
+                            tooltip: S.landmarkDelete,
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () => settings.removeLandmark(l.id),
+                          ),
+                        ),
+                    ]);
               },
             ),
           ],

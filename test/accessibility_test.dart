@@ -83,7 +83,7 @@ void main() {
       app.settings.addLandmark('Сбор', 53.903, 27.553);
       await tester.pumpWidget(inApp(_screens['map']!()));
       await tester.pump();
-      await tester.tap(find.byTooltip('Ориентиры'));
+      await tester.tap(find.byTooltip('Метки'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, '53.91, 27.57');
       await tester.pump();
@@ -103,7 +103,7 @@ void main() {
                 .copyWith(textScaler: const TextScaler.linear(2)),
             child: child!)));
     await tester.pump();
-    await tester.tap(find.byTooltip('Ориентиры'));
+    await tester.tap(find.byTooltip('Метки'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'X 5975056 Y 5536935');
     await tester.pump();

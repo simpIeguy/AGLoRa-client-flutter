@@ -6,6 +6,7 @@ class Landmark {
     required this.name,
     required this.latitude,
     required this.longitude,
+    this.visible = true,
   });
 
   /// unique among the landmarks, kept between launches
@@ -14,11 +15,22 @@ class Landmark {
   final double latitude;
   final double longitude;
 
+  /// drawn on the map; a hidden one stays in the list
+  final bool visible;
+
+  Landmark withVisible(bool visible) => Landmark(
+      id: id,
+      name: name,
+      latitude: latitude,
+      longitude: longitude,
+      visible: visible);
+
   Map<String, Object?> toJson() => {
         'id': id,
         'name': name,
         'latitude': latitude,
         'longitude': longitude,
+        'visible': visible,
       };
 
   /// null when the saved data is not a landmark
@@ -32,7 +44,13 @@ class Landmark {
         }) {
       final lat = latitude.toDouble(), lon = longitude.toDouble();
       if (!lat.isFinite || !lon.isFinite) return null;
-      return Landmark(id: id, name: name, latitude: lat, longitude: lon);
+      final shown = json['visible'];
+      return Landmark(
+          id: id,
+          name: name,
+          latitude: lat,
+          longitude: lon,
+          visible: shown is bool ? shown : true);
     }
     return null;
   }

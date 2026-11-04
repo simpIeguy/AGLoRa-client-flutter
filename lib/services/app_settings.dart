@@ -92,6 +92,22 @@ class AppSettings extends ChangeNotifier {
     if (_landmarks.length != before) notifyListeners();
   }
 
+  /// show or hide one landmark on the map
+  void setLandmarkVisible(int id, bool visible) {
+    final i = _landmarks.indexWhere((l) => l.id == id);
+    if (i < 0 || _landmarks[i].visible == visible) return;
+    _landmarks[i] = _landmarks[i].withVisible(visible);
+    notifyListeners();
+  }
+
+  /// show or hide all the landmarks at once
+  void setAllLandmarksVisible(bool visible) {
+    for (var i = 0; i < _landmarks.length; i++) {
+      _landmarks[i] = _landmarks[i].withVisible(visible);
+    }
+    notifyListeners();
+  }
+
   /// the user's own tracker: the app connects to it again by itself after a
   /// launch; null after "Отключиться"
   ({String id, String name})? _lastTracker;

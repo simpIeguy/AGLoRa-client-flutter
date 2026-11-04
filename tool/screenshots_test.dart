@@ -207,7 +207,7 @@ void main() {
         await tester.pump();
         await tester.pump();
         if (sheet) {
-          await tester.tap(find.byTooltip('Ориентиры'));
+          await tester.tap(find.byTooltip('Метки'));
           await tester.pumpAndSettle();
           await tester.enterText(
               find.byType(TextField).first, 'X 5975056 Y 5536935');

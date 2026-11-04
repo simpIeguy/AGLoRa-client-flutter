@@ -95,7 +95,7 @@ void main() {
 
   group('landmarks', () {
     Future<void> openSheet(WidgetTester tester) async {
-      await tester.tap(find.byTooltip('Ориентиры'));
+      await tester.tap(find.byTooltip('Метки'));
       await tester.pumpAndSettle();
     }
 
@@ -110,7 +110,7 @@ void main() {
       await tester.tap(find.text('Добавить на карту'));
       await tester.pumpAndSettle();
       expect(find.byType(BottomSheet), findsNothing);
-      expect(find.text('Ориентир 1'), findsOneWidget);
+      expect(find.text('Метка 1'), findsOneWidget);
       expect(app.settings.landmarks.single.latitude, closeTo(53.91, 1e-9));
     });
 
@@ -152,10 +152,27 @@ void main() {
       expect(find.text('Сбор'), findsNWidgets(2),
           reason: 'the flag and the row');
 
-      await tester.tap(find.byTooltip('Удалить ориентир'));
+      await tester.tap(find.byTooltip('Удалить метку'));
       await tester.pumpAndSettle();
       expect(app.settings.landmarks, isEmpty);
-      expect(find.text('Пока нет ни одного ориентира'), findsOneWidget);
+      expect(find.text('Пока нет ни одной метки'), findsOneWidget);
+    });
+
+    testWidgets('the eye hides a landmark from the map, not from the list',
+        (tester) async {
+      resetApp();
+      app.settings.addLandmark('Сбор', 53.903, 27.553);
+      await show(tester, chosen: 'UAV1');
+      await openSheet(tester);
+      await tester.tap(find.byTooltip('Скрыть метку с карты'));
+      await tester.pump();
+      expect(app.settings.landmarks.single.visible, isFalse);
+      expect(find.text('Сбор'), findsOneWidget, reason: 'only the row');
+      expect(find.byTooltip('Показать метку на карте'), findsOneWidget);
+      await tester.tap(find.text('Показать все'));
+      await tester.pump();
+      expect(app.settings.landmarks.single.visible, isTrue);
+      expect(find.text('Сбор'), findsNWidgets(2));
     });
 
     testWidgets('a tap on a flag sends the line to it, and back',

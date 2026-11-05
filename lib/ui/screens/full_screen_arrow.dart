@@ -302,8 +302,6 @@ class _Coordinates extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 onTap: () =>
                     copyCoordinates(context, point.latitude, point.longitude),
-                onLongPress: () =>
-                    showCopyFormats(context, point.latitude, point.longitude),
                 child: CoordinatesText(point.latitude, point.longitude),
               ),
             ),

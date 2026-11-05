@@ -1031,15 +1031,14 @@ class _PanelButton extends StatelessWidget {
           customBorder: shape,
           child: SizedBox.square(
               dimension: AppSizes.minTap,
-              // the counter sits on the corner of the icon, inside the frame:
-              // the frame is drawn over what touches it and would cut it
-              child: Center(
-                  child: badge > 0
-                      ? Badge(
-                          label: Text('$badge'),
-                          alignment: AlignmentDirectional.topEnd,
-                          child: Icon(icon, color: p.ink))
-                      : Icon(icon, color: p.ink))),
+              // the counter sits in the corner of the button, inside the
+              // frame: the frame is drawn over what touches it and would cut it
+              child: Stack(alignment: Alignment.center, children: [
+                Icon(icon, color: p.ink),
+                if (badge > 0)
+                  PositionedDirectional(
+                      top: 3, end: 3, child: Badge(label: Text('$badge'))),
+              ])),
         ),
       ),
     );

@@ -28,7 +28,7 @@ IconData roleIcon(TrackerRole role) => switch (role) {
 /// button. The card itself is neutral: the dot and the text tell the status.
 /// A tap on the arrow opens the full screen, on the coordinates copies them,
 /// anywhere else opens the tracker's screen.
-class TrackerCard extends StatefulWidget {
+class TrackerCard extends StatelessWidget {
   const TrackerCard({super.key, required this.entry, this.framed = true});
 
   final TrackerEntry entry;
@@ -38,65 +38,43 @@ class TrackerCard extends StatefulWidget {
   final bool framed;
 
   @override
-  State<TrackerCard> createState() => _TrackerCardState();
-}
-
-class _TrackerCardState extends State<TrackerCard> {
-  /// a finger is on the coordinates: the card must not light up as a whole
-  final ValueNotifier<bool> _onCoordinates = ValueNotifier(false);
-
-  @override
-  void dispose() {
-    _onCoordinates.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final entry = widget.entry;
     if (entry.status == TrackerStatus.waiting) {
       return _WaitingStub(entry: entry);
     }
     final p = AppPalette.of(context);
     final point = entry.latest;
     return Material(
-      color: widget.framed ? p.card : Colors.transparent,
+      color: framed ? p.card : Colors.transparent,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-          side: widget.framed ? BorderSide(color: p.line) : BorderSide.none),
+          side: framed ? BorderSide(color: p.line) : BorderSide.none),
       clipBehavior: Clip.antiAlias,
-      child: ValueListenableBuilder<bool>(
-        valueListenable: _onCoordinates,
-        builder: (context, onCoordinates, child) => InkWell(
-          // the highlight of the whole card is off while the coordinates are
-          // pressed (it would start after 0.1 s, before the press is decided)
-          overlayColor: onCoordinates
-              ? const WidgetStatePropertyAll(Colors.transparent)
-              : null,
-          splashFactory: onCoordinates ? NoSplash.splashFactory : null,
-          // also without a fix: the screen tells what the tracker sends
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => TrackerScreen(
-                  identifier: point?.identifier ?? entry.name.raw))),
-          child: child,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppSizes.screenPadding,
-              AppSizes.padding, AppSizes.gap, AppSizes.gap),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _TopRow(entry: entry),
-              if (point != null)
-                Listener(
-                  onPointerDown: (_) => _onCoordinates.value = true,
-                  onPointerUp: (_) => _onCoordinates.value = false,
-                  onPointerCancel: (_) => _onCoordinates.value = false,
-                  child: CoordinatesRow(point: point),
-                ),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // the coordinates are not inside this tap: they light up alone
+          InkWell(
+            // also without a fix: the screen tells what the tracker sends
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => TrackerScreen(
+                    identifier: point?.identifier ?? entry.name.raw))),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                  AppSizes.screenPadding,
+                  AppSizes.padding,
+                  AppSizes.gap,
+                  point == null ? AppSizes.gap : 0),
+              child: _TopRow(entry: entry),
+            ),
           ),
-        ),
+          if (point != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSizes.screenPadding, 0, AppSizes.gap, AppSizes.gap),
+              child: CoordinatesRow(point: point),
+            ),
+        ],
       ),
     );
   }
@@ -285,18 +263,16 @@ class CoordinatesRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     void copy() => copyCoordinates(context, point.latitude, point.longitude);
-    void formats() => showCopyFormats(context, point.latitude, point.longitude);
     return Container(
       margin: const EdgeInsets.only(top: AppSizes.gap),
       decoration: BoxDecoration(border: Border(top: BorderSide(color: p.line))),
       child: Row(children: [
         Expanded(
-          child: GestureDetector(
+          child: InkWell(
             // a tap on the coordinates copies them, as the button does; the
-            // whole strip, not only the digits
-            behavior: HitTestBehavior.opaque,
+            // whole strip, not only the digits, and only it lights up. The
+            // choice of the format is on the button alone
             onTap: copy,
-            onLongPress: formats,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.padding),
               child: CoordinatesText(point.latitude, point.longitude),

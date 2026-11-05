@@ -511,7 +511,6 @@ class _PointRow extends StatelessWidget {
     final p = AppPalette.of(context);
     final time = formatClock(point.time.toLocal());
     void copy() => copyCoordinates(context, point.latitude, point.longitude);
-    void formats() => showCopyFormats(context, point.latitude, point.longitude);
     return Container(
       constraints: const BoxConstraints(minHeight: height),
       padding: const EdgeInsets.only(left: 4),
@@ -523,7 +522,6 @@ class _PointRow extends StatelessWidget {
             // a tap copies, as on the cards
             behavior: HitTestBehavior.opaque,
             onTap: copy,
-            onLongPress: formats,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -28,7 +28,7 @@ IconData roleIcon(TrackerRole role) => switch (role) {
 /// button. The card itself is neutral: the dot and the text tell the status.
 /// A tap on the arrow opens the full screen, on the coordinates copies them,
 /// anywhere else opens the tracker's screen.
-class TrackerCard extends StatelessWidget {
+class TrackerCard extends StatefulWidget {
   const TrackerCard({super.key, required this.entry, this.framed = true});
 
   final TrackerEntry entry;
@@ -38,23 +38,48 @@ class TrackerCard extends StatelessWidget {
   final bool framed;
 
   @override
+  State<TrackerCard> createState() => _TrackerCardState();
+}
+
+class _TrackerCardState extends State<TrackerCard> {
+  /// a finger is on the coordinates: the card must not light up as a whole
+  final ValueNotifier<bool> _onCoordinates = ValueNotifier(false);
+
+  @override
+  void dispose() {
+    _onCoordinates.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final entry = widget.entry;
     if (entry.status == TrackerStatus.waiting) {
       return _WaitingStub(entry: entry);
     }
     final p = AppPalette.of(context);
     final point = entry.latest;
     return Material(
-      color: framed ? p.card : Colors.transparent,
+      color: widget.framed ? p.card : Colors.transparent,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-          side: framed ? BorderSide(color: p.line) : BorderSide.none),
+          side: widget.framed ? BorderSide(color: p.line) : BorderSide.none),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        // also without a fix: the screen tells what the tracker sends
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => TrackerScreen(
-                identifier: point?.identifier ?? entry.name.raw))),
+      child: ValueListenableBuilder<bool>(
+        valueListenable: _onCoordinates,
+        builder: (context, onCoordinates, child) => InkWell(
+          // the highlight of the whole card is off while the coordinates are
+          // pressed (it would start after 0.1 s, before the press is decided)
+          overlayColor: onCoordinates
+              ? const WidgetStatePropertyAll(Colors.transparent)
+              : null,
+          splashFactory: onCoordinates ? NoSplash.splashFactory : null,
+          // also without a fix: the screen tells what the tracker sends
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => TrackerScreen(
+                  identifier: point?.identifier ?? entry.name.raw))),
+          child: child,
+        ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(AppSizes.screenPadding,
               AppSizes.padding, AppSizes.gap, AppSizes.gap),
@@ -62,7 +87,13 @@ class TrackerCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _TopRow(entry: entry),
-              if (point != null) CoordinatesRow(point: point),
+              if (point != null)
+                Listener(
+                  onPointerDown: (_) => _onCoordinates.value = true,
+                  onPointerUp: (_) => _onCoordinates.value = false,
+                  onPointerCancel: (_) => _onCoordinates.value = false,
+                  child: CoordinatesRow(point: point),
+                ),
             ],
           ),
         ),

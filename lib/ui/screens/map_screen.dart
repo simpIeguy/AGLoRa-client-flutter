@@ -1025,20 +1025,21 @@ class _PanelButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         shape: shape,
-        // no clip: the counter sits on the corner and sticks out of the
-        // button; the ripple is rounded by the InkWell's own border
-        clipBehavior: Clip.none,
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           customBorder: shape,
           child: SizedBox.square(
               dimension: AppSizes.minTap,
-              child: badge > 0
-                  ? Badge(
-                      label: Text('$badge'),
-                      alignment: AlignmentDirectional.topEnd,
-                      child: Center(child: Icon(icon, color: p.ink)))
-                  : Icon(icon, color: p.ink)),
+              // the counter sits on the corner of the icon, inside the frame:
+              // the frame is drawn over what touches it and would cut it
+              child: Center(
+                  child: badge > 0
+                      ? Badge(
+                          label: Text('$badge'),
+                          alignment: AlignmentDirectional.topEnd,
+                          child: Icon(icon, color: p.ink))
+                      : Icon(icon, color: p.ink))),
         ),
       ),
     );

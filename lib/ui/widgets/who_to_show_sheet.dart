@@ -11,6 +11,9 @@ import 'tracker_card.dart';
 Future<void> showWhoToShowSheet(BuildContext context) => showAppSheet<void>(
     context: context,
     isScrollControlled: true,
+    // with many trackers the list used to fill the whole screen: nothing to
+    // tap beside it, and a pull down only scrolled the list
+    maxHeightFraction: 0.75,
     builder: (_) => const _WhoToShowSheet());
 
 /// Ticks per tracker. UAVs are always on and can not be unticked, so a UAV

@@ -7,10 +7,18 @@ Future<T?> showAppSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   bool isScrollControlled = false,
+
+  /// a tall sheet stops at this part of the screen height, so there is always
+  /// a free strip above it to tap or to pull the sheet down by
+  double? maxHeightFraction,
 }) =>
     showModalBottomSheet<T>(
       context: context,
       isScrollControlled: isScrollControlled,
+      constraints: maxHeightFraction == null
+          ? null
+          : BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * maxHeightFraction),
       builder: (sheet) => _PullDownToClose(
         // our own handle: the stock one leaves 48 px of empty space above
         child: Column(mainAxisSize: MainAxisSize.min, children: [

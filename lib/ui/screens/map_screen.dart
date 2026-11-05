@@ -1025,7 +1025,9 @@ class _PanelButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         shape: shape,
-        clipBehavior: Clip.antiAlias,
+        // no clip: the counter sits on the corner and sticks out of the
+        // button; the ripple is rounded by the InkWell's own border
+        clipBehavior: Clip.none,
         child: InkWell(
           onTap: onTap,
           customBorder: shape,

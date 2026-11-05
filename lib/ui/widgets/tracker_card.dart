@@ -23,6 +23,9 @@ IconData roleIcon(TrackerRole role) => switch (role) {
       TrackerRole.other => Icons.gps_fixed,
     };
 
+/// room around the coordinates for their rounded highlight
+const double _coordsBleed = 8;
+
 /// One tracker, as in the Main mockup: the arrow, the name, the status dot
 /// and text, the distance in large digits; the coordinates below with a copy
 /// button. The card itself is neutral: the dot and the text tell the status.
@@ -70,9 +73,13 @@ class TrackerCard extends StatelessWidget {
           ),
           if (point != null)
             Padding(
+              // the row starts left by its own room, the digits stay in place
               padding: const EdgeInsets.fromLTRB(
-                  AppSizes.screenPadding, 0, AppSizes.gap, AppSizes.gap),
-              child: CoordinatesRow(point: point),
+                  AppSizes.screenPadding - _coordsBleed,
+                  0,
+                  AppSizes.gap,
+                  AppSizes.gap),
+              child: CoordinatesRow(point: point, bleed: _coordsBleed),
             ),
         ],
       ),
@@ -255,40 +262,55 @@ class _Arrow extends StatelessWidget {
 
 /// "53.90228, 27.56183" and a copy button, under a line
 class CoordinatesRow extends StatelessWidget {
-  const CoordinatesRow({super.key, required this.point});
+  const CoordinatesRow({super.key, required this.point, this.bleed = 0});
 
   final TrackerPoint point;
+
+  /// room for the highlight left of the digits; the caller moves the row left
+  /// by the same amount, so the digits and the line stay where they were
+  final double bleed;
 
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
     void copy() => copyCoordinates(context, point.latitude, point.longitude);
+    // The highlight is a rounded pill with room around the digits, apart from
+    // the line above and the button beside.
+    const inset = 4.0;
     return Container(
       margin: const EdgeInsets.only(top: AppSizes.gap),
-      decoration: BoxDecoration(border: Border(top: BorderSide(color: p.line))),
-      child: Row(children: [
-        Expanded(
-          child: InkWell(
-            // a tap on the coordinates copies them, as the button does; the
-            // whole strip, not only the digits, and only it lights up. A long
-            // hold copies with a buzz; the choice of the format is on the
-            // button alone
-            onTap: copy,
-            onLongPress: () =>
-                copyCoordinatesHeld(context, point.latitude, point.longitude),
-            enableFeedback: false,
-            borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+      child: Column(children: [
+        Padding(
+          padding: EdgeInsets.only(left: bleed),
+          child: Divider(height: 1, thickness: 1, color: p.line),
+        ),
+        Row(children: [
+          Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.padding),
-              child: CoordinatesText(point.latitude, point.longitude),
+              padding: const EdgeInsets.symmetric(vertical: inset),
+              child: InkWell(
+                // a tap on the coordinates copies them, as the button does;
+                // the whole strip, and only it lights up. A long hold copies
+                // with a buzz; the choice of the format is on the button alone
+                onTap: copy,
+                onLongPress: () => copyCoordinatesHeld(
+                    context, point.latitude, point.longitude),
+                enableFeedback: false,
+                borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(bleed, AppSizes.padding - inset,
+                      bleed, AppSizes.padding - inset),
+                  child: CoordinatesText(point.latitude, point.longitude),
+                ),
+              ),
             ),
           ),
-        ),
-        CopyCoordinatesButton(
-          latitude: point.latitude,
-          longitude: point.longitude,
-          tooltip: S.copyCoordinates,
-        ),
+          CopyCoordinatesButton(
+            latitude: point.latitude,
+            longitude: point.longitude,
+            tooltip: S.copyCoordinates,
+          ),
+        ]),
       ]),
     );
   }

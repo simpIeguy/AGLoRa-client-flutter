@@ -270,9 +270,14 @@ class CoordinatesRow extends StatelessWidget {
         Expanded(
           child: InkWell(
             // a tap on the coordinates copies them, as the button does; the
-            // whole strip, not only the digits, and only it lights up. The
-            // choice of the format is on the button alone
+            // whole strip, not only the digits, and only it lights up. A long
+            // hold copies with a buzz; the choice of the format is on the
+            // button alone
             onTap: copy,
+            onLongPress: () =>
+                copyCoordinatesHeld(context, point.latitude, point.longitude),
+            enableFeedback: false,
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.padding),
               child: CoordinatesText(point.latitude, point.longitude),

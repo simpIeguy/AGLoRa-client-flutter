@@ -522,6 +522,8 @@ class _PointRow extends StatelessWidget {
             // a tap copies, as on the cards
             behavior: HitTestBehavior.opaque,
             onTap: copy,
+            onLongPress: () =>
+                copyCoordinatesHeld(context, point.latitude, point.longitude),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

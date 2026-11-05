@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../services/app_services.dart';
 import '../../util/sk42.dart';
@@ -38,6 +41,14 @@ class CopyCoordinatesButton extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// A long hold on the digits: copies at once and gives a buzz, so the hand
+/// feels it is done (the choice of the format is on the button alone)
+void copyCoordinatesHeld(
+    BuildContext context, double latitude, double longitude) {
+  unawaited(HapticFeedback.mediumImpact());
+  copyCoordinates(context, latitude, longitude);
 }
 
 /// "Copy as": WGS 84 or СК-42, each with the text it would copy

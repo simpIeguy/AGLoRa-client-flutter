@@ -43,8 +43,10 @@ class _WhoToShowSheet extends StatelessWidget {
               ListTile(
                 title: Text(S.whoToShow,
                     style: Theme.of(context).textTheme.titleLarge),
+                // each on its own line: the text does not jump when the
+                // button changes its width ("Скрыть все" / "Показать все")
                 subtitle: const Text(
-                    '${S.uavsAlwaysShown}, ${S.connectedAlwaysShown}'),
+                    '${S.uavsAlwaysShown},\n${S.connectedAlwaysShown}'),
                 trailing: switchable.isEmpty
                     ? null
                     : TextButton(

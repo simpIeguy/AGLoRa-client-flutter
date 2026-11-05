@@ -169,7 +169,7 @@ abstract final class S {
   static const String compassNone = 'Компаса нет';
   static const String courseGps = 'Курс GPS';
   static const String sectionArrow = 'Стрелка';
-  static const String courseWhenWalking = 'Включить курс по GPS';
+  static const String courseWhenWalking = 'Курс по GPS во время движения';
   static const String figureEight = 'Помашите телефоном восьмёркой';
 
   // full screen

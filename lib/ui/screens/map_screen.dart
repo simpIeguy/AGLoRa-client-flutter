@@ -500,7 +500,6 @@ class _MapScreenState extends State<MapScreen> {
                 ListTile(
                   title: Text(S.tracksTitle,
                       style: Theme.of(context).textTheme.titleMedium),
-                  subtitle: const Text(S.tracksHint),
                 ),
                 // all at once: untick everyone, then tick the ones to draw
                 CheckboxListTile(

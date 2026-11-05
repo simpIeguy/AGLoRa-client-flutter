@@ -75,7 +75,6 @@ class SettingsScreen extends StatelessWidget {
                           settings.theme = choice.single,
                     ),
                   ),
-                  _Hint(S.themeNightHint, style: muted),
                   const _Section(S.sectionCoordinates),
                   _Group(children: [
                     for (final format in CoordinateFormat.values)
@@ -97,13 +96,11 @@ class SettingsScreen extends StatelessWidget {
                   _Group(children: [
                     _Switch(
                       title: S.everyNewUav,
-                      hint: S.everyNewUavHint,
                       value: store.alertNewUavs,
                       onChanged: (v) => store.alertNewUavs = v,
                     ),
                     _Switch(
                       title: S.lostAlert,
-                      hint: S.lostAlertHint,
                       value: settings.lostAlert,
                       onChanged: (v) => settings.lostAlert = v,
                     ),
@@ -126,7 +123,6 @@ class SettingsScreen extends StatelessWidget {
                       onChosen: (d) => store.setThresholds(lostAfter: d),
                     ),
                   ]),
-                  _Hint(S.thresholdsHint, style: muted),
                   ValueListenableBuilder<bool?>(
                     valueListenable: services.link.relayMe,
                     builder: (context, relay, _) {
@@ -249,19 +245,6 @@ class _Section extends StatelessWidget {
                 .textTheme
                 .labelLarge
                 ?.copyWith(color: AppPalette.of(context).muted)),
-      );
-}
-
-class _Hint extends StatelessWidget {
-  const _Hint(this.text, {this.style});
-
-  final String text;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(4, AppSizes.gap, 4, 0),
-        child: Text(text, style: style),
       );
 }
 

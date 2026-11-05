@@ -215,14 +215,8 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
   static ({String title, String? hint})? _problem(DirectionProblem problem) =>
       switch (problem) {
         DirectionProblem.none => null,
-        DirectionProblem.noPhonePosition => (
-            title: S.noPhoneGps,
-            hint: S.noPhoneGpsHint
-          ),
-        DirectionProblem.noCompass => (
-            title: S.noCompass,
-            hint: S.noCompassHint
-          ),
+        DirectionProblem.noPhonePosition => (title: S.noPhoneGps, hint: null),
+        DirectionProblem.noCompass => (title: S.noCompass, hint: null),
         DirectionProblem.compassUnreliable => (
             title: S.compassBad,
             hint: S.figureEight

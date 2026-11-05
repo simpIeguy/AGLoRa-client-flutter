@@ -150,8 +150,6 @@ abstract final class S {
   static String linkBack(String name) => '$name снова на связи';
   static const String lastPoint = 'Последняя точка';
   static const String lostAlert = 'Сигнал при потере связи';
-  static const String lostAlertHint =
-      'Звук и вибрация, когда БЛА перестал отвечать';
   static String cameOnline(String name) => '$name вышел на связь';
   static const String copy = 'Копировать';
 
@@ -177,10 +175,6 @@ abstract final class S {
   // full screen
   static const String azimuth = 'азимут';
   static const String noPhoneGps = 'Нет сигнала GPS';
-  static const String noPhoneGpsHint =
-      'Выйдите на открытое место. Стрелка и расстояние появятся, когда телефон найдёт спутники.';
-  static const String noCompassHint =
-      'Направление показано так, будто верх телефона смотрит на север';
   static const String roughDirection = 'направление приблизительное';
   // a no-break space: "±6 м" never splits over two lines
   static String gpsAccuracyLine(int metres) => 'точность GPS ±$metres м';
@@ -257,8 +251,6 @@ abstract final class S {
   static const String landmarkZoneGuessed =
       'Нет номера зоны перед Y: взята зона карты';
   static const String landmarkListEmpty = 'Пока нет ни одной метки';
-  static const String landmarkListHint =
-      'Нажмите на метку: на карте появится линия и расстояние до неё';
   static String landmarkSamePlace(String name) =>
       'Здесь уже есть метка «$name»';
   static const String landmarkSameName = 'Метка с таким названием уже есть';
@@ -288,7 +280,6 @@ abstract final class S {
   static String kindGaussKruger(int zone) => 'СК-42, прямоугольные, зона $zone';
 
   static const String tracksTitle = 'Чьи следы показывать';
-  static const String tracksHint = 'Последние 50 точек каждого трекера';
 
   // settings
   static const String sectionLook = 'Вид';
@@ -297,19 +288,14 @@ abstract final class S {
   static const String themeLight = 'Светлая';
   static const String themeDark = 'Тёмная';
   static const String themeNight = 'Ночная';
-  static const String themeNightHint =
-      'Ночная: красные цвета на чёрном, не слепит и не сбивает ночное зрение.';
   static const String sectionCoordinates = 'Координаты';
   static const String coordinatesDecimal = 'Десятичные градусы (DD), WGS 84';
   static const String coordinatesDms = 'Градусы, минуты, секунды (DMS), WGS 84';
   static const String sectionNotifications = 'Уведомления';
   static const String everyNewUav = 'О каждом новом БЛА';
-  static const String everyNewUavHint = 'Звук и вибрация, один раз';
   static const String sectionLink = 'Связь с трекером';
   static const String fadingAfter = 'Связь пропадает после';
   static const String lostAfter = 'Связь потеряна после';
-  static const String thresholdsHint =
-      'Время считается от последней принятой точки. Подберите под то, как часто трекеры шлют координаты.';
   static const String sectionRelay = 'Сеть';
   static const String relayMe = 'Транслировать мою позицию';
   static const String relayMeUavNote = 'На БЛА выключить нельзя';

@@ -1,6 +1,7 @@
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tsp_tracker/data/scan_list.dart';
+import 'package:tsp_tracker/protocol/tracker_point.dart';
 import 'package:tsp_tracker/services/app_settings.dart';
 import 'package:tsp_tracker/services/location_service.dart';
 import 'package:tsp_tracker/ui/screens/find_devices_screen.dart';
@@ -99,6 +100,30 @@ void main() {
       expect(find.text('Не подключён'), findsOneWidget);
       expect(find.byTooltip('Подключить трекер'), findsOneWidget);
       expect(find.text('Подключиться'), findsOneWidget);
+    });
+
+    testWidgets('who to show: hide all and show all, UAVs stay',
+        (tester) async {
+      final now = DateTime.now().toUtc();
+      for (final name in ['UAV1', 'GROUND2', 'GROUND3']) {
+        app.store.addPoint(TrackerPoint(
+            identifier: name, latitude: 53.9, longitude: 27.5, time: now));
+      }
+      await tester.pumpWidget(inApp(const TrackersScreen()));
+      await tester.tap(find.byTooltip('Кого показывать'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Скрыть все'));
+      await tester.pump();
+      expect(app.store.isHidden('GROUND2'), isTrue);
+      expect(app.store.isHidden('GROUND3'), isTrue);
+      expect(app.store.isHidden('UAV1'), isFalse);
+
+      await tester.tap(find.text('Показать все'));
+      await tester.pump();
+      expect(app.store.isHidden('GROUND2'), isFalse);
+      expect(app.store.isHidden('GROUND3'), isFalse);
+      expect(find.text('Скрыть все'), findsOneWidget);
     });
 
     testWidgets('no location permission: a banner, details on a tap',

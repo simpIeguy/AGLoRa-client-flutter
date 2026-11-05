@@ -289,6 +289,16 @@ class TrackerStore extends ChangeNotifier {
     if (changed) notifyListeners();
   }
 
+  /// several trackers at once ("Скрыть все" / "Показать все"), one redraw
+  void setHiddenAll(Iterable<String> identifiers, bool hidden) {
+    var changed = false;
+    for (final identifier in identifiers) {
+      final key = trackerKey(identifier);
+      changed |= hidden ? _hidden.add(key) : _hidden.remove(key);
+    }
+    if (changed) notifyListeners();
+  }
+
   // the order of the cards
 
   /// where a tracker stands in the user's order; null while never placed

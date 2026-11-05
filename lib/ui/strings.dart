@@ -140,6 +140,8 @@ abstract final class S {
   static const String whoToShow = 'Кого показывать';
   static const String uavsAlwaysShown = 'БЛА видны всегда';
   static const String connectedAlwaysShown = 'свой трекер виден всегда';
+  static const String hideAll = 'Скрыть все';
+  static const String showAll = 'Показать все';
   static String hiddenCount(int n) => 'Скрыто: $n';
   static String archive(int n) => 'Архив, нет данных 7 дней: $n';
   static const String alertNewUavs = 'Сообщать о каждом новом БЛА';

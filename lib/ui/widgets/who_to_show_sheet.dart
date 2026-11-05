@@ -18,6 +18,8 @@ Future<void> showWhoToShowSheet(BuildContext context) => showAppSheet<void>(
 
 /// Ticks per tracker. UAVs are always on and can not be unticked, so a UAV
 /// is never hidden by mistake; the connected tracker is always shown too.
+/// The title with "Скрыть все" / "Показать все" and the controls below stay
+/// in place, only the trackers scroll between them.
 class _WhoToShowSheet extends StatelessWidget {
   const _WhoToShowSheet();
 
@@ -29,29 +31,51 @@ class _WhoToShowSheet extends StatelessWidget {
       listenable: store,
       builder: (context, _) {
         final entries = _allEntries(services);
+        final switchable = [
+          for (final e in entries)
+            if (!_locked(e)) e.key
+        ];
+        final anyShown = switchable.any((k) => !store.isHidden(k));
         return SafeArea(
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            shrinkWrap: true,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 title: Text(S.whoToShow,
                     style: Theme.of(context).textTheme.titleLarge),
                 subtitle: const Text(
                     '${S.uavsAlwaysShown}, ${S.connectedAlwaysShown}'),
+                trailing: switchable.isEmpty
+                    ? null
+                    : TextButton(
+                        onPressed: () =>
+                            store.setHiddenAll(switchable, anyShown),
+                        child: Text(anyShown ? S.hideAll : S.showAll)),
               ),
-              for (final entry in entries)
-                CheckboxListTile(
-                  secondary: Icon(roleIcon(entry.name.role)),
-                  title: Text(displayName(entry.name,
-                      alias: entry.alias, mine: entry.isMine)),
-                  subtitle: Text(entry.name.raw),
-                  value: !store.isHidden(entry.key) || _locked(entry),
-                  onChanged: _locked(entry)
-                      ? null
-                      : (shown) => store.setHidden(entry.key, shown == false),
+              const Divider(height: 1),
+              Flexible(
+                child: Scrollbar(
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    children: [
+                      for (final entry in entries)
+                        CheckboxListTile(
+                          secondary: Icon(roleIcon(entry.name.role)),
+                          title: Text(displayName(entry.name,
+                              alias: entry.alias, mine: entry.isMine)),
+                          subtitle: Text(entry.name.raw),
+                          value: !store.isHidden(entry.key) || _locked(entry),
+                          onChanged: _locked(entry)
+                              ? null
+                              : (shown) =>
+                                  store.setHidden(entry.key, shown == false),
+                        ),
+                    ],
+                  ),
                 ),
-              const Divider(),
+              ),
+              const Divider(height: 1),
               SwitchListTile(
                 title: const Text(S.alertNewUavs),
                 value: store.alertNewUavs,

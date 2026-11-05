@@ -171,10 +171,7 @@ abstract final class S {
   static const String compassNone = 'Компаса нет';
   static const String courseGps = 'Курс GPS';
   static const String sectionArrow = 'Стрелка';
-  static const String courseWhenWalking = 'При ходьбе вести по курсу GPS';
-  static const String courseWhenWalkingHint =
-      'Когда вы идёте, стрелка показывает, куда вы движетесь, а не куда '
-      'повёрнут телефон. Остановились, и стрелка снова идёт по компасу';
+  static const String courseWhenWalking = 'Включить курс по GPS';
   static const String figureEight = 'Помашите телефоном восьмёркой';
 
   // full screen

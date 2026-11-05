@@ -89,7 +89,6 @@ class SettingsScreen extends StatelessWidget {
                   _Group(children: [
                     _Switch(
                       title: S.courseWhenWalking,
-                      hint: S.courseWhenWalkingHint,
                       value: settings.courseWhenWalking,
                       onChanged: (v) => settings.courseWhenWalking = v,
                     ),

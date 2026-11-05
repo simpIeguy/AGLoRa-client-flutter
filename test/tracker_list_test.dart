@@ -330,6 +330,39 @@ void main() {
       expect(entry.latest!.latitude, 55);
     });
 
+    test('a point from memory: old coordinates, the link is alive', () {
+      TrackerPoint fromMemory(Duration age) => TrackerPoint(
+          identifier: 'UAV1',
+          latitude: 54,
+          longitude: 27.5,
+          time: now.subtract(age),
+          sensors: const [TrackerSensor(name: 'fromMemory', value: '1')]);
+
+      var clock = now;
+      final store = TrackerStore(now: () => clock)
+        ..addPoint(fromMemory(const Duration(minutes: 30)));
+      var entry = buildTrackerList(store, now).shown.single;
+      expect(entry.status, TrackerStatus.active);
+      expect(entry.searchingSatellites, isTrue);
+      expect(entry.latest!.latitude, 54);
+      expect(entry.lastHeard, now);
+
+      // the same point again later: known, but still a sign of life
+      clock = now.add(const Duration(minutes: 5));
+      expect(store.addPoint(fromMemory(const Duration(minutes: 30))), isFalse);
+      entry = buildTrackerList(store, clock).shown.single;
+      expect(entry.status, TrackerStatus.active);
+      expect(entry.lastHeard, clock);
+    });
+
+    test('an old point without the mark (history on connect) is not alive', () {
+      final store = TrackerStore(now: () => now)
+        ..addPoint(at('UAV1', const Duration(minutes: 30)));
+      final entry = buildTrackerList(store, now).shown.single;
+      expect(entry.status, TrackerStatus.lost);
+      expect(entry.searchingSatellites, isFalse);
+    });
+
     test('a waited tracker leaves the stubs, alerts on its first fix',
         () async {
       final store = TrackerStore(now: () => now);

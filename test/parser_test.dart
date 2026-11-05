@@ -31,6 +31,19 @@ void main() {
     expect(point!.time, DateTime.utc(2026, 10, 31, 0, 0, 5));
   });
 
+  test('a point from memory: an old fix, the tracker is alive without one', () {
+    final old = now.subtract(const Duration(minutes: 20));
+    feed('AGLoRa-point&ver=2.3&name=UAV1&lat=53.9&lon=27.5'
+        '&timestamp=${formatTime(old)}&gpsValid=1&fromMemory=1&alt=120.0\r\n');
+
+    final point = app.store.latestPoints.single;
+    expect(point.fromMemory, isTrue);
+    expect(point.time, DateTime.parse(formatTime(old)));
+    expect(app.store.isSearchingSatellites('UAV1'), isTrue);
+    expect(app.store.lastHeard('UAV1')!.isAfter(old), isTrue,
+        reason: 'heard now, not 20 minutes ago');
+  });
+
   test('a whole message in one chunk', () {
     app.link.receive(
         pointMessage('Tracker2', 53.902284, 27.561831, now, index: 0)

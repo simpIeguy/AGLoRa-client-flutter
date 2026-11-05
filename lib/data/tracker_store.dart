@@ -132,8 +132,16 @@ class TrackerStore extends ChangeNotifier {
         lostAfter: _lostAfter);
   }
 
-  /// false when the same fix is already stored (resent by the tracker)
+  /// false when the same fix is already stored (resent by the tracker).
+  /// A point from the tracker's memory is an old fix plus "on air now
+  /// without a fix": the tracker is alive, its coordinates are old.
   bool addPoint(TrackerPoint point) {
+    final added = _addFix(point);
+    if (point.fromMemory) heardWithoutFix(point.identifier);
+    return added;
+  }
+
+  bool _addFix(TrackerPoint point) {
     final key = trackerKey(point.identifier);
     final points = _points.putIfAbsent(key, () => []);
     if (points.any(point.isSameFixAs)) return false;

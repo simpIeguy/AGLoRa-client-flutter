@@ -39,6 +39,10 @@ class TrackerPoint {
     return null;
   }
 
+  /// Not a fix now: the tracker is on air without GPS and sends its last good
+  /// point from memory (`&fromMemory=1`); [time] is the time of that point.
+  bool get fromMemory => sensor('fromMemory') == '1';
+
   /// the same fix: a point resent by the tracker or by another one (mesh)
   bool isSameFixAs(TrackerPoint other) =>
       parseTrackerName(identifier).key ==

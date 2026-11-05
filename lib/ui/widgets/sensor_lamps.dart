@@ -15,8 +15,12 @@ class SensorLamps extends StatelessWidget {
   Widget build(BuildContext context) {
     final services = AppScope.of(context);
     return ListenableBuilder(
-      listenable: Listenable.merge(
-          [services.location, services.compass, services.clock]),
+      listenable: Listenable.merge([
+        services.location,
+        services.compass,
+        services.heading,
+        services.clock
+      ]),
       builder: (context, _) {
         final phone = services.location.position;
         final gps = gpsLamp(
@@ -24,8 +28,11 @@ class SensorLamps extends StatelessWidget {
             accuracy: phone?.accuracy,
             now: services.clock.now);
         final reading = services.compass.reading;
-        final compass = compassLamp(
-            hasReading: reading != null, accuracy: reading?.accuracy);
+        final byCourse = services.heading.usingCourse;
+        final compass = byCourse
+            ? LampLevel.good
+            : compassLamp(
+                hasReading: reading != null, accuracy: reading?.accuracy);
 
         final accuracy = phone?.accuracy;
         final gpsText = phone == null
@@ -33,13 +40,15 @@ class SensorLamps extends StatelessWidget {
             : accuracy == null
                 ? S.gpsNoAccuracy
                 : S.gpsAccuracy(accuracy.round());
-        final compassText = reading == null
-            ? S.compassNone
-            : switch (compass) {
-                LampLevel.good => S.compassGood,
-                LampLevel.fair => S.compassFair,
-                LampLevel.bad => S.compassBad,
-              };
+        final compassText = byCourse
+            ? S.courseGps
+            : reading == null
+                ? S.compassNone
+                : switch (compass) {
+                    LampLevel.good => S.compassGood,
+                    LampLevel.fair => S.compassFair,
+                    LampLevel.bad => S.compassBad,
+                  };
 
         return Padding(
           padding: const EdgeInsets.symmetric(
@@ -71,7 +80,7 @@ class SensorLamps extends StatelessWidget {
                   _Lamp(level: compass, text: compassText),
                 ],
               ),
-              if (compass == LampLevel.bad && reading != null)
+              if (!byCourse && compass == LampLevel.bad && reading != null)
                 const Text(S.figureEight),
             ],
           ),

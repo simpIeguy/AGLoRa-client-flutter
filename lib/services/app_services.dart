@@ -8,6 +8,7 @@ import 'app_settings.dart';
 import 'app_storage.dart';
 import 'clock.dart';
 import 'compass_service.dart';
+import 'heading_service.dart';
 import 'location_service.dart';
 import 'map_link.dart';
 import 'screen_keeper.dart';
@@ -37,7 +38,12 @@ class AppServices {
         ? null
         : AppStorage(this.store, this.settings, backend: storage);
     connection = bluetooth ? TrackerConnection(link, this.settings) : null;
+    heading = HeadingService(this.compass, this.location, this.settings);
   }
+
+  /// where the arrows take the top of the phone to point: the compass, or
+  /// the GPS course while walking (a setting)
+  late final HeadingService heading;
 
   /// the memory between launches; null in tests that do not need it
   late final AppStorage? storage;
@@ -90,6 +96,7 @@ class AppServices {
     connection?.dispose();
     _lifecycle?.dispose();
     link.detach();
+    heading.dispose();
     compass.dispose();
     location.dispose();
     clock.dispose();

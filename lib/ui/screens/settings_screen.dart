@@ -85,6 +85,15 @@ class SettingsScreen extends StatelessWidget {
                         onTap: () => settings.coordinates = format,
                       ),
                   ]),
+                  const _Section(S.sectionArrow),
+                  _Group(children: [
+                    _Switch(
+                      title: S.courseWhenWalking,
+                      hint: S.courseWhenWalkingHint,
+                      value: settings.courseWhenWalking,
+                      onChanged: (v) => settings.courseWhenWalking = v,
+                    ),
+                  ]),
                   const _Section(S.sectionNotifications),
                   _Group(children: [
                     _Switch(

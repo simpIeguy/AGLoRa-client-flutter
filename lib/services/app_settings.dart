@@ -51,6 +51,18 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _courseWhenWalking = false;
+
+  /// walking, the arrows follow the GPS course (where the phone moves)
+  /// instead of the compass (where it points); off by default
+  bool get courseWhenWalking => _courseWhenWalking;
+
+  set courseWhenWalking(bool value) {
+    if (_courseWhenWalking == value) return;
+    _courseWhenWalking = value;
+    notifyListeners();
+  }
+
   bool _showMyTracker = true;
 
   /// the user's own tracker on the map: on by default, it can be taken off in
@@ -176,6 +188,7 @@ class AppSettings extends ChangeNotifier {
         'coordinates': _coordinates.name,
         'keepScreenOn': _keepScreenOn,
         'lostAlert': _lostAlert,
+        'courseWhenWalking': _courseWhenWalking,
         // a new key: the old "false" was only the old default
         'showMineOnMap': _showMyTracker,
         'hiddenTracks': _hiddenTracks.toList(),
@@ -197,6 +210,8 @@ class AppSettings extends ChangeNotifier {
     if (keep is bool) _keepScreenOn = keep;
     final lostAlert = json['lostAlert'];
     if (lostAlert is bool) _lostAlert = lostAlert;
+    final course = json['courseWhenWalking'];
+    if (course is bool) _courseWhenWalking = course;
     final showMine = json['showMineOnMap'];
     if (showMine is bool) _showMyTracker = showMine;
     final hidden = json['hiddenTracks'];

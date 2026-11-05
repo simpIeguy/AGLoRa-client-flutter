@@ -11,13 +11,15 @@ Direction currentDirection(
     AppServices services, double latitude, double longitude) {
   final phone = services.location.position;
   final reading = services.compass.reading;
+  // walking by the GPS course the compass does not matter, its doubts too
+  final byCourse = services.heading.usingCourse;
   return directionTo(
     latitude: latitude,
     longitude: longitude,
     phoneLatitude: phone?.latitude,
     phoneLongitude: phone?.longitude,
-    hasCompassReading: reading != null,
-    compassAccuracy: reading?.accuracy,
+    hasCompassReading: byCourse || reading != null,
+    compassAccuracy: byCourse ? null : reading?.accuracy,
   );
 }
 
@@ -59,7 +61,7 @@ class DirectionArrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compass = AppScope.of(context).compass;
+    final heading = AppScope.of(context).heading;
     final target = bearing;
     if (target == null) {
       return ArrowShape(
@@ -67,9 +69,9 @@ class DirectionArrow extends StatelessWidget {
     }
     final style = reliable && !stale ? ArrowStyle.filled : ArrowStyle.outline;
     return ListenableBuilder(
-      listenable: compass,
+      listenable: heading,
       builder: (context, _) => Transform.rotate(
-        angle: arrowAngle(target, compass.arrowHeading),
+        angle: arrowAngle(target, heading.arrowHeading),
         child: ArrowShape(
             size: size, color: stale ? mutedColor : color, style: style),
       ),

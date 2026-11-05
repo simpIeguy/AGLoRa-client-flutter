@@ -173,7 +173,6 @@ abstract final class S {
 
   // full screen
   static const String azimuth = 'азимут';
-  static const String exitFullScreen = 'Двойной тап — выйти';
   static const String toLastKnownPoint =
       'Стрелка ведёт к последней известной точке';
   static const String noPhoneGps = 'Нет сигнала GPS';
@@ -278,9 +277,6 @@ abstract final class S {
   static const String landmarkDeleteAsk = 'Удалить метку?';
   static const String landmarkDeleteYes = 'Удалить';
   static const String landmarkUndo = 'Отменить';
-  static const String landmarkSwipeHint =
-      'Нажмите на метку, чтобы перейти к ней. Смахните влево, чтобы удалить. '
-      'Долгое нажатие — изменить.';
   static String landmarkRemoved(String name) => 'Удалено: $name';
   static String landmarkDefaultName(int n) => 'Метка $n';
   static String landmarkUnderstoodAs(String kind) => 'Понял как: $kind';

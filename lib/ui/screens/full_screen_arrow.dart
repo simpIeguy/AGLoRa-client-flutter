@@ -139,7 +139,6 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
         children: [
           ...header,
           const Expanded(child: Center(child: Text(S.noPointsYet))),
-          const _ExitHint(),
         ],
       );
     }
@@ -150,17 +149,19 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
     final distance = direction.distance;
     final accuracy = services.location.position?.accuracy;
     final noGps = direction.problem == DirectionProblem.noPhonePosition;
+    final hasAzimuth = direction.isReliable && bearing != null;
     final details = [
       if (noGps)
         S.gpsAccuracyUnknown
       else ...[
-        if (direction.isReliable && bearing != null)
+        if (hasAzimuth)
           '${S.azimuth} ${formatBearing(normalizeDegrees(bearing))}'
         else
           S.roughDirection,
         if (accuracy != null) S.gpsAccuracyLine(accuracy.round()),
       ],
-    ].join(' · ');
+      // with an azimuth it is one short line; without, one sentence a line
+    ].join(hasAzimuth ? ' · ' : '\n');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -211,7 +212,6 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
                   ? S.lastPoint
                   : null,
         ),
-        const _ExitHint(),
       ],
     );
   }
@@ -317,16 +317,4 @@ class _Coordinates extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ExitHint extends StatelessWidget {
-  const _ExitHint();
-
-  @override
-  Widget build(BuildContext context) => Text(S.exitFullScreen,
-      textAlign: TextAlign.center,
-      style: Theme.of(context)
-          .textTheme
-          .bodyMedium
-          ?.copyWith(color: AppPalette.of(context).muted));
 }

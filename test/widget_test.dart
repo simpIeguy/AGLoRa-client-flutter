@@ -89,7 +89,7 @@ void main() {
     await tester.tap(arrow);
     await tester.pumpAndSettle();
     expect(find.byType(FullScreenArrow), findsOneWidget);
-    expect(find.text('направление приблизительное · точность GPS ±6\u00A0м'),
+    expect(find.text('направление приблизительное\nточность GPS ±6\u00A0м'),
         findsOneWidget);
     expect(find.text('53.91000, 27.57000'), findsOneWidget);
     expect(find.text('Компас неточный'), findsOneWidget);
@@ -97,9 +97,11 @@ void main() {
     expect(screenKept, [true], reason: 'the screen stays on');
 
     // a double tap goes back
-    await tester.tap(find.text('Двойной тап — выйти'));
+    final spot = tester.getTopLeft(find.byType(FullScreenArrow)) +
+        const Offset(200, 300);
+    await tester.tapAt(spot);
     await tester.pump(const Duration(milliseconds: 50));
-    await tester.tap(find.text('Двойной тап — выйти'));
+    await tester.tapAt(spot);
     await tester.pumpAndSettle();
     expect(find.byType(FullScreenArrow), findsNothing);
     expect(screenKept, [true, false], reason: 'and goes dark again after');

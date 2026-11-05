@@ -368,18 +368,15 @@ class _LandmarkSheetState extends State<_LandmarkSheet> {
                 return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(children: [
-                        Expanded(
-                            child: Text(S.landmarkSwipeHint,
-                                style: textTheme.bodyMedium
-                                    ?.copyWith(color: p.muted))),
-                        TextButton(
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
                           onPressed: () =>
                               settings.setAllLandmarksVisible(!allShown),
                           child: Text(
                               allShown ? S.landmarkHideAll : S.landmarkShowAll),
                         ),
-                      ]),
+                      ),
                       for (var i = 0; i < rows.length; i++)
                         _row(context, settings, rows[i], i),
                     ]);

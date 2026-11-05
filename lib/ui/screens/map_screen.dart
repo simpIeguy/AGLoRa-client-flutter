@@ -793,24 +793,35 @@ class _HiddenPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = AppPalette.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: p.card,
-        border: Border.all(color: p.line),
-        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-      ),
-      child: Row(children: [
-        IconButton(
-          tooltip: S.onMapTooltip,
-          icon: Badge(
-              label: Text('$hidden'),
-              child: const Icon(Icons.visibility_off_outlined)),
-          onPressed: onFilter,
+    final radius = BorderRadius.circular(AppSizes.cardRadius);
+    return Material(
+      color: p.card,
+      shape: RoundedRectangleBorder(
+          borderRadius: radius, side: BorderSide(color: p.line)),
+      // a tap anywhere on the card opens the list, not only on the eye
+      child: Tooltip(
+        message: S.onMapTooltip,
+        child: InkWell(
+          onTap: onFilter,
+          customBorder: RoundedRectangleBorder(borderRadius: radius),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppSizes.minTap),
+            child: Row(children: [
+              const SizedBox(width: AppSizes.padding),
+              // room around the icon, so the counter is not cut off
+              Padding(
+                padding: const EdgeInsets.all(AppSizes.gap),
+                child: Badge(
+                    label: Text('$hidden'),
+                    child: const Icon(Icons.visibility_off_outlined)),
+              ),
+              Expanded(
+                  child: Text(S.allOffMap,
+                      style: Theme.of(context).textTheme.bodyMedium)),
+            ]),
+          ),
         ),
-        Expanded(
-            child: Text(S.allOffMap,
-                style: Theme.of(context).textTheme.bodyMedium)),
-      ]),
+      ),
     );
   }
 }

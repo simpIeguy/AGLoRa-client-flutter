@@ -17,6 +17,7 @@ import 'ui/widgets/crash_notice.dart';
 import 'ui/widgets/first_signal_alerts.dart';
 import 'util/frame_stats.dart';
 import 'util/log.dart';
+import 'util/tile_errors.dart';
 
 Future<void> main() async {
   // every error nobody caught goes to the journal, where the user can save it
@@ -33,7 +34,17 @@ Future<void> _start() async {
           '${Platform.operatingSystem} ${Platform.operatingSystemVersion}');
   // the speed of drawing, a line in the journal every ten seconds
   WidgetsBinding.instance.addTimingsCallback(FrameStats().onTimings);
+  var lastTileNote = DateTime.fromMillisecondsSinceEpoch(0);
   FlutterError.onError = (details) {
+    if (isTileLoadFailure(details.exception, details.library)) {
+      // no network for the map: one short line a minute, not an error
+      final now = DateTime.now();
+      if (now.difference(lastTileNote) > const Duration(minutes: 1)) {
+        lastTileNote = now;
+        appLog('map: tiles not loaded (no network)');
+      }
+      return;
+    }
     AppLog.instance.error(details.exception, details.stack,
         where: details.library ?? 'flutter');
     if (kDebugMode) FlutterError.presentError(details);

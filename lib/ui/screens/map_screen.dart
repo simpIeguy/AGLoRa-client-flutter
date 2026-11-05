@@ -9,6 +9,7 @@ import '../../data/tracker_list.dart';
 import '../../data/tracker_status.dart';
 import '../../data/tracker_store.dart';
 import '../../services/app_services.dart';
+import '../../util/change_filter.dart';
 import '../../util/geo.dart';
 import '../names.dart';
 import '../strings.dart';
@@ -100,6 +101,18 @@ class _MapScreenState extends State<MapScreen> {
 
   late final AppServices _services = AppScope.of(context);
 
+  /// the clock's tick that matters to the map: a status changed somewhere
+  ChangeFilter? _statusChanges;
+
+  ChangeFilter get _statusTicks => _statusChanges ??= ChangeFilter(
+        _services.clock,
+        () => [
+          for (final e
+              in buildTrackerList(_services.store, _services.clock.now).shown)
+            '${e.key}:${e.status.name}',
+        ].join('|'),
+      );
+
   @override
   void initState() {
     super.initState();
@@ -126,6 +139,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void dispose() {
     _mapEventSubscription?.cancel();
+    _statusChanges?.dispose();
     if (_followCompass) _services.compass.removeListener(_onHeading);
     _mapController.dispose();
     super.dispose();
@@ -291,10 +305,11 @@ class _MapScreenState extends State<MapScreen> {
     return Scaffold(
       backgroundColor: AppColors.mapBackground,
       body: ListenableBuilder(
-        // new points, colors by timer, the phone moving and turning
+        // new points, colors by timer (not every tick of the clock, only
+        // when a status changes), the phone moving and turning
         listenable: Listenable.merge([
           _services.store,
-          _services.clock,
+          _statusTicks,
           _services.location,
           _services.compass,
           // the tracks ticked in "След"

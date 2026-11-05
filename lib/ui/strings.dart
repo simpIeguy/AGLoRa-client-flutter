@@ -176,8 +176,6 @@ abstract final class S {
 
   // full screen
   static const String azimuth = 'азимут';
-  static const String toLastKnownPoint =
-      'Стрелка ведёт к последней известной точке';
   static const String noPhoneGps = 'Нет сигнала GPS';
   static const String noPhoneGpsHint =
       'Выйдите на открытое место. Стрелка и расстояние появятся, когда телефон найдёт спутники.';

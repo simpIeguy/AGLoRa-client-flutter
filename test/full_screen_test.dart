@@ -56,8 +56,7 @@ void main() {
     await show(tester, 'UAV3');
 
     expect(find.text('Связь потеряна · 14 мин назад'), findsOneWidget);
-    expect(
-        find.text('Стрелка ведёт к последней известной точке'), findsOneWidget);
+    expect(find.textContaining('последней известной'), findsNothing);
     expect(find.text('Последняя точка'), findsOneWidget);
     expect(arrowStyles(), [ArrowStyle.outline]);
   });

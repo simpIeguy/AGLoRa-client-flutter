@@ -120,15 +120,11 @@ class _FullScreenArrowState extends State<FullScreenArrow> {
                             fontWeight: FontWeight.w800)
                         : textTheme.titleMedium))),
       ]),
-      if (lost || searching)
+      if (searching)
         Padding(
           padding: const EdgeInsets.only(left: AppSizes.lamp + AppSizes.gap),
           child: Text(
-              searching
-                  ? point == null
-                      ? S.searchingSatellites
-                      : S.noFixLastGoodPoint
-                  : S.toLastKnownPoint,
+              point == null ? S.searchingSatellites : S.noFixLastGoodPoint,
               style: textTheme.bodyMedium?.copyWith(color: p.muted)),
         ),
     ];
